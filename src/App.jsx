@@ -244,17 +244,14 @@ export default function HabitFlow() {
     const hour = new Date().getHours();
     return (hour >= 6 && hour < 18) ? "light" : "dark";
   };
-  const [theme, setTheme] = useState(getTimeTheme());
+  const [theme, setTheme] = useState(getTimeTheme);
 
- useEffect(() => {
-  const interval = setInterval(() => {
-    if (!localStorage.getItem("hf_theme_manual")) {
+  useEffect(() => {
+    const interval = setInterval(() => {
       setTheme(getTimeTheme());
-    }
-  }, 60000); // Check every minute
-
-  return () => clearInterval(interval);
-}, []);
+    }, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
   const [page, setPage] = useState("landing");
   const [user, setUser] = useState(null);
   const [isPro, setIsPro] = useState(false);
@@ -688,7 +685,6 @@ Be encouraging, specific, and concise. Give actionable advice. Keep responses un
           <button onClick={()=>{localStorage.setItem("hf_onboarded","true");setShowOnboarding(false);}} style={{fontSize:12,color:"#555",background:"none",border:"none",cursor:"pointer"}}>
             Skip for now
           </button>
-        </div>
         </div>
       </div>
     );
