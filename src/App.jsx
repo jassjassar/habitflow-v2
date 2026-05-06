@@ -244,14 +244,17 @@ export default function HabitFlow() {
     const hour = new Date().getHours();
     return (hour >= 6 && hour < 18) ? "light" : "dark";
   };
-  const [theme, setTheme] = useState(getTimeTheme);
+  const [theme, setTheme] = useState(getTimeTheme());
 
-  useEffect(() => {
-    const interval = setInterval(() => {
+ useEffect(() => {
+  const interval = setInterval(() => {
+    if (!localStorage.getItem("hf_theme_manual")) {
       setTheme(getTimeTheme());
-    }, 60000); // Check every minute
-    return () => clearInterval(interval);
-  }, []);
+    }
+  }, 60000); // Check every minute
+
+  return () => clearInterval(interval);
+}, []);
   const [page, setPage] = useState("landing");
   const [user, setUser] = useState(null);
   const [isPro, setIsPro] = useState(false);
