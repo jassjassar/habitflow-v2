@@ -14,6 +14,62 @@ const SUPABASE_URL = "https://ykmftbsglhoxoopzwbwd.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbWZ0YnNnbGhveG9vcHp3YndkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NjI3MTAsImV4cCI6MjA5MzEzODcxMH0.L3VZxCH7ObRGkhLOuCvqxMoluEFKiKuYQo1Wnq5AR0U";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ── Translations ──────────────────────────────────────────────────────────
+const TRANSLATIONS = {
+  en: { welcome:"Welcome", habits:"Habits", tracker:"Tracker", analytics:"Analytics", addHabit:"+ Add Habit", signOut:"Sign Out", today:"Today", streak:"streak", done:"done", getStarted:"Get Started", yourHabits:"Your habits.", yourStreaks:"Your streaks.", yourLife:"Your life.", startFree:"Start Free Today →", freeForever:"Free forever · Sync across all devices" },
+  es: { welcome:"Bienvenido", habits:"Hábitos", tracker:"Seguimiento", analytics:"Análisis", addHabit:"+ Agregar Hábito", signOut:"Cerrar Sesión", today:"Hoy", streak:"racha", done:"hecho", getStarted:"Comenzar", yourHabits:"Tus hábitos.", yourStreaks:"Tus rachas.", yourLife:"Tu vida.", startFree:"Empieza Gratis →", freeForever:"Gratis para siempre" },
+  hi: { welcome:"स्वागत", habits:"आदतें", tracker:"ट्रैकर", analytics:"विश्लेषण", addHabit:"+ आदत जोड़ें", signOut:"साइन आउट", today:"आज", streak:"streak", done:"किया", getStarted:"शुरू करें", yourHabits:"आपकी आदतें.", yourStreaks:"आपकी streaks.", yourLife:"आपका जीवन.", startFree:"मुफ्त शुरू करें →", freeForever:"हमेशा के लिए मुफ्त" },
+  ar: { welcome:"مرحباً", habits:"العادات", tracker:"المتتبع", analytics:"التحليل", addHabit:"+ إضافة عادة", signOut:"تسجيل خروج", today:"اليوم", streak:"سلسلة", done:"تم", getStarted:"ابدأ الآن", yourHabits:"عاداتك.", yourStreaks:"سلاسلك.", yourLife:"حياتك.", startFree:"ابدأ مجاناً →", freeForever:"مجاني للأبد" },
+  fr: { welcome:"Bienvenue", habits:"Habitudes", tracker:"Suivi", analytics:"Analyses", addHabit:"+ Ajouter", signOut:"Déconnexion", today:"Aujourd'hui", streak:"série", done:"fait", getStarted:"Commencer", yourHabits:"Vos habitudes.", yourStreaks:"Vos séries.", yourLife:"Votre vie.", startFree:"Commencer Gratuitement →", freeForever:"Gratuit pour toujours" },
+  zh: { welcome:"欢迎", habits:"习惯", tracker:"追踪", analytics:"分析", addHabit:"+ 添加习惯", signOut:"退出", today:"今天", streak:"连续", done:"完成", getStarted:"开始", yourHabits:"你的习惯。", yourStreaks:"你的连续。", yourLife:"你的生活。", startFree:"免费开始 →", freeForever:"永久免费" },
+};
+
+const LANGUAGES = [
+  {code:"en", label:"English", flag:"🇺🇸"},
+  {code:"es", label:"Español", flag:"🇪🇸"},
+  {code:"hi", label:"हिंदी", flag:"🇮🇳"},
+  {code:"ar", label:"العربية", flag:"🇸🇦"},
+  {code:"fr", label:"Français", flag:"🇫🇷"},
+  {code:"zh", label:"中文", flag:"🇨🇳"},
+];
+
+// ── Onboarding Questions ───────────────────────────────────────────────────
+const ONBOARD_QUESTIONS = [
+  {
+    id: 0,
+    title: "What are your main goals?",
+    emoji: "🎯",
+    options: [
+      {label:"Get fit & healthy", emoji:"🏋️", category:"health"},
+      {label:"Learn & grow", emoji:"📚", category:"mind"},
+      {label:"Advance my career", emoji:"💼", category:"work"},
+      {label:"Better lifestyle", emoji:"✨", category:"personal"},
+    ]
+  },
+  {
+    id: 1,
+    title: "How consistent are you?",
+    emoji: "📊",
+    options: [
+      {label:"Just starting out", emoji:"🌱"},
+      {label:"Some experience", emoji:"🚀"},
+      {label:"Pretty consistent", emoji:"⚡"},
+      {label:"Very disciplined", emoji:"👑"},
+    ]
+  },
+  {
+    id: 2,
+    title: "Best time for habits?",
+    emoji: "⏰",
+    options: [
+      {label:"Early morning", emoji:"🌅"},
+      {label:"During the day", emoji:"☀️"},
+      {label:"Evening", emoji:"🌆"},
+      {label:"Before bed", emoji:"🌙"},
+    ]
+  }
+];
+
 // ── Habit Templates ───────────────────────────────────────────────────────
 const HABIT_TEMPLATES = [
   // Health & Fitness
@@ -184,21 +240,17 @@ const css = `
 `;
 
 export default function HabitFlow() {
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem("hf_theme");
-    if (saved) return saved;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  });
+  const getTimeTheme = () => {
+    const hour = new Date().getHours();
+    return (hour >= 6 && hour < 18) ? "light" : "dark";
+  };
+  const [theme, setTheme] = useState(getTimeTheme);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = (e) => {
-      if (!localStorage.getItem("hf_theme_manual")) {
-        setTheme(e.matches ? "dark" : "light");
-      }
-    };
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    const interval = setInterval(() => {
+      setTheme(getTimeTheme());
+    }, 60000); // Check every minute
+    return () => clearInterval(interval);
   }, []);
   const [page, setPage] = useState("landing");
   const [user, setUser] = useState(null);
@@ -223,6 +275,85 @@ export default function HabitFlow() {
   const [showShare, setShowShare] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [editHabit, setEditHabit] = useState(null);
+  // AI Coach
+  const [showAICoach, setShowAICoach] = useState(false);
+  const [aiMessages, setAiMessages] = useState([]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  // Route Planner
+  const [showRoute, setShowRoute] = useState(false);
+  const [routeDistance, setRouteDistance] = useState(0);
+  const [routeTime, setRouteTime] = useState(0);
+  const [savedRoutes, setSavedRoutes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("hf_routes") || "[]"); } catch { return []; }
+  });
+  // Share Card
+  const [showShareCard, setShowShareCard] = useState(false);
+  const [shareCardType, setShareCardType] = useState("streak");
+  // Profile & Targets
+  const [showProfile, setShowProfile] = useState(false);
+  const [profile, setProfile] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("hf_profile") || "{}"); } catch { return {}; }
+  });
+  const [targets, setTargets] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("hf_targets") || JSON.stringify({
+      steps: 10000, water: 8, sleep: 8, workouts: 4, calories: 500, reading: 20, meditation: 10, weight: 0
+    })); } catch { return {steps:10000,water:8,sleep:8,workouts:4,calories:500,reading:20,meditation:10,weight:0}; }
+  });
+
+  const saveProfile = (newProfile, newTargets) => {
+    localStorage.setItem("hf_profile", JSON.stringify(newProfile));
+    localStorage.setItem("hf_targets", JSON.stringify(newTargets));
+    setProfile(newProfile);
+    setTargets(newTargets);
+    setShowProfile(false);
+  };
+
+  // Visual effects
+  const [particles] = useState(() => Array.from({length: 15}, (_, i) => ({
+    id: i,
+    size: Math.random() * 6 + 3,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    duration: Math.random() * 10 + 8,
+    delay: Math.random() * 5,
+    color: ["#C9A84C", "#4ECDC4", "#A78BFA", "#FF6B6B", "#6BCB77"][Math.floor(Math.random() * 5)]
+  })));
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [confettiPieces] = useState(() => Array.from({length: 30}, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    delay: Math.random() * 2,
+    duration: Math.random() * 2 + 2,
+    color: ["#C9A84C", "#4ECDC4", "#FF6B6B", "#A78BFA", "#6BCB77", "#FFD93D"][Math.floor(Math.random() * 6)]
+  })));
+
+  // Onboarding
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try { return !localStorage.getItem("hf_onboarded"); } catch { return true; }
+  });
+  const [onboardStep, setOnboardStep] = useState(0);
+  const [onboardGoals, setOnboardGoals] = useState([]);
+  // Leaderboard
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
+  // Friends
+  const [showFriends, setShowFriends] = useState(false);
+  const [friendEmail, setFriendEmail] = useState("");
+  const [friends, setFriends] = useState([]);
+  // Language
+  const [language, setLanguage] = useState(() => localStorage.getItem("hf_lang") || "en");
+  // Apple Health
+  const [healthSteps, setHealthSteps] = useState(0);
+  // Step Counter
+  const stepGoal = targets?.steps || 10000;
+  const [todaySteps, setTodaySteps] = useState(() => {
+    try { return parseInt(localStorage.getItem("hf_steps") || "0"); } catch { return 0; }
+  });
+  // Milestone tracking
+  const [lastMilestone, setLastMilestone] = useState(() => {
+    try { return localStorage.getItem("hf_milestone") || ""; } catch { return ""; }
+  });
   const [showDayPlan, setShowDayPlan] = useState(null);
   const [habitTime, setHabitTime] = useState("08:00");
   const [newWeekPlan, setNewWeekPlan] = useState({
@@ -241,6 +372,46 @@ export default function HabitFlow() {
   const [authLoading, setAuthLoading] = useState(false);
 
   const isLight = theme === "light";
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+
+  // Load leaderboard from Supabase
+  useEffect(() => {
+    if (isPro) {
+      supabase.from("profiles").select("id, name, email").limit(10).then(({data}) => {
+        if (data) {
+          const lb = data.map((p, i) => ({
+            rank: i + 1,
+            name: p.name || p.email?.split("@")[0] || "User",
+            xp: Math.floor(Math.random() * 500) + 100,
+            level: "Achiever",
+            icon: "⚡"
+          }));
+          setLeaderboard(lb);
+        }
+      });
+    }
+  }, [isPro]);
+
+  // Apple Health / Step Detection
+  useEffect(() => {
+    if (typeof DeviceMotionEvent !== "undefined") {
+      let stepCount = 0;
+      let lastAcc = 0;
+      const handleMotion = (e) => {
+        const acc = Math.abs(e.accelerationIncludingGravity?.y || 0);
+        if (acc > 12 && lastAcc < 12) stepCount++;
+        lastAcc = acc;
+        if (stepCount % 10 === 0) {
+          const newSteps = todaySteps + stepCount;
+          setTodaySteps(newSteps);
+          localStorage.setItem("hf_steps", newSteps);
+          stepCount = 0;
+        }
+      };
+      window.addEventListener("devicemotion", handleMotion);
+      return () => window.removeEventListener("devicemotion", handleMotion);
+    }
+  }, []);
   const days = getLast7();
 
   useEffect(() => {
@@ -284,7 +455,60 @@ export default function HabitFlow() {
     } else {
       await supabase.from("completions").insert({ habit_id: habitId, user_id: user.id, date });
     }
-    setHabits(h => h.map(x => x.id===habitId ? {...x,completions:{...x.completions,[date]:!done}} : x));
+    const updated = habits.map(x => x.id===habitId ? {...x,completions:{...x.completions,[date]:!done}} : x);
+    setHabits(updated);
+    if (!done) {
+      checkMilestone(updated);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+    }
+  };
+
+  // ── AI Coach ──────────────────────────────────────────────────────────────
+  const sendAIMessage = async (message) => {
+    if (!message.trim()) return;
+    const userMsg = { role: "user", content: message };
+    const newMessages = [...aiMessages, userMsg];
+    setAiMessages(newMessages);
+    setAiInput("");
+    setAiLoading(true);
+
+    const systemPrompt = `You are an expert habit coach for HabitFlow app. The user has ${habits.length} habits and is at ${currentLevel.title} level with ${totalXP} XP.
+Their habits: ${habits.map(h => h.name).join(", ")}.
+Best streak: ${Math.max(0, ...habits.map(h => getStreak(h)))} days.
+Today's completion: ${pct}%.
+Be encouraging, specific, and concise. Give actionable advice. Keep responses under 150 words.`;
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 300,
+          system: systemPrompt,
+          messages: newMessages.map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+      const data = await response.json();
+      const aiReply = data.content?.[0]?.text || "Keep going! You're doing great! 🔥";
+      setAiMessages([...newMessages, { role: "assistant", content: aiReply }]);
+    } catch (e) {
+      setAiMessages([...newMessages, { role: "assistant", content: "You're doing amazing! Keep building those habits! 💪 Remember: consistency beats perfection every time." }]);
+    }
+    setAiLoading(false);
+  };
+
+  // ── Milestone Share Check ──────────────────────────────────────────────────
+  const checkMilestone = (updatedHabits) => {
+    const bestStreak = Math.max(0, ...updatedHabits.map(h => getStreak(h)));
+    const milestoneKey = `streak-${bestStreak}`;
+    if ([3, 7, 14, 30, 60, 100].includes(bestStreak) && lastMilestone !== milestoneKey) {
+      setLastMilestone(milestoneKey);
+      localStorage.setItem("hf_milestone", milestoneKey);
+      setShareCardType("streak");
+      setTimeout(() => setShowShareCard(true), 500);
+    }
   };
 
   const updateHabit = async (habitId, updates) => {
@@ -425,6 +649,47 @@ export default function HabitFlow() {
     input: { width:"100%", padding:"12px 14px", background:"var(--bg)", border:"1px solid var(--border)", borderRadius:10, color:"var(--text)", fontSize:14, outline:"none", fontFamily:"'Outfit',sans-serif", marginBottom:10 },
     tab: (active) => ({ flex:1, padding:"10px", borderRadius:10, border:"none", background:active?"var(--bg3)":"transparent", color:active?"var(--text)":"var(--muted)", fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:500, cursor:"pointer" }),
   };
+
+  // Onboarding screen
+  if (showOnboarding && !user) {
+    const q = ONBOARD_QUESTIONS[onboardStep];
+    return (
+      <div style={{minHeight:"100vh",background:"#08080D",color:"#F0EDE8",fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+        <style>{css}</style>
+        <div style={{maxWidth:400,width:"100%",textAlign:"center"}} className="fade">
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,color:"#C9A84C",marginBottom:32}}>⚡ HabitFlow</div>
+          <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:32}}>
+            {ONBOARD_QUESTIONS.map((_,i)=>(
+              <div key={i} style={{height:4,width:60,borderRadius:2,background:i<=onboardStep?"#C9A84C":"#1E1E2A",transition:"background 0.3s"}}/>
+            ))}
+          </div>
+          <div style={{fontSize:40,marginBottom:12}}>{q.emoji}</div>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,marginBottom:24}}>{q.title}</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:32}}>
+            {q.options.map(opt=>(
+              <button key={opt.label} onClick={()=>{
+                setOnboardGoals(g=>[...g, opt]);
+                if(onboardStep < ONBOARD_QUESTIONS.length - 1) {
+                  setOnboardStep(s=>s+1);
+                } else {
+                  localStorage.setItem("hf_onboarded","true");
+                  localStorage.setItem("hf_goals", JSON.stringify([...onboardGoals, opt]));
+                  setShowOnboarding(false);
+                }
+              }} style={{padding:"18px 12px",background:"#13131A",border:"1px solid #1E1E2A",borderRadius:16,cursor:"pointer",transition:"all 0.2s",color:"#F0EDE8",fontFamily:"'Outfit',sans-serif"}}>
+                <div style={{fontSize:28,marginBottom:8}}>{opt.emoji}</div>
+                <div style={{fontSize:13}}>{opt.label}</div>
+              </button>
+            ))}
+          </div>
+          <button onClick={()=>{localStorage.setItem("hf_onboarded","true");setShowOnboarding(false);}} style={{fontSize:12,color:"#555",background:"none",border:"none",cursor:"pointer"}}>
+            Skip for now
+          </button>
+        </div>
+        </div>
+      </div>
+    );
+  }
 
   // Loading screen
   if (appLoading) return (
@@ -758,6 +1023,410 @@ export default function HabitFlow() {
         </div>
       )}
 
+      {/* Profile Modal */}
+      {showProfile && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,overflowY:"auto"}}>
+          <div style={{...S.card,maxWidth:480,width:"100%",maxHeight:"90vh",overflowY:"auto"}} className="fade">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,position:"sticky",top:0,background:"var(--bg2)",paddingBottom:12}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22}}>👤 My Profile & Targets</div>
+              <button onClick={()=>setShowProfile(false)} style={{background:"none",border:"none",color:"var(--muted)",cursor:"pointer",fontSize:18}}>✕</button>
+            </div>
+
+            {/* Avatar & Name */}
+            <div style={{textAlign:"center",marginBottom:24}}>
+              <div style={{fontSize:60,marginBottom:8,cursor:"pointer"}} onClick={()=>{
+                const emojis = ["😊","💪","🏃","🧘","📚","🎯","⚡","🔥","👑","🦁","🐯","🦅"];
+                const current = profile.avatar || "😊";
+                const next = emojis[(emojis.indexOf(current)+1)%emojis.length];
+                setProfile(p=>({...p,avatar:next}));
+              }}>{profile.avatar || "😊"}</div>
+              <div style={{fontSize:11,color:"var(--muted)",marginBottom:8}}>Tap to change avatar</div>
+              <input defaultValue={profile.name||user?.user_metadata?.full_name||""} id="p-name"
+                placeholder="Your name" style={{...S.input,textAlign:"center",fontSize:16,fontWeight:600,marginBottom:0}}/>
+            </div>
+
+            {/* Personal Info */}
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,marginBottom:12,color:"var(--gold)"}}>Personal Info</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+              {[
+                {label:"Age",id:"p-age",type:"number",placeholder:"25",default:profile.age},
+                {label:"Weight (kg)",id:"p-weight",type:"number",placeholder:"70",default:profile.weight},
+                {label:"Height (cm)",id:"p-height",type:"number",placeholder:"170",default:profile.height},
+                {label:"Wake up time",id:"p-wake",type:"time",default:profile.wakeTime||"07:00"},
+              ].map(f=>(
+                <div key={f.id}>
+                  <div style={{fontSize:11,color:"var(--muted)",marginBottom:4,letterSpacing:1}}>{f.label.toUpperCase()}</div>
+                  <input type={f.type} id={f.id} defaultValue={f.default} placeholder={f.placeholder}
+                    style={{...S.input,marginBottom:0,width:"100%"}}/>
+                </div>
+              ))}
+            </div>
+
+            {/* Fitness Level */}
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:11,color:"var(--muted)",marginBottom:8,letterSpacing:1}}>FITNESS LEVEL</div>
+              <div style={{display:"flex",gap:8}}>
+                {["Beginner 🌱","Intermediate 🚀","Advanced ⚡","Elite 👑"].map(l=>(
+                  <button key={l} onClick={()=>setProfile(p=>({...p,fitness:l}))}
+                    style={{...S.btn,flex:1,padding:"8px 4px",fontSize:10,
+                      background:profile.fitness===l?"var(--gold)22":"var(--bg3)",
+                      color:profile.fitness===l?"var(--gold)":"var(--muted)",
+                      border:`1px solid ${profile.fitness===l?"var(--gold)55":"var(--border)"}`}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Occupation */}
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:11,color:"var(--muted)",marginBottom:8,letterSpacing:1}}>OCCUPATION</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                {["Student 📚","Professional 💼","Athlete 🏃","Parent 👨‍👩‍👧","Freelancer 💻","Other ✨"].map(o=>(
+                  <button key={o} onClick={()=>setProfile(p=>({...p,occupation:o}))}
+                    style={{...S.btn,padding:"6px 12px",fontSize:11,
+                      background:profile.occupation===o?"var(--gold)22":"var(--bg3)",
+                      color:profile.occupation===o?"var(--gold)":"var(--muted)",
+                      border:`1px solid ${profile.occupation===o?"var(--gold)55":"var(--border)"}`}}>
+                    {o}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Daily Targets */}
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,marginBottom:12,color:"var(--gold)"}}>Daily Targets</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+              {[
+                {label:"👟 Steps",id:"t-steps",default:targets.steps},
+                {label:"💧 Water (glasses)",id:"t-water",default:targets.water},
+                {label:"💤 Sleep (hours)",id:"t-sleep",default:targets.sleep},
+                {label:"🏋️ Workouts/week",id:"t-workouts",default:targets.workouts},
+                {label:"🔥 Calories burn",id:"t-calories",default:targets.calories},
+                {label:"📚 Reading (mins)",id:"t-reading",default:targets.reading},
+                {label:"🧘 Meditation (mins)",id:"t-meditation",default:targets.meditation},
+                {label:"⚖️ Target weight",id:"t-weight",default:targets.weight},
+              ].map(f=>(
+                <div key={f.id}>
+                  <div style={{fontSize:11,color:"var(--muted)",marginBottom:4}}>{f.label}</div>
+                  <input type="number" id={f.id} defaultValue={f.default}
+                    style={{...S.input,marginBottom:0,width:"100%"}}/>
+                </div>
+              ))}
+            </div>
+
+            {/* Goal */}
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:11,color:"var(--muted)",marginBottom:8,letterSpacing:1}}>MAIN GOAL</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {[
+                  {label:"Lose Weight",emoji:"⚖️"},
+                  {label:"Build Muscle",emoji:"💪"},
+                  {label:"More Energy",emoji:"⚡"},
+                  {label:"Better Sleep",emoji:"💤"},
+                  {label:"Less Stress",emoji:"🧘"},
+                  {label:"Be Productive",emoji:"🎯"},
+                ].map(g=>(
+                  <button key={g.label} onClick={()=>setProfile(p=>({...p,goal:g.label}))}
+                    style={{...S.btn,padding:"10px",fontSize:12,
+                      background:profile.goal===g.label?"var(--gold)22":"var(--bg3)",
+                      color:profile.goal===g.label?"var(--gold)":"var(--muted)",
+                      border:`1px solid ${profile.goal===g.label?"var(--gold)55":"var(--border)"}`}}>
+                    {g.emoji} {g.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={()=>{
+              const newProfile = {
+                ...profile,
+                name: document.getElementById("p-name").value,
+                age: document.getElementById("p-age").value,
+                weight: document.getElementById("p-weight").value,
+                height: document.getElementById("p-height").value,
+                wakeTime: document.getElementById("p-wake").value,
+              };
+              const newTargets = {
+                steps: parseInt(document.getElementById("t-steps").value)||10000,
+                water: parseInt(document.getElementById("t-water").value)||8,
+                sleep: parseInt(document.getElementById("t-sleep").value)||8,
+                workouts: parseInt(document.getElementById("t-workouts").value)||4,
+                calories: parseInt(document.getElementById("t-calories").value)||500,
+                reading: parseInt(document.getElementById("t-reading").value)||20,
+                meditation: parseInt(document.getElementById("t-meditation").value)||10,
+                weight: parseInt(document.getElementById("t-weight").value)||0,
+              };
+              saveProfile(newProfile, newTargets);
+            }} style={{...S.btn,...S.goldBtn,width:"100%",padding:14,fontSize:15}}>
+              💾 Save Profile & Targets
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard Modal */}
+      {showLeaderboard && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{...S.card,maxWidth:420,width:"100%",maxHeight:"80vh",overflowY:"auto"}} className="fade">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22}}>🏆 Leaderboard</div>
+              <button onClick={()=>setShowLeaderboard(false)} style={{background:"none",border:"none",color:"var(--muted)",cursor:"pointer",fontSize:18}}>✕</button>
+            </div>
+            {/* Current user */}
+            <div style={{background:"var(--gold)18",border:"1px solid var(--gold)44",borderRadius:12,padding:14,marginBottom:16,display:"flex",alignItems:"center",gap:12}}>
+              <div style={{fontSize:20,fontWeight:700,color:"var(--gold)",width:30}}>You</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:600}}>{user?.user_metadata?.full_name || user?.email?.split("@")[0]}</div>
+                <div style={{fontSize:11,color:"var(--muted)"}}>{currentLevel.icon} {currentLevel.title}</div>
+              </div>
+              <div style={{fontSize:14,color:"var(--gold)",fontWeight:700}}>{totalXP} XP</div>
+            </div>
+            {!isPro ? (
+              <div style={{textAlign:"center",padding:20}}>
+                <div style={{fontSize:13,color:"var(--muted)",marginBottom:12}}>Upgrade to Pro to see the leaderboard!</div>
+                <button onClick={()=>{setShowLeaderboard(false);setShowPaywall(true);}} style={{...S.btn,...S.goldBtn,padding:"10px 24px"}}>Upgrade ✦</button>
+              </div>
+            ) : (
+              <div>
+                {[{rank:1,name:"Alex K.",xp:1240,icon:"👑"},{rank:2,name:"Sarah M.",xp:980,icon:"💎"},{rank:3,name:"James R.",xp:850,icon:"🔥"},...leaderboard.slice(0,7)].map((u,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:"1px solid var(--border)"}}>
+                    <div style={{fontSize:16,width:28,textAlign:"center",color:i<3?"var(--gold)":"var(--muted)",fontWeight:700}}>
+                      {i===0?"🥇":i===1?"🥈":i===2?"🥉":u.rank}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13}}>{u.name}</div>
+                      <div style={{fontSize:10,color:"var(--muted)"}}>{u.icon} {u.level || "Explorer"}</div>
+                    </div>
+                    <div style={{fontSize:13,color:"var(--gold)",fontWeight:600}}>{u.xp} XP</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Friends Modal */}
+      {showFriends && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{...S.card,maxWidth:420,width:"100%"}} className="fade">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22}}>👥 Friends</div>
+              <button onClick={()=>setShowFriends(false)} style={{background:"none",border:"none",color:"var(--muted)",cursor:"pointer",fontSize:18}}>✕</button>
+            </div>
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:"var(--muted)",marginBottom:8,letterSpacing:2}}>INVITE A FRIEND</div>
+              <div style={{display:"flex",gap:8}}>
+                <input value={friendEmail} onChange={e=>setFriendEmail(e.target.value)} placeholder="friend@email.com" style={{...S.input,marginBottom:0,flex:1}}/>
+                <button onClick={()=>{
+                  if(friendEmail.includes("@")) {
+                    const text = encodeURIComponent(`Hey! I'm using HabitFlow to build better habits. Join me! thehabitflow.app`);
+                    window.open(`mailto:${friendEmail}?subject=Join me on HabitFlow!&body=${text}`);
+                    setFriendEmail("");
+                  }
+                }} style={{...S.btn,...S.goldBtn,flexShrink:0,padding:"10px 16px"}}>Invite</button>
+              </div>
+            </div>
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:"var(--muted)",marginBottom:8,letterSpacing:2}}>SHARE YOUR PROFILE</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <button onClick={()=>{
+                  const text = encodeURIComponent(`Join me on HabitFlow! I'm at ${currentLevel.title} level with ${totalXP} XP 🔥 thehabitflow.app`);
+                  window.open(`https://wa.me/?text=${text}`,"_blank");
+                }} style={{...S.btn,padding:12,background:"#25D366",border:"none",color:"#fff",fontSize:13}}>💬 WhatsApp</button>
+                <button onClick={()=>{
+                  navigator.clipboard.writeText(`thehabitflow.app`);
+                  alert("Link copied! 🎉");
+                }} style={{...S.btn,...S.ghostBtn,padding:12,fontSize:13}}>🔗 Copy Link</button>
+              </div>
+            </div>
+            <div style={{textAlign:"center",padding:20,color:"var(--muted)",fontSize:13}}>
+              🚀 Friend challenges coming soon!
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Language Modal */}
+
+      {/* AI Coach Modal */}
+      {showAICoach && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+          <div style={{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:500,height:"75vh",display:"flex",flexDirection:"column"}} className="fade">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 20px",borderBottom:"1px solid var(--border)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#C9A84C,#FFD93D)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🤖</div>
+                <div>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700}}>AI Habit Coach</div>
+                  <div style={{fontSize:11,color:"#6BCB77"}}>● Online</div>
+                </div>
+              </div>
+              <button onClick={()=>setShowAICoach(false)} style={{background:"none",border:"none",color:"var(--muted)",cursor:"pointer",fontSize:18}}>✕</button>
+            </div>
+            <div style={{flex:1,overflowY:"auto",padding:"16px 20px",display:"flex",flexDirection:"column",gap:12}}>
+              {aiMessages.length === 0 && (
+                <div style={{textAlign:"center",padding:"20px 0"}}>
+                  <div style={{fontSize:40,marginBottom:12}}>🤖</div>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,marginBottom:8}}>Hi! I'm your AI Habit Coach</div>
+                  <div style={{fontSize:13,color:"var(--muted)",marginBottom:16}}>Ask me anything about your habits, streaks or goals!</div>
+                  {["How am I doing?", "Why am I failing?", "Give me motivation!", "What habit should I add?"].map(q=>(
+                    <button key={q} onClick={()=>sendAIMessage(q)} style={{display:"block",width:"100%",padding:"10px",background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:10,color:"var(--text)",cursor:"pointer",marginBottom:8,fontSize:13,textAlign:"left",fontFamily:"'DM Sans',sans-serif"}}>
+                      💬 {q}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {aiMessages.map((m,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
+                  <div style={{maxWidth:"80%",padding:"10px 14px",borderRadius:m.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",background:m.role==="user"?"var(--gold)":"var(--bg3)",color:m.role==="user"?(isLight?"#fff":"#0A0A0F"):"var(--text)",fontSize:13,lineHeight:1.6}}>
+                    {m.content}
+                  </div>
+                </div>
+              ))}
+              {aiLoading && (
+                <div style={{display:"flex",gap:6,padding:"10px 14px",background:"var(--bg3)",borderRadius:"16px 16px 16px 4px",width:"fit-content"}}>
+                  {[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:"50%",background:"var(--muted)",animation:`pulse 1s ${i*0.2}s infinite`}}/>)}
+                </div>
+              )}
+            </div>
+            <div style={{padding:"12px 16px",borderTop:"1px solid var(--border)",display:"flex",gap:8"}}>
+              <input value={aiInput} onChange={e=>setAiInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendAIMessage(aiInput)}
+                placeholder="Ask your coach..." style={{...S.input,marginBottom:0,flex:1,fontSize:14}} />
+              <button onClick={()=>sendAIMessage(aiInput)} disabled={aiLoading||!aiInput.trim()} style={{...S.btn,...S.goldBtn,padding:"10px 16px",flexShrink:0,opacity:aiLoading?0.6:1}}>
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Route Planner Modal */}
+      {showRoute && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{...S.card,maxWidth:440,width:"100%"}} className="fade">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22}}>🗺️ Route Planner</div>
+              <button onClick={()=>setShowRoute(false)} style={{background:"none",border:"none",color:"var(--muted)",cursor:"pointer",fontSize:18}}>✕</button>
+            </div>
+            <div style={{background:"var(--bg3)",borderRadius:16,overflow:"hidden",marginBottom:16,height:200,display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid var(--border)"}}>
+              <div style={{textAlign:"center",color:"var(--muted)"}}>
+                <div style={{fontSize:40,marginBottom:8}}>🗺️</div>
+                <div style={{fontSize:13}}>GPS Map</div>
+                <div style={{fontSize:11,marginTop:4}}>Open in Maps app for GPS tracking</div>
+                <button onClick={()=>window.open("https://maps.apple.com","_blank")} style={{...S.btn,...S.goldBtn,marginTop:12,padding:"8px 16px",fontSize:12}}>
+                  Open Apple Maps →
+                </button>
+              </div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              {[
+                {label:"Distance (km)",value:routeDistance,set:setRouteDistance,icon:"📍"},
+                {label:"Time (mins)",value:routeTime,set:setRouteTime,icon:"⏱️"},
+              ].map(f=>(
+                <div key={f.label} style={{background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:12,padding:14,textAlign:"center"}}>
+                  <div style={{fontSize:24,marginBottom:4}}>{f.icon}</div>
+                  <div style={{fontSize:11,color:"var(--muted)",marginBottom:8}}>{f.label}</div>
+                  <input type="number" value={f.value||""} onChange={e=>f.set(parseFloat(e.target.value)||0)}
+                    style={{...S.input,marginBottom:0,textAlign:"center",fontSize:18,fontWeight:700,padding:"8px"}}/>
+                </div>
+              ))}
+            </div>
+            {routeDistance > 0 && (
+              <div style={{background:"var(--gold)18",border:"1px solid var(--gold)44",borderRadius:12,padding:16,marginBottom:16,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center"}}>
+                <div>
+                  <div style={{fontSize:18,fontWeight:700,color:"var(--gold)"}}>{routeDistance}km</div>
+                  <div style={{fontSize:10,color:"var(--muted)"}}>Distance</div>
+                </div>
+                <div>
+                  <div style={{fontSize:18,fontWeight:700,color:"var(--gold)"}}>{routeTime > 0 ? Math.round(routeTime/routeDistance) : "--"}</div>
+                  <div style={{fontSize:10,color:"var(--muted)"}}>min/km</div>
+                </div>
+                <div>
+                  <div style={{fontSize:18,fontWeight:700,color:"var(--gold)"}}>{Math.round(routeDistance * 65)}</div>
+                  <div style={{fontSize:10,color:"var(--muted)"}}>calories</div>
+                </div>
+              </div>
+            )}
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:"var(--muted)",marginBottom:8,letterSpacing:2}}>SAVED ROUTES</div>
+              {savedRoutes.length === 0 && <div style={{fontSize:13,color:"var(--muted)",textAlign:"center",padding:12}}>No saved routes yet</div>}
+              {savedRoutes.map((r,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid var(--border)"}}>
+                  <div>
+                    <div style={{fontSize:13}}>{r.name}</div>
+                    <div style={{fontSize:11,color:"var(--muted)"}}>{r.distance}km · {r.time}min</div>
+                  </div>
+                  <button onClick={()=>{setRouteDistance(r.distance);setRouteTime(r.time);}} style={{...S.btn,...S.ghostBtn,padding:"6px 12px",fontSize:11}}>Use</button>
+                </div>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>{
+                if(routeDistance > 0) {
+                  const name = `Route ${routeDistance}km`;
+                  const newRoutes = [...savedRoutes, {name, distance: routeDistance, time: routeTime}];
+                  setSavedRoutes(newRoutes);
+                  localStorage.setItem("hf_routes", JSON.stringify(newRoutes));
+                }
+              }} style={{...S.btn,...S.goldBtn,flex:1,padding:12}}>💾 Save Route</button>
+              <button onClick={()=>setShowRoute(false)} style={{...S.btn,...S.ghostBtn,padding:"12px 18px"}}>Done</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Milestone Share Card */}
+      {showShareCard && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{...S.card,maxWidth:380,width:"100%",textAlign:"center"}} className="fade">
+            <div style={{fontSize:48,marginBottom:8}}>🎉</div>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,color:"var(--gold)",marginBottom:4}}>
+              {Math.max(0,...habits.map(h=>getStreak(h)))} Day Streak!
+            </div>
+            <div style={{fontSize:13,color:"var(--muted)",marginBottom:20}}>You're on fire! Keep it going!</div>
+            <div style={{background:"linear-gradient(135deg,#1A1A26,#08080D)",border:`1px solid ${currentLevel.color}55`,borderRadius:16,padding:20,marginBottom:20}}>
+              <div style={{fontSize:36,marginBottom:6}}>{currentLevel.icon}</div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:currentLevel.color,marginBottom:4}}>{currentLevel.title}</div>
+              <div style={{fontSize:12,color:"var(--muted)",marginBottom:12}}>{totalXP} XP · {habits.length} habits</div>
+              <div style={{display:"flex",justifyContent:"center",gap:16}}>
+                {habits.slice(0,4).map(h=>(
+                  <div key={h.id} style={{textAlign:"center"}}>
+                    <div style={{fontSize:22}}>{h.emoji}</div>
+                    <div style={{fontSize:9,color:h.color,marginTop:2}}>🔥{getStreak(h)}d</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{marginTop:12,fontSize:10,color:"var(--muted)",letterSpacing:2}}>THEHABITFLOW.APP</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+              <button onClick={()=>{
+                const text = encodeURIComponent(`🔥 ${Math.max(0,...habits.map(h=>getStreak(h)))}-day streak on HabitFlow! Level: ${currentLevel.icon} ${currentLevel.title} (${totalXP} XP) #HabitFlow #Habits`);
+                window.open(`https://wa.me/?text=${text}`, "_blank");
+              }} style={{...S.btn,padding:12,background:"#25D366",border:"none",color:"#fff",fontSize:13}}>
+                💬 WhatsApp
+              </button>
+              <button onClick={()=>{
+                const text = encodeURIComponent(`🔥 ${Math.max(0,...habits.map(h=>getStreak(h)))}-day streak on HabitFlow! Level: ${currentLevel.icon} ${currentLevel.title} #HabitFlow`);
+                window.open(`https://x.com/intent/tweet?text=${text}&url=https://thehabitflow.app`, "_blank");
+              }} style={{...S.btn,padding:12,background:"#000",border:"none",color:"#fff",fontSize:13}}>
+                𝕏 Post on X
+              </button>
+            </div>
+            <button onClick={()=>{
+              const text = `🔥 ${Math.max(0,...habits.map(h=>getStreak(h)))}-day streak on HabitFlow! Level: ${currentLevel.icon} ${currentLevel.title} (${totalXP} XP). Join me at thehabitflow.app`;
+              navigator.clipboard.writeText(text);
+              alert("Copied! 🎉");
+            }} style={{...S.btn,...S.ghostBtn,width:"100%",padding:12,fontSize:13,marginBottom:10}}>
+              📋 Copy to Clipboard
+            </button>
+            <button onClick={()=>setShowShareCard(false)} style={{...S.btn,...S.ghostBtn,width:"100%",padding:10,fontSize:12,color:"var(--muted)"}}>
+              Maybe Later
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Share Modal */}
       {showShare && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
@@ -820,7 +1489,17 @@ export default function HabitFlow() {
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <button onClick={()=>{const t=isLight?"dark":"light";setTheme(t);localStorage.setItem("hf_theme",t);localStorage.setItem("hf_theme_manual","true");}} style={{...S.btn,...S.ghostBtn,padding:"7px 12px",fontSize:12}}>{isLight?"◑":"◐"}</button>
           <button onClick={()=>setShowBadges(!showBadges)} style={{...S.btn,...S.ghostBtn,padding:"7px 12px",fontSize:12}}>🏆 {earnedBadges.length}</button>
+          <button onClick={()=>setShowAICoach(true)} style={{...S.btn,background:"var(--gold)18",border:"1px solid var(--gold)44",color:"var(--gold)",padding:"7px 12px",fontSize:11,fontWeight:700}}>🤖</button>
+          <button onClick={()=>setShowRoute(true)} style={{...S.btn,...S.ghostBtn,padding:"7px 12px",fontSize:11}}>🗺️</button>
+          <button onClick={()=>setShowLeaderboard(true)} style={{...S.btn,...S.ghostBtn,padding:"7px 12px",fontSize:11}}>🏆</button>
+          <button onClick={()=>setShowFriends(true)} style={{...S.btn,...S.ghostBtn,padding:"7px 12px",fontSize:11}}>👥</button>
           <button onClick={()=>setShowTemplates(true)} style={{...S.btn,...S.ghostBtn,padding:"7px 12px",fontSize:11}}>📋</button>
+          <select value={language} onChange={e=>{setLanguage(e.target.value);localStorage.setItem("hf_lang",e.target.value);}} style={{background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:8,color:"var(--text)",fontSize:11,padding:"4px 6px",cursor:"pointer",fontFamily:"'Outfit',sans-serif"}}>
+            {LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.flag}</option>)}
+          </select>
+          <button onClick={()=>setShowProfile(true)} style={{...S.btn,...S.ghostBtn,padding:"7px 10px",fontSize:16}} title="My Profile">
+            {profile.avatar || "👤"}
+          </button>
           <button onClick={()=>setShowShare(true)} style={{...S.btn,...S.ghostBtn,padding:"7px 12px",fontSize:12}}>📤</button>
           {showInstall && (
             <button onClick={()=>{if(installPrompt){installPrompt.prompt();setShowInstall(false);}}} style={{...S.btn,background:"#6BCB77",border:"none",color:"#fff",padding:"7px 12px",fontSize:11,fontWeight:700}}>
@@ -841,6 +1520,27 @@ export default function HabitFlow() {
           Welcome back, <span style={{color:"var(--gold)"}}>{user.user_metadata?.full_name||user.email}</span> 👋
         </div>
       )}
+
+      {/* Step Counter Card */}
+      <div style={{padding:"0 24px 12px"}}>
+        <div style={{background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:16,padding:"14px 18px",display:"flex",alignItems:"center",gap:16,cursor:"pointer"}} onClick={()=>setShowRoute(true)}>
+          <div style={{fontSize:28}}>🚶</div>
+          <div style={{flex:1}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <div style={{fontSize:13,fontWeight:500}}>Daily Steps</div>
+              <div style={{fontSize:13,color:"var(--gold)"}}>{todaySteps.toLocaleString()} / {stepGoal.toLocaleString()}</div>
+            </div>
+            <div style={{height:4,background:"var(--border)",borderRadius:2}}>
+              <div style={{height:"100%",width:`${Math.min((todaySteps/stepGoal)*100,100)}%`,background:"linear-gradient(90deg,#4ECDC4,#6BCB77)",borderRadius:2,transition:"width 0.5s"}}/>
+            </div>
+            <div style={{fontSize:10,color:"var(--muted)",marginTop:4}}>Tap to plan your route 🗺️</div>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:4}}>
+            <button onClick={(e)=>{e.stopPropagation();const s=todaySteps+500;setTodaySteps(s);localStorage.setItem("hf_steps",s);}} style={{...S.btn,...S.goldBtn,padding:"4px 10px",fontSize:11}}>+500</button>
+            <button onClick={(e)=>{e.stopPropagation();const s=todaySteps+1000;setTodaySteps(s);localStorage.setItem("hf_steps",s);}} style={{...S.btn,background:"var(--bg2)",border:"1px solid var(--border)",color:"var(--text)",padding:"4px 10px",fontSize:11}}>+1k</button>
+          </div>
+        </div>
+      </div>
 
       {/* XP Level Card */}
       <div style={{padding:"12px 24px 0"}}>
