@@ -1290,7 +1290,7 @@ Be encouraging, specific, and concise. Give actionable advice. Keep responses un
                 </div>
               )}
             </div>
-            <div style={{padding:"12px 16px",borderTop:"1px solid var(--border)",display:"flex",gap:8"}}>
+            <div style={{padding:"12px 16px",borderTop:"1px solid var(--border)",display:"flex",gap:8}}>
               <input value={aiInput} onChange={e=>setAiInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendAIMessage(aiInput)}
                 placeholder="Ask your coach..." style={{...S.input,marginBottom:0,flex:1,fontSize:14}} />
               <button onClick={()=>sendAIMessage(aiInput)} disabled={aiLoading||!aiInput.trim()} style={{...S.btn,...S.goldBtn,padding:"10px 16px",flexShrink:0,opacity:aiLoading?0.6:1}}>
