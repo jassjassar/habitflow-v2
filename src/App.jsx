@@ -222,6 +222,7 @@ export default function HabitFlow() {
   const [showBadges, setShowBadges] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [editHabit, setEditHabit] = useState(null);
   const [showDayPlan, setShowDayPlan] = useState(null);
   const [habitTime, setHabitTime] = useState("08:00");
   const [newWeekPlan, setNewWeekPlan] = useState({
@@ -284,6 +285,12 @@ export default function HabitFlow() {
       await supabase.from("completions").insert({ habit_id: habitId, user_id: user.id, date });
     }
     setHabits(h => h.map(x => x.id===habitId ? {...x,completions:{...x.completions,[date]:!done}} : x));
+  };
+
+  const updateHabit = async (habitId, updates) => {
+    await supabase.from("habits").update(updates).eq("id", habitId);
+    setHabits(h => h.map(x => x.id === habitId ? {...x, ...updates} : x));
+    setEditHabit(null);
   };
 
   const addHabitFromTemplate = async (template) => {
@@ -681,6 +688,76 @@ export default function HabitFlow() {
         </div>
       )}
 
+      {/* Edit Habit Modal */}
+      {editHabit && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{...S.card,maxWidth:440,width:"100%",maxHeight:"85vh",overflowY:"auto"}} className="fade">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22}}>Edit Habit</div>
+              <button onClick={()=>setEditHabit(null)} style={{background:"none",border:"none",color:"var(--muted)",cursor:"pointer",fontSize:18}}>✕</button>
+            </div>
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,color:"var(--muted)",marginBottom:6,letterSpacing:1}}>HABIT NAME</div>
+              <input defaultValue={editHabit.name} id="edit-name" style={{...S.input,marginBottom:0}} />
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
+              {EMOJIS.map(e=>(
+                <button key={e} onClick={()=>setEditHabit(h=>({...h,emoji:e}))} style={{width:34,height:34,borderRadius:8,border:editHabit.emoji===e?"2px solid var(--gold)":"1px solid var(--border)",background:editHabit.emoji===e?"var(--bg3)":"transparent",cursor:"pointer",fontSize:15}}>{e}</button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:14}}>
+              {COLORS.map(c=>(
+                <button key={c} onClick={()=>setEditHabit(h=>({...h,color:c}))} style={{width:22,height:22,borderRadius:"50%",background:c,border:editHabit.color===c?"3px solid var(--text)":"2px solid transparent",cursor:"pointer",outline:"none"}}/>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+              {CATEGORIES.map(c=>(
+                <button key={c.id} onClick={()=>setEditHabit(h=>({...h,category:c.id}))} style={{...S.btn,padding:"6px 12px",fontSize:11,background:editHabit.category===c.id?c.color+"22":"var(--bg3)",color:editHabit.category===c.id?c.color:"var(--muted)",border:`1px solid ${editHabit.category===c.id?c.color+"55":"var(--border)"}`}}>
+                  {c.icon} {c.label.split(" ")[0]}
+                </button>
+              ))}
+            </div>
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,color:"var(--muted)",marginBottom:6,letterSpacing:1}}>⏰ REMINDER TIME</div>
+              <input type="time" defaultValue={editHabit.reminder_time||"08:00"} id="edit-time" style={{...S.input,marginBottom:0,width:"auto"}}/>
+            </div>
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:"var(--muted)",marginBottom:8,letterSpacing:1}}>📅 WEEKLY PLAN</div>
+              {DAYS_OF_WEEK.map(day=>{
+                const plan = editHabit.week_plan ? (typeof editHabit.week_plan==="string" ? JSON.parse(editHabit.week_plan) : editHabit.week_plan) : {};
+                return (
+                  <div key={day} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                    <span style={{fontSize:12,color:day===getTodayKey()?"var(--gold)":"var(--muted)",width:28,fontWeight:day===getTodayKey()?700:400}}>{day}</span>
+                    <input defaultValue={plan[day]||""} id={`edit-day-${day}`} placeholder={`What to do on ${day}...`}
+                      style={{...S.input,marginBottom:0,fontSize:12,padding:"8px 10px"}}/>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>{
+                const name = document.getElementById("edit-name").value;
+                const time = document.getElementById("edit-time").value;
+                const weekPlan = {};
+                DAYS_OF_WEEK.forEach(day=>{
+                  weekPlan[day] = document.getElementById(`edit-day-${day}`).value;
+                });
+                const hasWeekPlan = Object.values(weekPlan).some(v=>v.trim());
+                updateHabit(editHabit.id, {
+                  name: name.trim(),
+                  emoji: editHabit.emoji,
+                  color: editHabit.color,
+                  category: editHabit.category,
+                  reminder_time: time,
+                  week_plan: hasWeekPlan ? JSON.stringify(weekPlan) : null
+                });
+              }} style={{...S.btn,...S.goldBtn,flex:1,padding:12}}>Save Changes</button>
+              <button onClick={()=>setEditHabit(null)} style={{...S.btn,...S.ghostBtn,padding:"12px 18px"}}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Share Modal */}
       {showShare && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
@@ -884,6 +961,7 @@ export default function HabitFlow() {
                     {shields > 0 && !habit.completions?.[days[5]] && habit.completions?.[days[6]] && (
                       <button onClick={()=>useShield(habit.id)} title="Use Shield to protect yesterday streak!" style={{background:"none",border:"1px solid #4ECDC4",borderRadius:6,color:"#4ECDC4",cursor:"pointer",fontSize:10,padding:"2px 6px",flexShrink:0}}>🛡️</button>
                     )}
+                    <button className="del-btn" onClick={()=>setEditHabit(habit)} style={{background:"none",border:"1px solid var(--border)",color:"var(--muted)",cursor:"pointer",fontSize:10,padding:"2px 6px",borderRadius:4,flexShrink:0,opacity:0,transition:"opacity 0.2s"}}>✏️</button>
                     <button className="del-btn" onClick={()=>deleteHabit(habit.id)} style={{background:"none",border:"none",color:"var(--border)",cursor:"pointer",fontSize:12,padding:"2px 4px",flexShrink:0,opacity:0,transition:"opacity 0.2s"}}>✕</button>
                   </div>
                   {days.map(d=>{
