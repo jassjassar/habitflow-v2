@@ -215,24 +215,21 @@ const css = `
   }
 
   .tab-bar{
-    position:fixed;bottom:0;left:0;right:0;
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:480px;
     background:rgba(10,10,20,0.92);
     backdrop-filter:blur(20px);
     border-top:1px solid rgba(255,255,255,0.08);
-    display:flex;
+    display:flex;align-items:center;
     z-index:50;
-    padding:8px 0 20px;
-    max-width:480px;
-    margin:0 auto;
-    left:50%;transform:translateX(-50%);
+    padding:10px 0 24px;
   }
-
-  .tab-item{
-    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
-    cursor:pointer;padding:6px 0;transition:all 0.2s;
+ .tab-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    cursor:pointer;padding:4px 0;transition:all 0.2s;min-width:0;
   }
   .tab-item:hover{transform:translateY(-2px)}
-  .tab-icon{font-size:22px;transition:transform 0.2s}
+  .tab-icon{font-size:20px;transition:transform 0.2s;line-height:1}
   .tab-item.active .tab-icon{transform:scale(1.2)}
   .tab-label{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,0.85)}
   .tab-item.active .tab-label{color:#fff}
