@@ -668,9 +668,10 @@ Rules:
           <div style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.6)"}}>
             {currentLevel.icon} {currentLevel.title}
           </div>
-          <button onClick={()=>setShowAI(true)} className="glass-btn" style={{padding:"6px 12px",fontSize:12}}>🤖 AI Coach</button>
+         <button onClick={()=>setShowAI(true)} className="glass-btn" style={{padding:"6px 12px",fontSize:12}}>🤖 AI Coach</button>
 <button onClick={signOut} className="glass-btn" style={{padding:"6px 10px",fontSize:12}}>↪ Sign Out</button>
-
+        </div>
+      </div>
       <div style={{padding:"16px 16px 0",position:"relative",zIndex:10}}>
 
         {/* ── HOME TAB ── */}
