@@ -241,6 +241,22 @@ const css = `
 
   .progress-ring{transition:stroke-dasharray 1s cubic-bezier(.4,0,.2,1)}
 
+  /* TOOLTIPS */
+  .tip{position:relative}
+  .tip::after{
+    content:attr(data-tip);
+    position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+    background:rgba(20,20,35,0.95);color:#fff;font-size:11px;font-weight:700;
+    padding:5px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;
+    opacity:0;transition:opacity .2s;border:1px solid rgba(255,255,255,0.15);
+    backdrop-filter:blur(10px);letter-spacing:.3px;z-index:999;
+  }
+  .tip:hover::after{opacity:1}
+
+  /* SMOOTH CURSOR */
+  button{cursor:pointer}
+  a{cursor:pointer}
+
   .shimmer{
     background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0) 100%);
     background-size:200% 100%;
@@ -435,20 +451,65 @@ export default function App() {
   const triggerParticles = () => { setParticles(true); setTimeout(()=>setParticles(false),2500) }
 
   const sendAI = async () => {
-    if (!aiInput.trim()) return
-    const msg = {role:"user",content:aiInput}
-    const msgs = [...aiMsgs,msg]
-    setAiMsgs(msgs); setAiInput(""); setAiLoading(true)
+    if (!aiInput.trim() || aiLoading) return
+    const userMsg = {role:"user", content:aiInput}
+    const updatedMsgs = [...aiMsgs, userMsg]
+    setAiMsgs(updatedMsgs)
+    setAiInput("")
+    setAiLoading(true)
+
+    // Build detailed system prompt with real user data
+    const habitList = habits.map(h=>`${h.emoji} ${h.name} (${getStreak(h,days)} day streak)`).join(", ") || "none yet"
+    const todayDoneList = habits.filter(h=>h.completions?.[todayStr]).map(h=>h.name).join(", ") || "none yet"
+    const systemPrompt = `You are an energetic, personal AI habit coach inside the HabitFlow app. You know this user personally:
+- Their habits: ${habitList}
+- Habits completed today: ${todayDoneList}
+- Best streak: ${bestStreak} days
+- Total XP: ${xp} (Level: ${currentLevel.title} ${currentLevel.icon})
+- Steps today: ${steps.toLocaleString()}
+- Water today: ${water}/8 cups
+- Mood today: ${mood || "not logged"}
+
+Rules:
+- NEVER give the same response twice. Always respond to their SPECIFIC message.
+- Be conversational, warm, and personal. Reference their actual habits and stats.
+- Keep responses under 120 words. Use 1-2 emojis max.
+- If they ask about a specific habit, give specific advice for that habit.
+- If they seem down, be encouraging. If they're doing well, celebrate with them.
+- Give actionable tips, not generic motivation.`
+
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:250,
-          system:`You are an energetic, motivating habit coach. User has ${habits.length} habits, ${bestStreak} day streak, ${xp} XP. Be hyped and concise (under 100 words). Use emojis!`,
-          messages:msgs.map(m=>({role:m.role,content:m.content}))})
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY || "",
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 300,
+          system: systemPrompt,
+          messages: updatedMsgs.map(m=>({role:m.role, content:m.content}))
+        })
       })
       const d = await res.json()
-      setAiMsgs([...msgs,{role:"assistant",content:d.content?.[0]?.text||"You're crushing it! 🔥"}])
-    } catch { setAiMsgs([...msgs,{role:"assistant",content:"Consistency is your superpower! 💪🔥"}]) }
+      const reply = d.content?.[0]?.text
+      if (reply) {
+        setAiMsgs(prev=>[...prev, {role:"assistant", content:reply}])
+      } else {
+        // If API key not set, give contextual responses based on message
+        const fallbacks = [
+          `Looking at your ${habits.length} habits — you're building something real here! What specifically can I help you improve?`,
+          `${bestStreak} day streak is no joke. That takes real discipline. What's on your mind?`,
+          `You've got ${doneToday}/${habits.length} habits done today. Tell me more about what you're working on!`,
+        ]
+        setAiMsgs(prev=>[...prev, {role:"assistant", content:fallbacks[prev.length % fallbacks.length]}])
+      }
+    } catch(err) {
+      setAiMsgs(prev=>[...prev, {role:"assistant", content:`Connection issue — but I see you have ${habits.length} habits tracked. Keep going, one day at a time! 💪`}])
+    }
     setAiLoading(false)
   }
 
@@ -606,8 +667,8 @@ export default function App() {
           <div style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.6)"}}>
             {currentLevel.icon} {currentLevel.title}
           </div>
-          <button onClick={()=>setShowAI(true)} className="glass-btn" style={{padding:"6px 12px",fontSize:12}}>🤖 AI</button>
-          <button onClick={signOut} className="glass-btn" style={{padding:"6px 10px",fontSize:12}}>↪</button>
+          <button onClick={()=>setShowAI(true)} className="glass-btn tip" data-tip="AI Coach" style={{padding:"6px 12px",fontSize:12,position:"relative"}}>🤖 AI</button>
+          <button onClick={signOut} className="glass-btn tip" data-tip="Sign Out" style={{padding:"6px 10px",fontSize:12,position:"relative"}}>↪</button>
         </div>
       </div>
 
@@ -855,7 +916,8 @@ export default function App() {
               ))}
             </div>
             <div style={{textAlign:"center",fontSize:12,color:"rgba(255,255,255,0.25)",padding:"10px 0"}}>
-              HabitFlow v3.0 · Made with 💜<br/>contact@thehabitflow.app
+              HabitFlow v3.0 · Made with 💜<br/>contact@thehabitflow.app<br/>
+            <span style={{color:"rgba(255,255,255,0.2)",fontSize:10}}>Add VITE_ANTHROPIC_KEY to Vercel env for live AI</span>
             </div>
           </div>
         )}
@@ -972,10 +1034,33 @@ export default function App() {
             </div>
             <div style={{flex:1,padding:16,overflowY:"auto",minHeight:200}}>
               {aiMsgs.length===0 && (
-                <div style={{textAlign:"center",padding:28,color:"rgba(255,255,255,0.4)"}}>
-                  <div style={{fontSize:48,marginBottom:12,animation:"float 3s ease-in-out infinite"}}>🤖</div>
-                  <div style={{fontWeight:700,color:"#fff",marginBottom:6}}>Your AI Habit Coach</div>
-                  <div style={{fontSize:13}}>I know your stats! Ask me anything 💪</div>
+                <div style={{padding:16}}>
+                  <div style={{textAlign:"center",marginBottom:20}}>
+                    <div style={{fontSize:44,marginBottom:10,animation:"float 3s ease-in-out infinite"}}>🤖</div>
+                    <div style={{fontWeight:800,color:"#fff",marginBottom:4,fontSize:16}}>Your AI Habit Coach</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>I know your stats • Ask me anything</div>
+                  </div>
+                  <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.35)",letterSpacing:1,marginBottom:10,textAlign:"center"}}>SUGGESTED QUESTIONS</div>
+                  {[
+                    "How can I improve my streak?",
+                    "What habit should I focus on?",
+                    "I'm struggling to stay consistent",
+                    "Give me a morning routine tip",
+                    "How do I build better sleep habits?",
+                  ].map(q=>(
+                    <button key={q} onClick={()=>{setAiInput(q)}} style={{
+                      width:"100%",padding:"10px 14px",marginBottom:8,
+                      background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",
+                      borderRadius:12,color:"rgba(255,255,255,0.7)",fontSize:13,
+                      cursor:"pointer",textAlign:"left",fontFamily:"'Inter',sans-serif",
+                      transition:"all .2s"
+                    }}
+                    onMouseEnter={e=>e.target.style.background="rgba(255,255,255,0.1)"}
+                    onMouseLeave={e=>e.target.style.background="rgba(255,255,255,0.05)"}
+                    >
+                      💬 {q}
+                    </button>
+                  ))}
                 </div>
               )}
               {aiMsgs.map((m,i)=>(
