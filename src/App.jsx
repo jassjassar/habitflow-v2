@@ -234,7 +234,7 @@ const css = `
   .tab-item:hover{transform:translateY(-2px)}
   .tab-icon{font-size:22px;transition:transform 0.2s}
   .tab-item.active .tab-icon{transform:scale(1.2)}
-  .tab-label{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,0.4)}
+  .tab-label{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,0.85)}
   .tab-item.active .tab-label{color:#fff}
   .tab-dot{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:2px}
   .tab-item.active .tab-dot{background:#fff}
