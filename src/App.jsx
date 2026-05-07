@@ -255,7 +255,7 @@ const css = `
   }
 `;
 
-export default function HabitFlow() {
+export default function App() {
   const getTimeTheme = () => {
     const manual = localStorage.getItem("hf_theme_manual");
     if (manual) return localStorage.getItem("hf_theme") || "dark";
@@ -670,6 +670,19 @@ Be encouraging, specific, and concise. Give actionable advice. Keep responses un
 
   // theme saved in applyThemeKey
 
+  const addWaterCup = (n) => {
+    const d = new Date().toISOString().slice(0,10);
+    const newVal = Math.max(0, waterCups + n);
+    setWaterCups(newVal);
+    localStorage.setItem("hf_water_"+d, newVal);
+  };
+  const saveMood = (m) => {
+    const d = new Date().toISOString().slice(0,10);
+    setTodayMood(m);
+    localStorage.setItem("hf_mood_"+d, m);
+    setShowMoodPicker(false);
+  };
+
   const S = {
     wrap: { minHeight:"100vh", background:"var(--bg)", color:"var(--text)", fontFamily:"'Outfit',sans-serif", transition:"background 0.3s,color 0.3s" },
     nav: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"20px 28px", borderBottom:"1px solid var(--border)", position:"sticky", top:0, background:"var(--bg)", zIndex:50 },
@@ -904,19 +917,6 @@ Be encouraging, specific, and concise. Give actionable advice. Keep responses un
       </div>
     </div>
   );
-
-  const addWaterCup = (n) => {
-    const d = new Date().toISOString().slice(0,10);
-    const newVal = Math.max(0, waterCups + n);
-    setWaterCups(newVal);
-    localStorage.setItem("hf_water_"+d, newVal);
-  };
-  const saveMood = (m) => {
-    const d = new Date().toISOString().slice(0,10);
-    setTodayMood(m);
-    localStorage.setItem("hf_mood_"+d, m);
-    setShowMoodPicker(false);
-  };
 
   return (
     <div style={S.wrap} className={"t-"+themeKey+(isLight?" light":"")}>
