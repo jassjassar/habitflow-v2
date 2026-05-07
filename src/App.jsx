@@ -450,18 +450,19 @@ export default function App() {
 
   const triggerParticles = () => { setParticles(true); setTimeout(()=>setParticles(false),2500) }
 
-  const sendAI = async () => {
-    if (!aiInput.trim() || aiLoading) return
-    const userMsg = {role:"user", content:aiInput}
-    const updatedMsgs = [...aiMsgs, userMsg]
-    setAiMsgs(updatedMsgs)
-    setAiInput("")
-    setAiLoading(true)
+ const sendAI = async () => {
+  if (!aiInput.trim() || aiLoading) return
 
-    // Build detailed system prompt with real user data
-    const habitList = habits.map(h=>`${h.emoji} ${h.name} (${getStreak(h,days)} day streak)`).join(", ") || "none yet"
-    const todayDoneList = habits.filter(h=>h.completions?.[todayStr]).map(h=>h.name).join(", ") || "none yet"
-    const systemPrompt = `You are an energetic, personal AI habit coach inside the HabitFlow app. You know this user personally:
+  const userMsg = { role: "user", content: aiInput }
+  const updatedMsgs = [...aiMsgs, userMsg]
+  setAiMsgs(updatedMsgs)
+  setAiInput("")
+  setAiLoading(true)
+
+  const habitList = habits.map(h => `${h.emoji} ${h.name} (${getStreak(h, days)} day streak)`).join(", ") || "none yet"
+  const todayDoneList = habits.filter(h => h.completions?.[todayStr]).map(h => h.name).join(", ") || "none yet"
+
+  const systemPrompt = `You are an energetic, personal AI habit coach inside the HabitFlow app. You know this user personally:
 - Their habits: ${habitList}
 - Habits completed today: ${todayDoneList}
 - Best streak: ${bestStreak} days
@@ -478,41 +479,44 @@ Rules:
 - If they seem down, be encouraging. If they're doing well, celebrate with them.
 - Give actionable tips, not generic motivation.`
 
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY || "",
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 300,
-          system: systemPrompt,
-          messages: updatedMsgs.map(m=>({role:m.role, content:m.content}))
-        })
-      })
-      const d = await res.json()
-      const reply = d.content?.[0]?.text
-      if (reply) {
-        setAiMsgs(prev=>[...prev, {role:"assistant", content:reply}])
-      } else {
-        // If API key not set, give contextual responses based on message
-        const fallbacks = [
-          `Looking at your ${habits.length} habits — you're building something real here! What specifically can I help you improve?`,
-          `${bestStreak} day streak is no joke. That takes real discipline. What's on your mind?`,
-          `You've got ${doneToday}/${habits.length} habits done today. Tell me more about what you're working on!`,
-        ]
-        setAiMsgs(prev=>[...prev, {role:"assistant", content:fallbacks[prev.length % fallbacks.length]}])
-      }
-    } catch(err) {
-      setAiMsgs(prev=>[...prev, {role:"assistant", content:`Connection issue — but I see you have ${habits.length} habits tracked. Keep going, one day at a time! 💪`}])
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+
+    const res = await fetch("/api/ai-coach", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        messages: updatedMsgs.map(m => ({ role: m.role, content: m.content })),
+        systemPrompt,
+      }),
+    })
+
+    const data = await res.json()
+
+    if (data.reply) {
+      setAiMsgs(prev => [...prev, { role: "assistant", content: data.reply }])
+    } else {
+      throw new Error(data.error || "No reply")
     }
-    setAiLoading(false)
+
+  } catch(err) {
+    const fallbacks = [
+      `Looking at your ${habits.length} habits — you're building something real here! What specifically can I help you improve?`,
+      `${bestStreak} day streak is no joke. That takes real discipline. What's on your mind?`,
+      `You've got ${doneToday}/${habits.length} habits done today. Tell me more about what you're working on!`,
+    ]
+    setAiMsgs(prev => [...prev, {
+      role: "assistant",
+      content: fallbacks[prev.length % fallbacks.length]
+    }])
   }
 
+  setAiLoading(false)
+}
   const addWater = (n) => {
     const v = Math.max(0,water+n); setWater(v)
     localStorage.setItem("hf_water_"+todayStr,v)
