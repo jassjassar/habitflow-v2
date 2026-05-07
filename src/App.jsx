@@ -1,18 +1,11 @@
-// HabitFlow v3.0 - With email capture and footer
+// HabitFlow v3.0
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-// ⚡ STRIPE KEY — Replace below with your pk_live_ key
-const STRIPE_KEY = "YOUR_STRIPE_KEY_HERE";
-
-const GL = document.createElement("link");
-GL.rel = "stylesheet";
-GL.href = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Outfit:wght@300;400;500;600&display=swap";
-document.head.appendChild(GL);
-
-const SUPABASE_URL = "https://ykmftbsglhoxoopzwbwd.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbWZ0YnNnbGhveG9vcHp3YndkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NjI3MTAsImV4cCI6MjA5MzEzODcxMH0.L3VZxCH7ObRGkhLOuCvqxMoluEFKiKuYQo1Wnq5AR0U";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL || "https://ykmftbsglhoxoopzwbwd.supabase.co",
+  import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbWZ0YnNnbGhveG9vcHp3YndkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NjI3MTAsImV4cCI6MjA5MzEzODcxMH0.L3VZxCH7ObRGkhLOuCvqxMoluEFKiKuYQo1Wnq5AR0U"
+);
 
 // ── Translations ──────────────────────────────────────────────────────────
 const TRANSLATIONS = {
@@ -236,6 +229,7 @@ const THEMES = {
 };
 
 const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Outfit:wght@300;400;500;600&display=swap');
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);transition:background .3s,color .3s}
   :root{--bg:#08080D;--bg2:#0F0F16;--bg3:#15151F;--border:#1E1E2A;--text:#F0EDE8;--muted:#666;--gold:#C9A84C;--gold2:#E8C96A;}
