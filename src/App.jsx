@@ -21,7 +21,38 @@ const HABIT_TEMPLATES = [
   { name:"Healthy Eating", emoji:"🥗", color:"#6BCB77", category:"health", time:"12:00" },
   { name:"Gratitude",      emoji:"🙏", color:"#FFD93D", category:"personal",time:"21:00" },
   { name:"No Sugar",       emoji:"🍎", color:"#FF6B6B", category:"health", time:"08:00" },
-]
+] 
+
+const ONBOARDING_HABITS = {
+  health: [
+    { name:"Morning Run",    emoji:"🏃", color:"#FF6B6B", time:"06:30" },
+    { name:"Drink Water",    emoji:"💧", color:"#45B7D1", time:"08:00" },
+    { name:"Gym Workout",    emoji:"🏋️", color:"#FF8E53", time:"07:00" },
+    { name:"Healthy Eating", emoji:"🥗", color:"#6BCB77", time:"12:00" },
+    { name:"Sleep 8hrs",     emoji:"💤", color:"#A78BFA", time:"22:00" },
+  ],
+  mind: [
+    { name:"Meditate",       emoji:"🧘", color:"#A78BFA", time:"07:00" },
+    { name:"Read 20 Mins",   emoji:"📚", color:"#FFD93D", time:"20:00" },
+    { name:"Journal",        emoji:"✍️", color:"#F472B6", time:"21:00" },
+    { name:"Gratitude",      emoji:"🙏", color:"#FFD93D", time:"08:00" },
+    { name:"Deep Work",      emoji:"🎯", color:"#4ECDC4", time:"09:00" },
+  ],
+  work: [
+    { name:"Deep Work",      emoji:"🎯", color:"#4ECDC4", time:"09:00" },
+    { name:"Plan Tomorrow",  emoji:"📋", color:"#45B7D1", time:"21:00" },
+    { name:"No Phone AM",    emoji:"📵", color:"#FF6B6B", time:"08:00" },
+    { name:"Learn Something",emoji:"🧠", color:"#A78BFA", time:"18:00" },
+    { name:"Read 20 Mins",   emoji:"📚", color:"#FFD93D", time:"20:00" },
+  ],
+  personal: [
+    { name:"Cold Shower",    emoji:"🚿", color:"#45B7D1", time:"07:00" },
+    { name:"Walk 30 Mins",   emoji:"🚶", color:"#6BCB77", time:"17:00" },
+    { name:"No Sugar",       emoji:"🍎", color:"#FF6B6B", time:"08:00" },
+    { name:"Gratitude",      emoji:"🙏", color:"#FFD93D", time:"21:00" },
+    { name:"Sleep 8hrs",     emoji:"💤", color:"#A78BFA", time:"22:00" },
+  ],
+} 
 
 const LEVELS = [
   { level:1, title:"Beginner",  icon:"🌱", minXP:0    },
@@ -259,12 +290,328 @@ function LevelUpBurst({ show, level }) {
   )
 }
 
+function OnboardingQuiz({ user, supabase, onComplete }) {
+  const [step, setStep] = useState(0)
+  const [answers, setAnswers] = useState({})
+  const [animating, setAnimating] = useState(false)
+  const [completing, setCompleting] = useState(false)
+  const [celebrating, setCelebrating] = useState(false)
+ 
+  const STEPS = [
+    {
+      id: "goal",
+      emoji: "🎯",
+      title: "What's your main goal?",
+      subtitle: "We'll build the perfect habit set for you",
+      options: [
+        { id:"health",   emoji:"💪", label:"Get fit & healthy",    desc:"Exercise, nutrition, sleep" },
+        { id:"mind",     emoji:"🧘", label:"Mental clarity",        desc:"Meditate, read, journal" },
+        { id:"work",     emoji:"🚀", label:"Be more productive",    desc:"Deep work, focus, planning" },
+        { id:"personal", emoji:"✨", label:"Personal growth",       desc:"Self-care & better habits" },
+      ],
+    },
+    {
+      id: "time",
+      emoji: "⏰",
+      title: "When are you most active?",
+      subtitle: "We'll set reminders at the right times",
+      options: [
+        { id:"morning",   emoji:"🌅", label:"Early bird",     desc:"I'm active before 9am" },
+        { id:"afternoon", emoji:"☀️", label:"Afternoon peak",  desc:"I hit my stride after noon" },
+        { id:"evening",   emoji:"🌙", label:"Night owl",       desc:"Evenings work best for me" },
+        { id:"flexible",  emoji:"🎲", label:"Flexible",        desc:"No fixed preference" },
+      ],
+    },
+    {
+      id: "count",
+      emoji: "📊",
+      title: "How many habits to start?",
+      subtitle: "Research shows starting small leads to long-term success",
+      options: [
+        { id:"2", emoji:"🌱", label:"Start with 2",  desc:"Easy wins, high success rate" },
+        { id:"3", emoji:"⚡", label:"Go with 3",     desc:"The science-backed sweet spot" },
+        { id:"5", emoji:"🔥", label:"Challenge me",  desc:"I'm ready to commit fully" },
+      ],
+    },
+  ]
+ 
+  const currentStep = STEPS[step]
+  const totalSteps = STEPS.length
+  const progress = step / totalSteps
+ 
+  const selectOption = (optId) => {
+    setAnswers(prev => ({ ...prev, [currentStep.id]: optId }))
+  }
+ 
+  const goNext = async () => {
+    if (!answers[currentStep.id] || animating) return
+    if (step < totalSteps - 1) {
+      setAnimating(true)
+      setTimeout(() => { setStep(s => s + 1); setAnimating(false) }, 320)
+    } else {
+      // Final — show celebration then complete
+      setCelebrating(true)
+      setTimeout(async () => {
+        setCompleting(true)
+        const habits = buildHabits(answers)
+        await onComplete(habits)
+      }, 2200)
+    }
+  }
+ 
+  const buildHabits = (ans) => {
+    const pool = ONBOARDING_HABITS[ans.goal] || ONBOARDING_HABITS.health
+    const count = parseInt(ans.count || "3")
+    const offsets = { morning:0, afternoon:4, evening:8, flexible:0 }
+    const offset = offsets[ans.time] || 0
+    return pool.slice(0, count).map(h => {
+      const [hh, mm] = h.time.split(":").map(Number)
+      const newH = Math.min(22, hh + offset)
+      return { ...h, time:`${String(newH).padStart(2,"0")}:${String(mm).padStart(2,"0")}` }
+    })
+  }
+ 
+  // CELEBRATION SCREEN
+  if (celebrating) {
+    const habitCount = parseInt(answers.count || "3")
+    const goalLabels = { health:"fitness", mind:"mental clarity", work:"productivity", personal:"personal growth" }
+    const goal = goalLabels[answers.goal] || "your goals"
+    return (
+      <div style={{
+        position:"fixed", inset:0, zIndex:500,
+        background:"linear-gradient(135deg,#0d0d1a 0%,#1a0d2e 50%,#0d1a1a 100%)",
+        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+        padding:32, textAlign:"center",
+      }}>
+        <div style={{animation:"celebPop 0.6s cubic-bezier(.34,1.56,.64,1) forwards", fontSize:80, marginBottom:24}}>🎉</div>
+        <div style={{fontSize:28, fontWeight:900, color:"#fff", marginBottom:10, lineHeight:1.2}}>
+          You're all set!
+        </div>
+        <div style={{fontSize:16, color:"rgba(255,255,255,0.6)", marginBottom:32, lineHeight:1.6, maxWidth:300}}>
+          We've created {habitCount} habits focused on <span style={{color:"#A78BFA", fontWeight:700}}>{goal}</span>. Your journey starts now.
+        </div>
+        <div style={{display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:280}}>
+          {buildHabits(answers).map((h, i) => (
+            <div key={i} style={{
+              background:`${h.color}22`, border:`1px solid ${h.color}44`,
+              borderRadius:16, padding:"12px 16px",
+              display:"flex", alignItems:"center", gap:12,
+              animation:`slideInUp 0.4s ${i*0.1}s ease both`,
+            }}>
+              <div style={{fontSize:24}}>{h.emoji}</div>
+              <div style={{textAlign:"left"}}>
+                <div style={{fontSize:14, fontWeight:700, color:"#fff"}}>{h.name}</div>
+                <div style={{fontSize:11, color:"rgba(255,255,255,0.45)"}}>⏰ {h.time}</div>
+              </div>
+              <div style={{marginLeft:"auto", color:h.color, fontWeight:800, fontSize:12}}>✓</div>
+            </div>
+          ))}
+        </div>
+        {completing && (
+          <div style={{marginTop:24, fontSize:14, color:"rgba(255,255,255,0.4)"}}>
+            Setting up your app...
+          </div>
+        )}
+        <style>{`
+          @keyframes celebPop {
+            0%{transform:scale(0) rotate(-20deg);opacity:0}
+            60%{transform:scale(1.2) rotate(10deg)}
+            100%{transform:scale(1) rotate(0);opacity:1}
+          }
+          @keyframes slideInUp {
+            from{opacity:0;transform:translateY(20px)}
+            to{opacity:1;transform:translateY(0)}
+          }
+        `}</style>
+      </div>
+    )
+  }
+ 
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:500,
+      background:"linear-gradient(135deg,#0d0d1a 0%,#1a0d2e 60%,#0d1a1a 100%)",
+      display:"flex", flexDirection:"column",
+      overflowY:"auto",
+    }}>
+      <style>{`
+        @keyframes fadeSlideIn {
+          from{opacity:0;transform:translateX(24px)}
+          to{opacity:1;transform:translateX(0)}
+        }
+        @keyframes optionPop {
+          0%{transform:scale(0.94);opacity:0}
+          100%{transform:scale(1);opacity:1}
+        }
+        .ob-option {
+          transition: all 0.2s ease;
+        }
+        .ob-option:hover {
+          transform: translateY(-2px) scale(1.01);
+        }
+        .ob-option:active {
+          transform: scale(0.98);
+        }
+      `}</style>
+ 
+      {/* HEADER */}
+      <div style={{padding:"20px 24px 0", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+        <div style={{fontSize:16, fontWeight:900, background:"linear-gradient(135deg,#A78BFA,#4ECDC4)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>
+          ⚡ HabitFlow
+        </div>
+        <div style={{fontSize:12, color:"rgba(255,255,255,0.3)", fontWeight:600}}>
+          {step + 1} of {totalSteps}
+        </div>
+      </div>
+ 
+      {/* PROGRESS BAR */}
+      <div style={{padding:"12px 24px 0"}}>
+        <div style={{height:4, borderRadius:999, background:"rgba(255,255,255,0.08)", overflow:"hidden"}}>
+          <div style={{
+            height:"100%", borderRadius:999,
+            background:"linear-gradient(90deg,#A78BFA,#4ECDC4)",
+            width:`${((step + 1) / totalSteps) * 100}%`,
+            transition:"width 0.4s ease",
+            boxShadow:"0 0 10px rgba(167,139,250,0.5)",
+          }}/>
+        </div>
+      </div>
+ 
+      {/* CONTENT */}
+      <div style={{
+        flex:1, display:"flex", flexDirection:"column",
+        padding:"32px 24px 24px",
+        animation: animating ? "none" : "fadeSlideIn 0.35s ease",
+        opacity: animating ? 0 : 1,
+        transition: animating ? "opacity 0.2s" : "none",
+      }}>
+        {/* Emoji + Title */}
+        <div style={{textAlign:"center", marginBottom:36}}>
+          <div style={{
+            fontSize:64, marginBottom:16,
+            filter:"drop-shadow(0 0 20px rgba(167,139,250,0.4))",
+            animation:"float 3s ease-in-out infinite",
+          }}>
+            {currentStep.emoji}
+          </div>
+          <div style={{fontSize:24, fontWeight:900, color:"#fff", marginBottom:8, lineHeight:1.25}}>
+            {currentStep.title}
+          </div>
+          <div style={{fontSize:14, color:"rgba(255,255,255,0.45)", lineHeight:1.5}}>
+            {currentStep.subtitle}
+          </div>
+        </div>
+ 
+        {/* Options */}
+        <div style={{display:"flex", flexDirection:"column", gap:12, marginBottom:32}}>
+          {currentStep.options.map((opt, i) => {
+            const isSelected = answers[currentStep.id] === opt.id
+            return (
+              <div
+                key={opt.id}
+                className="ob-option"
+                onClick={() => selectOption(opt.id)}
+                style={{
+                  background: isSelected
+                    ? "linear-gradient(135deg,rgba(167,139,250,0.25),rgba(78,205,196,0.15))"
+                    : "rgba(255,255,255,0.05)",
+                  border: isSelected
+                    ? "2px solid rgba(167,139,250,0.8)"
+                    : "1px solid rgba(255,255,255,0.1)",
+                  borderRadius:18,
+                  padding:"16px 18px",
+                  cursor:"pointer",
+                  display:"flex",
+                  alignItems:"center",
+                  gap:14,
+                  boxShadow: isSelected ? "0 0 20px rgba(167,139,250,0.2)" : "none",
+                  animation:`optionPop 0.3s ${i*0.06}s ease both`,
+                }}
+              >
+                <div style={{
+                  width:46, height:46, borderRadius:14, flexShrink:0,
+                  background: isSelected ? "rgba(167,139,250,0.2)" : "rgba(255,255,255,0.07)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:24,
+                  border: isSelected ? "1px solid rgba(167,139,250,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                  transition:"all 0.2s",
+                }}>
+                  {opt.emoji}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{
+                    fontSize:15, fontWeight:700,
+                    color: isSelected ? "#fff" : "rgba(255,255,255,0.85)",
+                    marginBottom:3,
+                  }}>
+                    {opt.label}
+                  </div>
+                  <div style={{fontSize:12, color:"rgba(255,255,255,0.4)", fontWeight:500}}>
+                    {opt.desc}
+                  </div>
+                </div>
+                <div style={{
+                  width:22, height:22, borderRadius:"50%", flexShrink:0,
+                  background: isSelected ? "linear-gradient(135deg,#A78BFA,#4ECDC4)" : "rgba(255,255,255,0.08)",
+                  border: isSelected ? "none" : "1.5px solid rgba(255,255,255,0.2)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:12, color:"#fff",
+                  transition:"all 0.2s",
+                }}>
+                  {isSelected ? "✓" : ""}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+ 
+        {/* NEXT BUTTON */}
+        <button
+          onClick={goNext}
+          disabled={!answers[currentStep.id] || animating}
+          style={{
+            width:"100%", padding:"17px",
+            borderRadius:18, border:"none",
+            background: answers[currentStep.id]
+              ? "linear-gradient(135deg,#A78BFA,#4ECDC4)"
+              : "rgba(255,255,255,0.08)",
+            color: answers[currentStep.id] ? "#fff" : "rgba(255,255,255,0.3)",
+            fontSize:16, fontWeight:800,
+            cursor: answers[currentStep.id] ? "pointer" : "not-allowed",
+            transition:"all 0.25s",
+            boxShadow: answers[currentStep.id] ? "0 8px 28px rgba(167,139,250,0.35)" : "none",
+            transform: answers[currentStep.id] ? "none" : "scale(0.98)",
+            fontFamily:"'Inter',sans-serif",
+          }}
+        >
+          {step === totalSteps - 1 ? "Build My Habits 🚀" : "Continue →"}
+        </button>
+ 
+        {/* SKIP */}
+        {step === 0 && (
+          <div
+            onClick={() => onComplete(ONBOARDING_HABITS.health.slice(0,3))}
+            style={{textAlign:"center", marginTop:16, fontSize:12, color:"rgba(255,255,255,0.25)", cursor:"pointer", fontWeight:600}}
+          >
+            Skip setup →
+          </div>
+        )}
+      </div>
+ 
+      {/* BG ORBS */}
+      <div style={{position:"fixed", top:"15%", left:"10%", width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle,rgba(167,139,250,0.08),transparent 70%)", pointerEvents:"none", animation:"bgPulse 8s ease-in-out infinite"}}/>
+      <div style={{position:"fixed", bottom:"20%", right:"5%", width:250, height:250, borderRadius:"50%", background:"radial-gradient(circle,rgba(78,205,196,0.06),transparent 70%)", pointerEvents:"none", animation:"bgPulse 11s ease-in-out infinite reverse"}}/>
+    </div>
+  )
+}
+ 
 export default function App() {
   const [page, setPage] = useState("landing")
   const [user, setUser] = useState(null)
   const [habits, setHabits] = useState([])
   const [isPro, setIsPro] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true) 
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [activeTab, setActiveTab] = useState("home")
   const [showAdd, setShowAdd] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
@@ -306,12 +653,14 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const loadHabits = async (uid) => {
+  const loadHabits = async (uid) => { 
     const {data:hd} = await supabase.from("habits").select("*").eq("user_id",uid).order("created_at")
     const {data:cd} = await supabase.from("completions").select("*").eq("user_id",uid)
     if (hd) setHabits(hd.map(h=>({...h,completions:Object.fromEntries((cd||[]).filter(c=>c.habit_id===h.id).map(c=>[c.date,true]))})))
     const {data:p} = await supabase.from("profiles").select("is_pro").eq("id",uid).single()
-    if (p) setIsPro(p.is_pro)
+    if (p) setIsPro(p.is_pro) 
+    const isNewUser = !hd || hd.length === 0
+if (isNewUser) setShowOnboarding(true)
   }
 
   const signInGoogle = async () => await supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin}})
@@ -523,7 +872,28 @@ Rules: Be conversational, warm, personal. Keep under 120 words. Use 1-2 emojis. 
     <div style={{minHeight:"100vh",background:"#0d0d1a",color:"#fff",paddingBottom:96,maxWidth:480,margin:"0 auto",position:"relative"}}>
       <style>{css}</style>
       <Particles active={particles}/>
-      <LevelUpBurst show={levelUpShow} level={levelUpData}/>
+      <LevelUpBurst show={levelUpShow} level={levelUpData}/> 
+
+      {showOnboarding && (
+  <OnboardingQuiz
+    user={user}
+    supabase={supabase}
+    onComplete={async (selectedHabits) => {
+      for (const h of selectedHabits) {
+        const {data} = await supabase.from("habits").insert({
+          user_id: user.id,
+          name: h.name,
+          emoji: h.emoji,
+          color: h.color,
+          reminder_time: h.time,
+        }).select().single()
+        if (data) setHabits(prev => [...prev, {...data, completions:{}}])
+      }
+      triggerParticles()
+      setShowOnboarding(false)
+    }}
+  />
+)}
 
       {/* BG */}
       <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,height:"100%",pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
