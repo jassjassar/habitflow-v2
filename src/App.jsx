@@ -604,8 +604,224 @@ function OnboardingQuiz({ user, supabase, onComplete }) {
       <div style={{position:"fixed", bottom:"20%", right:"5%", width:250, height:250, borderRadius:"50%", background:"radial-gradient(circle,rgba(78,205,196,0.06),transparent 70%)", pointerEvents:"none", animation:"bgPulse 11s ease-in-out infinite reverse"}}/>
     </div>
   )
-}
+} 
+
+ function HeatmapCalendar({ habits }) {
+  const [tooltip, setTooltip] = useState(null)
+  const [selectedHabit, setSelectedHabit] = useState("all")
  
+  // Build 90 days of data
+  const buildDays = () => {
+    const days = []
+    const today = new Date()
+    for (let i = 89; i >= 0; i--) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      const dateStr = d.toISOString().slice(0, 10)
+      const dayHabits = selectedHabit === "all" ? habits : habits.filter(h => h.id === selectedHabit)
+      const total = dayHabits.length
+      const done = dayHabits.filter(h => h.completions?.[dateStr]).length
+      const pct = total > 0 ? done / total : 0
+      days.push({ dateStr, done, total, pct, date: d })
+    }
+    return days
+  }
+ 
+  const days = buildDays()
+ 
+  // Group into weeks
+  const weeks = []
+  let week = []
+  // Pad start
+  const firstDay = days[0].date.getDay()
+  for (let i = 0; i < firstDay; i++) week.push(null)
+  days.forEach((d, i) => {
+    week.push(d)
+    if (week.length === 7) { weeks.push(week); week = [] }
+  })
+  if (week.length > 0) {
+    while (week.length < 7) week.push(null)
+    weeks.push(week)
+  }
+ 
+  // Color based on completion %
+  const getColor = (pct, isToday) => {
+    if (isToday) return "rgba(167,139,250,0.9)"
+    if (pct === 0) return "rgba(255,255,255,0.06)"
+    if (pct <= 0.25) return "rgba(16,185,129,0.25)"
+    if (pct <= 0.5)  return "rgba(16,185,129,0.45)"
+    if (pct <= 0.75) return "rgba(16,185,129,0.65)"
+    return "rgba(16,185,129,0.9)"
+  }
+ 
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+  const DAYS = ["S","M","T","W","T","F","S"]
+ 
+  // Get month labels
+  const monthLabels = []
+  weeks.forEach((week, wi) => {
+    const firstReal = week.find(d => d !== null)
+    if (firstReal && firstReal.date.getDate() <= 7) {
+      monthLabels.push({ wi, label: MONTHS[firstReal.date.getMonth()] })
+    }
+  })
+ 
+  // Stats
+  const totalDone = days.filter(d => d.pct === 1).length
+  const currentStreak = (() => {
+    let s = 0
+    for (let i = days.length - 1; i >= 0; i--) {
+      if (days[i].pct === 1) s++
+      else break
+    }
+    return s
+  })()
+  const longestStreak = (() => {
+    let max = 0, cur = 0
+    days.forEach(d => { if (d.pct === 1) { cur++; max = Math.max(max, cur) } else cur = 0 })
+    return max
+  })()
+ 
+  return (
+    <div style={{
+      background:"rgba(255,255,255,0.04)",
+      border:"1px solid rgba(255,255,255,0.08)",
+      borderRadius:20,
+      padding:"18px 16px",
+      marginBottom:14,
+    }}>
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+        <div style={{fontSize:14,fontWeight:800,color:"#fff"}}>Activity</div>
+        <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",fontWeight:600}}>Last 90 days</div>
+      </div>
+ 
+      {/* Habit filter */}
+      {habits.length > 1 && (
+        <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
+          <button
+            onClick={() => setSelectedHabit("all")}
+            style={{
+              padding:"4px 10px",fontSize:11,fontWeight:700,borderRadius:8,border:"none",cursor:"pointer",
+              background:selectedHabit==="all"?"linear-gradient(135deg,#A78BFA,#4ECDC4)":"rgba(255,255,255,0.07)",
+              color:selectedHabit==="all"?"#fff":"rgba(255,255,255,0.5)",
+              fontFamily:"'Inter',sans-serif",transition:"all .2s",
+            }}
+          >All</button>
+          {habits.map(h => (
+            <button
+              key={h.id}
+              onClick={() => setSelectedHabit(h.id)}
+              style={{
+                padding:"4px 10px",fontSize:11,fontWeight:700,borderRadius:8,border:"none",cursor:"pointer",
+                background:selectedHabit===h.id?h.color:"rgba(255,255,255,0.07)",
+                color:selectedHabit===h.id?"#fff":"rgba(255,255,255,0.5)",
+                fontFamily:"'Inter',sans-serif",transition:"all .2s",
+              }}
+            >{h.emoji} {h.name}</button>
+          ))}
+        </div>
+      )}
+ 
+      {/* Month labels */}
+      <div style={{display:"flex",marginBottom:4,marginLeft:18}}>
+        {weeks.map((_, wi) => {
+          const label = monthLabels.find(m => m.wi === wi)
+          return (
+            <div key={wi} style={{width:14,fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:700,flexShrink:0,marginRight:2}}>
+              {label ? label.label : ""}
+            </div>
+          )
+        })}
+      </div>
+ 
+      {/* Grid */}
+      <div style={{display:"flex",gap:2}}>
+        {/* Day labels */}
+        <div style={{display:"flex",flexDirection:"column",gap:2,marginRight:4}}>
+          {DAYS.map((d,i) => (
+            <div key={i} style={{height:12,fontSize:9,color:"rgba(255,255,255,0.25)",fontWeight:700,lineHeight:"12px"}}>
+              {i % 2 === 1 ? d : ""}
+            </div>
+          ))}
+        </div>
+ 
+        {/* Weeks */}
+        {weeks.map((week, wi) => (
+          <div key={wi} style={{display:"flex",flexDirection:"column",gap:2}}>
+            {week.map((day, di) => {
+              if (!day) return <div key={di} style={{width:12,height:12}}/>
+              const isToday = day.dateStr === todayStr
+              const color = getColor(day.pct, isToday)
+              return (
+                <div
+                  key={di}
+                  onMouseEnter={() => setTooltip(day)}
+                  onMouseLeave={() => setTooltip(null)}
+                  style={{
+                    width:12, height:12, borderRadius:3,
+                    background:color,
+                    cursor:"pointer",
+                    transition:"transform .15s",
+                    border:isToday?"1px solid rgba(167,139,250,0.8)":"none",
+                    transform:tooltip?.dateStr===day.dateStr?"scale(1.4)":"scale(1)",
+                  }}
+                />
+              )
+            })}
+          </div>
+        ))}
+      </div>
+ 
+      {/* Legend */}
+      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:10,justifyContent:"flex-end"}}>
+        <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:600}}>Less</div>
+        {[0.06, 0.25, 0.45, 0.65, 0.9].map((o,i) => (
+          <div key={i} style={{width:10,height:10,borderRadius:2,background:`rgba(16,185,129,${o})`}}/>
+        ))}
+        <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:600}}>More</div>
+      </div>
+ 
+      {/* Tooltip */}
+      {tooltip && (
+        <div style={{
+          marginTop:10,padding:"8px 12px",
+          background:"rgba(255,255,255,0.08)",
+          borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",
+          fontSize:12,color:"rgba(255,255,255,0.8)",fontWeight:600,
+          textAlign:"center",
+        }}>
+          {tooltip.dateStr === todayStr ? "Today" : tooltip.date.toLocaleDateString("en",{month:"short",day:"numeric",year:"numeric"})}
+          {" · "}
+          {tooltip.total === 0 ? "No habits yet" :
+           tooltip.done === 0 ? "No habits completed" :
+           tooltip.done === tooltip.total ? `All ${tooltip.total} habits ✓` :
+           `${tooltip.done}/${tooltip.total} habits`}
+        </div>
+      )}
+ 
+      {/* Quick stats */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginTop:14}}>
+        {[
+          {lbl:"Perfect Days",val:totalDone,color:"#10b981"},
+          {lbl:"Current Streak",val:currentStreak+"🔥",color:"#FF8E53"},
+          {lbl:"Longest Streak",val:longestStreak+"⚡",color:"#A78BFA"},
+        ].map(s=>(
+          <div key={s.lbl} style={{
+            background:"rgba(255,255,255,0.04)",borderRadius:12,
+            padding:"10px 8px",textAlign:"center",
+            border:"1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{fontSize:18,fontWeight:900,color:s.color,filter:`drop-shadow(0 0 6px ${s.color})`}}>{s.val}</div>
+            <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontWeight:700,marginTop:3,textTransform:"uppercase",letterSpacing:.5}}>{s.lbl}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+} 
+
 export default function App() {
   const [page, setPage] = useState("landing")
   const [user, setUser] = useState(null)
@@ -1158,55 +1374,67 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
 
         {/* ANALYTICS TAB */}
         {activeTab==="analytics" && (
-          <div className="fade-up">
-            <div style={{fontSize:22,fontWeight:900,marginBottom:16}}>Analytics</div>
-            {!isPro ? (
-              <div className="card float-a" style={{padding:44,textAlign:"center"}}>
-                <div style={{fontSize:56,marginBottom:14}}>🔒</div>
-                <div style={{fontSize:22,fontWeight:800,marginBottom:8}}>Pro Feature</div>
-                <div style={{color:"rgba(255,255,255,0.4)",fontSize:14,marginBottom:24,lineHeight:1.6}}>Unlock detailed analytics, full history, and more</div>
-                <button onClick={()=>setShowPaywall(true)} className="btn-grad" style={{padding:"14px 30px",fontSize:15,background:"linear-gradient(135deg,#FFD93D,#FF8E53)"}}>Upgrade to Pro ⭐</button>
-              </div>
-            ) : (
-              <>
-                <div className="card float-b" style={{padding:24,textAlign:"center",marginBottom:14,background:"linear-gradient(135deg,rgba(167,139,250,0.12),rgba(78,205,196,0.08))"}}>
-                  <Ring3D pct={xpPct} size={160} color="#A78BFA" label="LEVEL PROGRESS" sublabel={currentLevel.title}/>
-                  <div style={{marginTop:12,fontSize:13,color:"rgba(255,255,255,0.45)"}}>{nextLevel?`${nextLevel.minXP-xp} XP to ${nextLevel.title}`:"MAX LEVEL! 👑"}</div>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-                  {[
-                    {lbl:"Total Completions",val:habits.reduce((s,h)=>s+Object.keys(h.completions||{}).length,0),color:"#4ECDC4"},
-                    {lbl:"Best Streak",val:bestStreak+"🔥",color:"#FF8E53"},
-                    {lbl:"Total XP",val:xp+"⚡",color:"#A78BFA"},
-                    {lbl:"Habits Tracked",val:habits.length,color:"#F472B6"},
-                  ].map(s=>(
-                    <div key={s.lbl} className="card" style={{padding:18,background:`linear-gradient(135deg,${s.color}18,${s.color}06)`}}>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginBottom:6,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>{s.lbl}</div>
-                      <div style={{fontSize:28,fontWeight:900,filter:`drop-shadow(0 0 8px ${s.color})`}}>{s.val}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="card" style={{padding:20,marginBottom:14}}>
-                  <div style={{fontSize:15,fontWeight:800,marginBottom:16}}>This Week</div>
-                  {habits.map(h=>{
-                    const cnt = days.filter(d=>h.completions?.[d]).length
-                    return (
-                      <div key={h.id} style={{marginBottom:14}}>
-                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:7,fontSize:13}}>
-                          <span>{h.emoji} {h.name}</span>
-                          <span style={{color:h.color,fontWeight:700}}>{cnt}/7</span>
-                        </div>
-                        <div style={{height:8,borderRadius:999,background:"rgba(255,255,255,0.07)",overflow:"hidden"}}>
-                          <div style={{height:"100%",width:(cnt/7*100)+"%",background:h.color,borderRadius:999,boxShadow:`0 0 8px ${h.color}88`,transition:"width 1s"}}/>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
+  <div className="su">
+    <div style={{fontSize:20,fontWeight:900,marginBottom:14}}>Analytics</div>
+ 
+    {/* HEATMAP — visible to ALL users */}
+    <HeatmapCalendar habits={habits}/>
+ 
+    {!isPro ? (
+      <div className="card-3d float-a" style={{padding:40,textAlign:"center"}}>
+        <div style={{fontSize:52,marginBottom:14}}>🔒</div>
+        <div style={{fontSize:20,fontWeight:800,marginBottom:8}}>Pro Feature</div>
+        <div style={{color:"rgba(255,255,255,0.4)",fontSize:14,marginBottom:22}}>Unlock detailed analytics and more</div>
+        <button onClick={()=>setShowPaywall(true)} className="color-btn" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FFD93D,#FF8E53)"}}>Upgrade to Pro ⭐</button>
+      </div>
+    ) : (
+      <>
+        {/* XP Ring */}
+        <div className="card-3d float-b" style={{padding:24,textAlign:"center",marginBottom:14,background:"linear-gradient(135deg,#A78BFA22,#4ECDC422)"}}>
+          <Ring3D pct={xpPct} size={160} color="#A78BFA" label="LEVEL PROGRESS" sublabel={currentLevel.title}/>
+          <div style={{marginTop:12,fontSize:13,color:"rgba(255,255,255,0.5)"}}>
+            {nextLevel ? `${nextLevel.minXP-displayXP} XP to ${nextLevel.title}` : "MAX LEVEL! 👑"}
           </div>
-        )}
+        </div>
+ 
+        {/* Stats grid */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+          {[
+            {lbl:"Total Completions",val:habits.reduce((s,h)=>s+Object.keys(h.completions||{}).length,0),color:"#4ECDC4"},
+            {lbl:"Best Streak",val:bestStreak+"🔥",color:"#FF8E53"},
+            {lbl:"Total XP",val:displayXP+"⚡",color:"#A78BFA"},
+            {lbl:"Habits Tracked",val:habits.length,color:"#F472B6"},
+          ].map(s=>(
+            <div key={s.lbl} className="card-3d" style={{padding:18,background:`linear-gradient(135deg,${s.color}22,${s.color}08)`}}>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:6,fontWeight:700,letterSpacing:.5}}>{s.lbl}</div>
+              <div style={{fontSize:28,fontWeight:900,filter:`drop-shadow(0 0 8px ${s.color})`}}>{s.val}</div>
+            </div>
+          ))}
+        </div>
+ 
+        {/* Habit completion bars */}
+        <div className="card-3d" style={{padding:20,marginBottom:14}}>
+          <div style={{fontSize:15,fontWeight:800,marginBottom:16}}>This Week</div>
+          {habits.map(h=>{
+            const cnt = days.filter(d=>h.completions?.[d]).length
+            return (
+              <div key={h.id} style={{marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:13}}>
+                  <span>{h.emoji} {h.name}</span>
+                  <span style={{color:h.color,fontWeight:700}}>{cnt}/7</span>
+                </div>
+                <div style={{height:8,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
+                  <div style={{height:"100%",width:(cnt/7*100)+"%",background:h.color,borderRadius:999,boxShadow:`0 0 8px ${h.color}88`,transition:"width 1s"}}/>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </>
+    )}
+  </div>
+)}
+ 
 
         {/* SETTINGS TAB */}
         {activeTab==="settings" && (
