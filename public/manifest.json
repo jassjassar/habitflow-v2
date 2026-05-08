@@ -1,11 +1,11 @@
 {
-  "name": "HabitFlow",
+  "name": "HabitFlow Pro",
   "short_name": "HabitFlow",
-  "description": "Build better habits with streaks, XP levels and analytics",
+  "description": "Build habits that change your life with AI coaching, streaks and XP",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#08080D",
-  "theme_color": "#C9A84C",
+  "background_color": "#0d0d1a",
+  "theme_color": "#A78BFA",
   "orientation": "portrait",
   "icons": [
     {
