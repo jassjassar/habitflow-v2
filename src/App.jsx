@@ -66,8 +66,8 @@ const LEVELS = [
 const getLast7 = () => Array.from({length:7},(_,i)=>{ const d=new Date(); d.setDate(d.getDate()-(6-i)); return d.toISOString().slice(0,10) })
 const todayStr = new Date().toISOString().slice(0,10)
 const calcXP = (habits, days) => { let xp=0; habits.forEach(h=>{ let s=0; days.forEach(d=>{ if(h.completions?.[d]){xp+=10;s++;xp+=s*5}else s=0 }) }); return xp }
-const getLevel = (xp) => LEVELS.slice().reverse().find(l=>xp>=l.minXP)||LEVELS[0]
-const getStreak = (habit, days) => { let s=0; const rev=[...days].reverse(); for(let d of rev){ if(habit.completions?.[d]) s++; else break }; return s }
+const getLevel = (xp) => LEVELS.slice().reverse().find(l=>xp>=l.minXP)||LEVELS[0] 
+const getStreak = (habit, days, freezeDates=[]) => { let s=0; const rev=[...days].reverse(); for(let d of rev){ if(habit.completions?.[d]) s++; else if(freezeDates.includes(d)) s++; else break }; return s }
 const getHour = () => new Date().getHours()
 const getGreeting = () => { const h=getHour(); return h<12?"Good morning":h<17?"Good afternoon":"Good evening" }
 
@@ -84,7 +84,8 @@ const css = `
   @keyframes floatB{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
   @keyframes pulse{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
   @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-  @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+  @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}} 
+  @keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
   @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
   @keyframes levelUp{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
   @keyframes fireFlicker{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.1) scaleX(0.95)}}
@@ -611,6 +612,9 @@ export default function App() {
   const [habits, setHabits] = useState([])
   const [isPro, setIsPro] = useState(false)
   const [loading, setLoading] = useState(true) 
+  const [freezes, setFreezes] = useState(() => parseInt(localStorage.getItem("hf_freezes")||"0"))
+  const [freezeToast, setFreezeToast] = useState(false)
+  const [freezeDates, setFreezeDates] = useState(() => { try { return JSON.parse(localStorage.getItem("hf_freeze_dates")||"[]") } catch { return [] } }) 
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [activeTab, setActiveTab] = useState("home")
   const [showAdd, setShowAdd] = useState(false)
@@ -681,7 +685,18 @@ if (isNewUser) setShowOnboarding(true)
       await supabase.from("completions").delete().eq("habit_id",id).eq("date",date)
     } else {
       await supabase.from("completions").insert({habit_id:id,user_id:user.id,date})
-      triggerParticles()
+      triggerParticles() 
+      const newStreak = getStreak({...h, completions:{...h.completions,[date]:true}}, days)
+if (newStreak > 0 && newStreak % 7 === 0) {
+  const maxFreezes = isPro ? 99 : 1
+  if (freezes < maxFreezes) {
+    const newFreezes = freezes + 1
+    setFreezes(newFreezes)
+    localStorage.setItem("hf_freezes", newFreezes)
+    setFreezeToast("shield_earned")
+    setTimeout(() => setFreezeToast(false), 3000)
+  }
+} 
       const newXP = calcXP([...habits.map(x=>x.id===id?{...x,completions:{...x.completions,[date]:true}}:x)], days)
       const oldLevel = getLevel(prevXP.current)
       const newLevel = getLevel(newXP)
@@ -758,7 +773,25 @@ Rules: Be conversational, warm, personal. Keep under 120 words. Use 1-2 emojis. 
   const currentLevel = getLevel(xp)
   const nextLevel = LEVELS.find(l=>l.level===currentLevel.level+1)
   const xpPct = nextLevel ? Math.round(((xp-currentLevel.minXP)/(nextLevel.minXP-currentLevel.minXP))*100) : 100
-  const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days))) : 0
+  useEffect(() => {
+  if (habits.length === 0 || freezes === 0) return
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1)
+  const yesterdayStr = yesterday.toISOString().slice(0,10)
+  const missedYesterday = habits.some(h => !h.completions?.[yesterdayStr])
+  const alreadyFroze = freezeDates.includes(yesterdayStr)
+  if (missedYesterday && !alreadyFroze) {
+    const newDates = [...freezeDates, yesterdayStr]
+    setFreezeDates(newDates)
+    localStorage.setItem("hf_freeze_dates", JSON.stringify(newDates))
+    const newFreezes = Math.max(0, freezes - 1)
+    setFreezes(newFreezes)
+    localStorage.setItem("hf_freezes", newFreezes)
+    setFreezeToast("shield_used")
+    setTimeout(() => setFreezeToast(false), 4000)
+  }
+}, [habits])
+
+const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,freezeDates))) : 0
   const doneToday = habits.filter(h=>h.completions?.[todayStr]).length
   const todayPct = habits.length ? Math.round((doneToday/habits.length)*100) : 0
   const stepsPct = Math.min((steps/10000)*100,100)
@@ -943,12 +976,25 @@ Rules: Be conversational, warm, personal. Keep under 120 words. Use 1-2 emojis. 
                 </div>
 
                 {/* Streak Card */}
-                <div className="card" style={{padding:"14px 16px",background:"linear-gradient(135deg,rgba(255,142,83,0.15),rgba(255,107,107,0.08))"}}>
-                  <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>BEST STREAK</div>
-                  <FireStreak streak={bestStreak}/>
-                </div>
-              </div>
-            </div>
+<div className="card" style={{padding:"14px 16px",background:"linear-gradient(135deg,rgba(255,142,83,0.15),rgba(255,107,107,0.08))"}}>
+  <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>BEST STREAK</div>
+  <FireStreak streak={bestStreak}/>
+  <div style={{display:"flex",alignItems:"center",gap:6,marginTop:8,padding:"5px 10px",background:"rgba(255,255,255,0.07)",borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",width:"fit-content"}}>
+    <span style={{fontSize:16}}>🛡️</span>
+    <span style={{fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.8)"}}>{freezes} {freezes===1?"shield":"shields"}</span>
+    {freezes===0 && <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontWeight:600}}>· earn at 7 days</span>}
+  </div>
+  {bestStreak>0 && bestStreak<7 && (
+    <div style={{marginTop:8}}>
+      <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontWeight:600,marginBottom:4}}>🛡️ next shield in {7-(bestStreak%7)} days</div>
+      <div style={{height:3,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
+        <div style={{height:"100%",borderRadius:999,background:"linear-gradient(90deg,#FF8E53,#FFD93D)",width:`${(bestStreak%7)/7*100}%`,transition:"width 0.6s ease"}}/>
+      </div>
+    </div>
+  )}
+</div>
+</div>
+</div>
 
             {/* STEPS CARD */}
             <div className="card" style={{padding:"16px 18px",marginBottom:14,background:"linear-gradient(135deg,rgba(78,205,196,0.12),rgba(69,183,209,0.06))"}}>
