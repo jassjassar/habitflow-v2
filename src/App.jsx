@@ -612,6 +612,7 @@ export default function App() {
   const [habits, setHabits] = useState([])
   const [isPro, setIsPro] = useState(false)
   const [loading, setLoading] = useState(true) 
+  const [totalXP, setTotalXP] = useState(0) 
   const [freezes, setFreezes] = useState(() => parseInt(localStorage.getItem("hf_freezes")||"0"))
   const [freezeToast, setFreezeToast] = useState(false)
   const [freezeDates, setFreezeDates] = useState(() => { try { return JSON.parse(localStorage.getItem("hf_freeze_dates")||"[]") } catch { return [] } }) 
@@ -661,8 +662,11 @@ export default function App() {
     const {data:hd} = await supabase.from("habits").select("*").eq("user_id",uid).order("created_at")
     const {data:cd} = await supabase.from("completions").select("*").eq("user_id",uid)
     if (hd) setHabits(hd.map(h=>({...h,completions:Object.fromEntries((cd||[]).filter(c=>c.habit_id===h.id).map(c=>[c.date,true]))})))
-    const {data:p} = await supabase.from("profiles").select("is_pro").eq("id",uid).single()
-    if (p) setIsPro(p.is_pro) 
+    const {data:p} = await supabase.from("profiles").select("is_pro, total_xp").eq("id",uid).single()
+if (p) {
+  setIsPro(p.is_pro)
+  if (p.total_xp) setTotalXP(p.total_xp)
+}
     const isNewUser = !hd || hd.length === 0
 if (isNewUser) setShowOnboarding(true)
   }
@@ -686,6 +690,11 @@ if (isNewUser) setShowOnboarding(true)
     } else {
       await supabase.from("completions").insert({habit_id:id,user_id:user.id,date})
       triggerParticles() 
+      const streakBonus = getStreak({...h, completions:{...h.completions,[date]:true}}, days) * 5
+const xpEarned = 10 + streakBonus
+const newTotalXP = totalXP + xpEarned
+setTotalXP(newTotalXP)
+supabase.from("profiles").upsert({id:user.id, total_xp:newTotalXP})
       const newStreak = getStreak({...h, completions:{...h.completions,[date]:true}}, days)
 if (newStreak > 0 && newStreak % 7 === 0) {
   const maxFreezes = isPro ? 99 : 1
@@ -770,9 +779,10 @@ Rules: Be conversational, warm, personal. Keep under 120 words. Use 1-2 emojis. 
   const saveMood = (m) => { setMood(m); localStorage.setItem("hf_mood_"+todayStr,m); setShowMood(false) }
 
   const xp = calcXP(habits, days)
-  const currentLevel = getLevel(xp)
-  const nextLevel = LEVELS.find(l=>l.level===currentLevel.level+1)
-  const xpPct = nextLevel ? Math.round(((xp-currentLevel.minXP)/(nextLevel.minXP-currentLevel.minXP))*100) : 100
+const displayXP = totalXP > 0 ? totalXP : xp
+const currentLevel = getLevel(displayXP)
+const nextLevel = LEVELS.find(l=>l.level===currentLevel.level+1)
+const xpPct = nextLevel ? Math.round(((displayXP-currentLevel.minXP)/(nextLevel.minXP-currentLevel.minXP))*100) : 100
   useEffect(() => {
   if (habits.length === 0 || freezes === 0) return
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1)
