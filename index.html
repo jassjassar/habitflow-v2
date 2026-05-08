@@ -2,16 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <meta name="theme-color" content="#C9A84C" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#A78BFA" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="HabitFlow" />
-    <meta name="description" content="Build better habits with streaks, XP levels and analytics" />
+    <meta name="apple-mobile-web-app-title" content="HabitFlow Pro" />
+    <meta name="description" content="Build habits that change your life with AI coaching, streaks and XP" />
+    <meta property="og:title" content="HabitFlow Pro" />
+    <meta property="og:description" content="Build habits that change your life" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://thehabitflow.app" />
     <title>HabitFlow — Build Better Habits</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+        })
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
