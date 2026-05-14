@@ -848,7 +848,13 @@ export default function App() {
   const [habits, setHabits] = useState([])
   const [isPro, setIsPro] = useState(false)
   const [loading, setLoading] = useState(true) 
-  const [totalXP, setTotalXP] = useState(0) 
+  const [totalXP, setTotalXP] = useState(0)
+  const [currentTheme, setCurrentTheme] = useState(() => {
+  const saved = localStorage.getItem("hf_theme") || "aurora"
+  applyTheme(saved)
+  return saved
+})
+const [showTheme, setShowTheme] = useState(false)
   const [freezes, setFreezes] = useState(() => parseInt(localStorage.getItem("hf_freezes")||"0"))
   const [freezeToast, setFreezeToast] = useState(false)
   const [freezeDates, setFreezeDates] = useState(() => { try { return JSON.parse(localStorage.getItem("hf_freeze_dates")||"[]") } catch { return [] } }) 
