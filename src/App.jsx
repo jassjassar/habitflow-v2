@@ -958,6 +958,9 @@ const [showTheme, setShowTheme] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
   const [showAI, setShowAI] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState("")
+  const [checkoutNotice, setCheckoutNotice] = useState("")
   const [showMood, setShowMood] = useState(false)
   const [editHabit, setEditHabit] = useState(null)
   const [particles, setParticles] = useState(false)
@@ -1007,6 +1010,64 @@ const [showTheme, setShowTheme] = useState(false)
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (!user || !supabase) return
+
+    const params = new URLSearchParams(window.location.search)
+    const checkoutResult = params.get("checkout")
+    if (!checkoutResult) return
+
+    const sessionId = params.get("session_id")
+    window.history.replaceState({}, "", window.location.pathname || "/")
+
+    if (checkoutResult === "cancel") {
+      setCheckoutNotice("Checkout canceled. You can restart anytime.")
+      setShowPaywall(true)
+      return
+    }
+
+    if (checkoutResult !== "success" || !sessionId) return
+
+    const confirmCheckout = async () => {
+      setCheckoutLoading(true)
+      setCheckoutError("")
+      setCheckoutNotice("Confirming your subscription...")
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.access_token) throw new Error("Please sign in again to confirm checkout.")
+
+        const res = await fetch("/api/confirm-checkout-session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ sessionId }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || "Checkout confirmation failed.")
+
+        if (data.success) {
+          setIsPro(true)
+          setShowPaywall(false)
+          setCheckoutNotice("You're Pro now. Welcome aboard.")
+          triggerParticles()
+        } else {
+          setShowPaywall(true)
+          setCheckoutNotice("Checkout is not complete yet. Please try again.")
+        }
+      } catch (err) {
+        setShowPaywall(true)
+        setCheckoutError(err?.message || "Could not confirm checkout.")
+      } finally {
+        setCheckoutLoading(false)
+      }
+    }
+
+    confirmCheckout()
+  }, [user])
 
   const loadHabits = async (uid) => { 
     const {data:hd} = await supabase.from("habits").select("*").eq("user_id",uid).order("created_at")
@@ -1092,6 +1153,34 @@ if (newStreak > 0 && newStreak % 7 === 0) {
   const deleteHabit = async (id) => {
     await supabase.from("habits").delete().eq("id",id)
     setHabits(h=>h.filter(x=>x.id!==id)); setEditHabit(null)
+  }
+
+  const startCheckout = async () => {
+    if (checkoutLoading) return
+    setCheckoutLoading(true)
+    setCheckoutError("")
+    setCheckoutNotice("")
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error("Please sign in before upgrading.")
+
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Could not start checkout.")
+      if (!data.url) throw new Error("Checkout did not return a redirect URL.")
+
+      window.location.href = data.url
+    } catch (err) {
+      setCheckoutError(err?.message || "Could not start checkout.")
+      setCheckoutLoading(false)
+    }
   }
 
   const triggerParticles = () => { setParticles(true); setTimeout(()=>setParticles(false),2500) }
@@ -1323,6 +1412,13 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
       <style>{css}</style>
       <Particles active={particles}/>
       <LevelUpBurst show={levelUpShow} level={levelUpData}/> 
+      {checkoutNotice && !showPaywall && (
+        <div style={{position:"fixed",top:76,left:"50%",transform:"translateX(-50%)",zIndex:120,width:"calc(100% - 32px)",maxWidth:440}}>
+          <div className="card" style={{padding:"12px 14px",fontSize:13,fontWeight:700,color:"#fff",textAlign:"center",background:"rgba(107,203,119,0.16)",border:"1px solid rgba(107,203,119,0.28)"}}>
+            {checkoutNotice}
+          </div>
+        </div>
+      )}
       {showTheme && (
   <ThemeSwitcher
     current={currentTheme}
@@ -1856,6 +1952,16 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
               <span style={{background:"linear-gradient(135deg,#FFD93D,#FF8E53)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>$1.99</span>
               <span style={{fontSize:14,color:"rgba(255,255,255,0.35)",fontWeight:400}}>/month</span>
             </div>
+            {checkoutNotice && (
+              <div style={{fontSize:12,lineHeight:1.5,color:"#FFD93D",background:"rgba(255,217,61,0.1)",border:"1px solid rgba(255,217,61,0.22)",borderRadius:12,padding:"10px 12px",marginBottom:14,fontWeight:700}}>
+                {checkoutNotice}
+              </div>
+            )}
+            {checkoutError && (
+              <div style={{fontSize:12,lineHeight:1.5,color:"#FFB4B4",background:"rgba(255,107,107,0.12)",border:"1px solid rgba(255,107,107,0.28)",borderRadius:12,padding:"10px 12px",marginBottom:14,fontWeight:700}}>
+                {checkoutError}
+              </div>
+            )}
             <div style={{textAlign:"left",background:"rgba(255,255,255,0.04)",borderRadius:16,padding:16,marginBottom:24,border:"1px solid rgba(255,255,255,0.07)"}}>
               {["♾️ Unlimited habits","📊 Full analytics & XP","🤖 AI Coach unlimited","🏆 Leaderboard access","☁️ Priority cloud sync"].map(f=>(
                 <div key={f} style={{display:"flex",gap:10,marginBottom:10,fontSize:14}}>
@@ -1863,8 +1969,8 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
                 </div>
               ))}
             </div>
-            <button onClick={async()=>{ if(user){ await supabase.from("profiles").upsert({id:user.id,is_pro:true}); setIsPro(true); setShowPaywall(false); triggerParticles() }}} className="btn-grad" style={{width:"100%",padding:16,fontSize:16,background:"linear-gradient(135deg,#FFD93D,#FF8E53)",marginBottom:10}}>
-              Start Pro Now 🚀
+            <button onClick={startCheckout} disabled={checkoutLoading || isPro} className="btn-grad" style={{width:"100%",padding:16,fontSize:16,background:"linear-gradient(135deg,#FFD93D,#FF8E53)",marginBottom:10,opacity:checkoutLoading || isPro?0.65:1}}>
+              {checkoutLoading ? "Opening checkout..." : isPro ? "Pro Active ✓" : "Start Pro Now 🚀"}
             </button>
             <button onClick={()=>setShowPaywall(false)} className="btn-glass" style={{width:"100%",padding:12,fontSize:13}}>Maybe later</button>
           </div>
