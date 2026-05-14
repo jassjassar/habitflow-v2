@@ -4,7 +4,7 @@ HabitFlow v2 - Premium habit tracking app with XP levels, streak shields, daily 
 ## Local setup
 
 1. Copy `.env.example` to `.env.local`.
-2. Fill in the Supabase, VAPID, Anthropic and cron values.
+2. Fill in the Supabase, VAPID, Anthropic, Stripe and cron values.
 3. Run `npm install`.
 4. Run `npm run dev`.
 
@@ -22,4 +22,8 @@ Required server values:
 - `VAPID_PUBLIC_KEY`
 - `VAPID_PRIVATE_KEY`
 - `CRON_SECRET`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PRICE_ID`
 - `APP_URL`
+
+Stripe checkout uses `STRIPE_PRICE_ID` for the recurring Pro subscription Price. `APP_URL` is used for Checkout success and cancel redirects.
