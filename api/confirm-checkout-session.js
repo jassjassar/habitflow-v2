@@ -59,7 +59,18 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: false, status: session.status, paymentStatus: session.payment_status })
     }
 
-    const { error: profileError } = await supabase.from("profiles").upsert({ id: user.id, is_pro: true })
+    const stripeCustomerId = typeof session.customer === "string" ? session.customer : session.customer?.id
+    const stripeSubscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id
+    if (!stripeCustomerId || !stripeSubscriptionId) {
+      return res.status(400).json({ error: "Checkout session is missing subscription details" })
+    }
+
+    const { error: profileError } = await supabase.from("profiles").upsert({
+      id: user.id,
+      is_pro: true,
+      stripe_customer_id: stripeCustomerId,
+      stripe_subscription_id: stripeSubscriptionId,
+    })
     if (profileError) throw profileError
 
     return res.status(200).json({ success: true })

@@ -27,3 +27,5 @@ Required server values:
 - `APP_URL`
 
 Stripe checkout uses `STRIPE_PRICE_ID` for the recurring Pro subscription Price. `APP_URL` is used for Checkout success and cancel redirects.
+
+Checkout confirmation stores `stripe_customer_id` and `stripe_subscription_id` on the user's profile for later subscription management.
