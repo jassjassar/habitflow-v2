@@ -1012,14 +1012,22 @@ const [showTheme, setShowTheme] = useState(false)
     const {data:hd} = await supabase.from("habits").select("*").eq("user_id",uid).order("created_at")
     const {data:cd} = await supabase.from("completions").select("*").eq("user_id",uid)
     if (hd) setHabits(hd.map(h=>({...h,completions:Object.fromEntries((cd||[]).filter(c=>c.habit_id===h.id).map(c=>[c.date,true]))})))
-   const {data:p} = await supabase.from("profiles").select("is_pro, total_xp, theme").eq("id",uid).single()
-if (p) {
-  setIsPro(p.is_pro)
-  if (p.total_xp) setTotalXP(p.total_xp)
-  if (p.theme) { setCurrentTheme(p.theme); applyTheme(p.theme) }
+    const {data:p, error:profileError} = await supabase.from("profiles").select("is_pro, total_xp, theme, onboarding_completed").eq("id",uid).maybeSingle()
+    let profile = p
+
+    if (profileError?.message?.includes("onboarding_completed")) {
+      const {data:fallbackProfile} = await supabase.from("profiles").select("is_pro, total_xp, theme").eq("id",uid).maybeSingle()
+      profile = fallbackProfile
+    }
+
+if (profile) {
+  setIsPro(profile.is_pro)
+  if (profile.total_xp) setTotalXP(profile.total_xp)
+  if (profile.theme) { setCurrentTheme(profile.theme); applyTheme(profile.theme) }
 }
-    const isNewUser = !hd || hd.length === 0
-if (isNewUser) setShowOnboarding(true)
+    const hasExistingHabits = Boolean(hd?.length)
+    const hasCompletedOnboarding = profile?.onboarding_completed === true || hasExistingHabits
+    setShowOnboarding(!hasCompletedOnboarding)
   }
 
   const signInGoogle = async () => await supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin}})
@@ -1345,6 +1353,9 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
       const createdHabits = (data || []).map(h => ({...h, completions:{}}))
 
       if (createdHabits.length === 0) throw new Error("No habits were created.")
+      const {error:profileError} = await supabase.from("profiles").upsert({id:user.id,onboarding_completed:true})
+      if (profileError) throw profileError
+
       setHabits(prev => [...prev, ...createdHabits])
       triggerParticles()
       return createdHabits
