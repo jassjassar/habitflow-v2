@@ -863,15 +863,24 @@ export default function App() {
   const prevXP = useRef(0)
 
   useEffect(() => {
+    let pushTimer
+    const schedulePushSetup = () => {
+      clearTimeout(pushTimer)
+      pushTimer = setTimeout(() => setupPushNotifications(), 3000)
+    }
+
     supabase.auth.getSession().then(({data:{session}}) => {
-      if (session?.user) { setUser(session.user); loadHabits(session.user.id) }
+      if (session?.user) { setUser(session.user); loadHabits(session.user.id); schedulePushSetup() }
       setLoading(false)
     })
     const {data:{subscription}} = supabase.auth.onAuthStateChange((_,session) => {
-      if (session?.user) { setUser(session.user); setPage("app"); loadHabits(session.user.id) }
+      if (session?.user) { setUser(session.user); setPage("app"); loadHabits(session.user.id); schedulePushSetup() }
       else { setUser(null); setHabits([]); setPage("landing") }
     })
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(pushTimer)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const loadHabits = async (uid) => { 
@@ -952,6 +961,39 @@ if (newStreak > 0 && newStreak % 7 === 0) {
   }
 
   const triggerParticles = () => { setParticles(true); setTimeout(()=>setParticles(false),2500) }
+
+  const setupPushNotifications = async () => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return
+
+    const permission = await Notification.requestPermission()
+    if (permission !== "granted") return
+
+    const registration = await navigator.serviceWorker.ready
+    const existingSubscription = await registration.pushManager.getSubscription()
+    const subscription = existingSubscription || await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array("BC90s6CBLIksHNXOk_AQYPK4RJ6KIdGMLd2PTMDAxwY-Ej9gwYOYxn52Qq5eUMuIwX4mfCe3rmLzGYxkLZyUfrA"),
+    })
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return
+
+    await fetch("/api/subscribe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ subscription }),
+    })
+  }
+
+  const urlBase64ToUint8Array = (base64String) => {
+    const padding = "=".repeat((4 - base64String.length % 4) % 4)
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/")
+    const rawData = window.atob(base64)
+    return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)))
+  }
 
   const sendAI = async () => {
     if (!aiInput.trim() || aiLoading) return
