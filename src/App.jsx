@@ -842,6 +842,46 @@ function OnboardingQuiz({ user, supabase, onComplete }) {
   )
 } 
 
+function ThemeSwitcher({ current, onSelect, onClose }) {
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:400,width:"100%",padding:24,margin:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+          <div style={{fontSize:18,fontWeight:900}}>🎨 Choose Theme</div>
+          <button onClick={onClose} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          {Object.entries(THEMES).map(([id, t]) => (
+            <div key={id} onClick={()=>onSelect(id)} style={{
+              borderRadius:16, overflow:"hidden",
+              border: current===id ? `2px solid ${t.accent}` : "2px solid transparent",
+              cursor:"pointer", transition:"all .2s",
+              transform: current===id ? "scale(1.03)" : "scale(1)",
+              boxShadow: current===id ? `0 0 20px ${t.accent}44` : "none",
+            }}>
+              <div style={{background:t.bg, padding:14, height:70, display:"flex", flexDirection:"column", gap:6}}>
+                <div style={{display:"flex",gap:5}}>
+                  <div style={{width:8,height:8,borderRadius:"50%",background:t.accent}}/>
+                  <div style={{width:8,height:8,borderRadius:"50%",background:t.accent,opacity:.6}}/>
+                </div>
+                <div style={{height:5,borderRadius:3,background:t.accent,width:"70%"}}/>
+                <div style={{height:5,borderRadius:3,background:t.accent,width:"50%",opacity:.6}}/>
+              </div>
+              <div style={{
+                background: t.text==="#ffffff"||t.text==="#f0f9ff"||t.text==="#f1f5f9" ? "#1a1a2e" : "#f9fafb",
+                color: t.text==="#ffffff"||t.text==="#f0f9ff"||t.text==="#f1f5f9" ? "#fff" : "#374151",
+                padding:"8px 10px", fontSize:11, fontWeight:800, textAlign:"center"
+              }}>
+                {current===id ? "✓ " : ""}{t.name}
+              </div>
+            </div>
+          ))}
+        </div>
+        <button onClick={onClose} className="btn-glass" style={{width:"100%",marginTop:16,padding:12,fontSize:14}}>Done</button>
+      </div>
+    </div>
+  )
+}
 export default function App() {
   const [page, setPage] = useState("landing")
   const [user, setUser] = useState(null)
@@ -913,7 +953,7 @@ const [showTheme, setShowTheme] = useState(false)
     const {data:hd} = await supabase.from("habits").select("*").eq("user_id",uid).order("created_at")
     const {data:cd} = await supabase.from("completions").select("*").eq("user_id",uid)
     if (hd) setHabits(hd.map(h=>({...h,completions:Object.fromEntries((cd||[]).filter(c=>c.habit_id===h.id).map(c=>[c.date,true]))})))
-    const {data:p} = await supabase.from("profiles").select("is_pro, total_xp").eq("id",uid).single()
+   const {data:p} = await supabase.from("profiles").select("is_pro, total_xp, theme").eq("id",uid).single()
 if (p) {
   setIsPro(p.is_pro)
   if (p.total_xp) setTotalXP(p.total_xp)
@@ -1201,6 +1241,18 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
       <style>{css}</style>
       <Particles active={particles}/>
       <LevelUpBurst show={levelUpShow} level={levelUpData}/> 
+      {showTheme && (
+  <ThemeSwitcher
+    current={currentTheme}
+    onClose={()=>setShowTheme(false)}
+    onSelect={async(themeId)=>{
+      setCurrentTheme(themeId)
+      applyTheme(themeId)
+      setShowTheme(false)
+      if(user) await supabase.from("profiles").upsert({id:user.id, theme:themeId})
+    }}
+  />
+)}
 
       {showOnboarding && (
   <OnboardingQuiz
@@ -1528,10 +1580,11 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
 
             <div className="card" style={{padding:4,marginBottom:14,overflow:"hidden"}}>
               {[
-                {icon:"⭐",lbl:isPro?"Pro Active ✓":"Upgrade to Pro",fn:()=>setShowPaywall(true),color:"#FFD93D"},
-                {icon:"🤖",lbl:"AI Coach",fn:()=>setShowAI(true),color:"#A78BFA"},
-                {icon:"📋",lbl:"Templates",fn:()=>setShowTemplates(true),color:"#4ECDC4"},
-                {icon:"↪",lbl:"Sign Out",fn:signOut,color:"#FF6B6B"},
+  {icon:"⭐",lbl:isPro?"Pro Active ✓":"Upgrade to Pro",fn:()=>setShowPaywall(true),color:"#FFD93D"},
+  {icon:"🎨",lbl:"Change Theme",fn:()=>setShowTheme(true),color:"#A78BFA"},
+  {icon:"🤖",lbl:"AI Coach",fn:()=>setShowAI(true),color:"#A78BFA"},
+  {icon:"📋",lbl:"Templates",fn:()=>setShowTemplates(true),color:"#4ECDC4"},
+  {icon:"↪",lbl:"Sign Out",fn:signOut,color:"#FF6B6B"},
               ].map((item,i,arr)=>(
                 <button key={i} onClick={item.fn} className="btn-glass" style={{width:"100%",padding:"16px 18px",borderRadius:0,border:"none",borderBottom:i<arr.length-1?"1px solid rgba(255,255,255,0.06)":"none",display:"flex",alignItems:"center",gap:14,fontSize:14,background:"transparent",textAlign:"left"}}>
                   <span style={{fontSize:22,filter:`drop-shadow(0 0 6px ${item.color})`}}>{item.icon}</span>
