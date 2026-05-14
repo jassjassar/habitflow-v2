@@ -341,7 +341,7 @@ function OnboardingQuiz({ onComplete, onDone }) {
       id: "time",
       emoji: "⏰",
       title: "When are you most active?",
-      subtitle: "We'll set reminders at the right times",
+      subtitle: "We'll use this to set your starter reminder times",
       options: [
         { id:"morning",   emoji:"🌅", label:"Early bird",     desc:"I'm active before 9am" },
         { id:"afternoon", emoji:"☀️", label:"Afternoon peak",  desc:"I hit my stride after noon" },
@@ -958,6 +958,10 @@ const [showTheme, setShowTheme] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
   const [showAI, setShowAI] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notificationLoading, setNotificationLoading] = useState(false)
+  const [notificationMessage, setNotificationMessage] = useState("")
+  const [notificationError, setNotificationError] = useState("")
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [checkoutError, setCheckoutError] = useState("")
   const [checkoutNotice, setCheckoutNotice] = useState("")
@@ -991,22 +995,15 @@ const [showTheme, setShowTheme] = useState(false)
       return
     }
 
-    let pushTimer
-    const schedulePushSetup = () => {
-      clearTimeout(pushTimer)
-      pushTimer = setTimeout(() => setupPushNotifications(), 3000)
-    }
-
     supabase.auth.getSession().then(({data:{session}}) => {
-      if (session?.user) { setUser(session.user); loadHabits(session.user.id); schedulePushSetup() }
+      if (session?.user) { setUser(session.user); loadHabits(session.user.id) }
       setLoading(false)
     })
     const {data:{subscription}} = supabase.auth.onAuthStateChange((_,session) => {
-      if (session?.user) { setUser(session.user); setPage("app"); loadHabits(session.user.id); schedulePushSetup() }
+      if (session?.user) { setUser(session.user); setPage("app"); loadHabits(session.user.id) }
       else { setUser(null); setHabits([]); setPage("landing") }
     })
     return () => {
-      clearTimeout(pushTimer)
       subscription.unsubscribe()
     }
   }, [])
@@ -1139,7 +1136,11 @@ if (newStreak > 0 && newStreak % 7 === 0) {
     if (!newName.trim()) return
     if (!isPro && habits.length >= 3) { setShowPaywall(true); return }
     const {data} = await supabase.from("habits").insert({user_id:user.id,name:newName.trim(),emoji:newEmoji,color:newColor,reminder_time:newTime}).select().single()
-    if (data) { setHabits(h=>[...h,{...data,completions:{}}]); triggerParticles() }
+    if (data) {
+      setHabits(h=>[...h,{...data,completions:{}}])
+      triggerParticles()
+      maybeOpenNotificationPrompt()
+    }
     setNewName(""); setShowAdd(false)
   }
 
@@ -1153,6 +1154,24 @@ if (newStreak > 0 && newStreak % 7 === 0) {
   const deleteHabit = async (id) => {
     await supabase.from("habits").delete().eq("id",id)
     setHabits(h=>h.filter(x=>x.id!==id)); setEditHabit(null)
+  }
+
+  const canUsePushNotifications = () => (
+    Boolean(env.vapidPublicKey) &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window
+  )
+
+  const maybeOpenNotificationPrompt = () => {
+    if (!canUsePushNotifications()) return
+    if (localStorage.getItem("hf_notifications_prompt_dismissed") === "true") return
+    if (Notification.permission === "default") setShowNotifications(true)
+  }
+
+  const dismissNotificationPrompt = () => {
+    localStorage.setItem("hf_notifications_prompt_dismissed", "true")
+    setShowNotifications(false)
   }
 
   const startCheckout = async () => {
@@ -1186,29 +1205,52 @@ if (newStreak > 0 && newStreak % 7 === 0) {
   const triggerParticles = () => { setParticles(true); setTimeout(()=>setParticles(false),2500) }
 
   const setupPushNotifications = async () => {
-    if (!env.vapidPublicKey || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return
+    if (!canUsePushNotifications()) {
+      setNotificationError("Reminders are not supported on this browser yet.")
+      return false
+    }
 
-    const permission = await Notification.requestPermission()
-    if (permission !== "granted") return
+    setNotificationLoading(true)
+    setNotificationError("")
+    setNotificationMessage("")
 
-    const registration = await navigator.serviceWorker.ready
-    const existingSubscription = await registration.pushManager.getSubscription()
-    const subscription = existingSubscription || await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(env.vapidPublicKey),
-    })
+    try {
+      const permission = await Notification.requestPermission()
+      if (permission !== "granted") {
+        setNotificationLoading(false)
+        setNotificationError("Notifications were not enabled. You can turn them on later from Settings.")
+        return false
+      }
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) return
+      const registration = await navigator.serviceWorker.ready
+      const existingSubscription = await registration.pushManager.getSubscription()
+      const subscription = existingSubscription || await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(env.vapidPublicKey),
+      })
 
-    await fetch("/api/subscribe", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ subscription }),
-    })
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error("Please sign in again to enable reminders.")
+
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ subscription }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Could not save your reminder settings.")
+
+      setNotificationMessage("Reminders are on. We'll nudge you at your habit times.")
+      return true
+    } catch (err) {
+      setNotificationError(err?.message || "Could not enable reminders.")
+      return false
+    } finally {
+      setNotificationLoading(false)
+    }
   }
 
   const urlBase64ToUint8Array = (base64String) => {
@@ -1458,6 +1500,7 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
     }}
     onDone={() => {
       setShowOnboarding(false)
+      maybeOpenNotificationPrompt()
     }}
   />
 )}
@@ -1769,6 +1812,7 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
               {[
   {icon:"⭐",lbl:isPro?"Pro Active ✓":"Upgrade to Pro",fn:()=>setShowPaywall(true),color:"#FFD93D"},
   {icon:"🎨",lbl:"Change Theme",fn:()=>setShowTheme(true),color:"#A78BFA"},
+  {icon:"🔔",lbl:"Reminder Notifications",fn:()=>setShowNotifications(true),color:"#4ECDC4"},
   {icon:"🤖",lbl:"AI Coach",fn:()=>setShowAI(true),color:"#A78BFA"},
   {icon:"📋",lbl:"Templates",fn:()=>setShowTemplates(true),color:"#4ECDC4"},
   {icon:"↪",lbl:"Sign Out",fn:signOut,color:"#FF6B6B"},
@@ -1828,6 +1872,9 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
             </div>
             <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.35)",letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>⏰ Reminder Time</div>
             <input type="time" value={newTime} onChange={e=>setNewTime(e.target.value)} className="inp" style={{width:"auto",marginBottom:20}}/>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.38)",lineHeight:1.5,marginTop:-12,marginBottom:18}}>
+              We'll ask before turning on notifications, then use this time for daily reminders.
+            </div>
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>setShowAdd(false)} className="btn-glass" style={{flex:1,padding:14,fontSize:14}}>Cancel</button>
               <button onClick={addHabit} className="btn-grad" style={{flex:2,padding:14,fontSize:15,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>Add Habit 🚀</button>
@@ -1938,6 +1985,46 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
             <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"rgba(255,255,255,0.25)",fontWeight:700,padding:"0 4px"}}>
               <span>Tired</span><span>Neutral</span><span>Good</span><span>Great</span><span>On fire!</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* NOTIFICATION OPT-IN */}
+      {showNotifications && (
+        <div className="overlay" onClick={dismissNotificationPrompt}>
+          <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:390,width:"100%",padding:28,textAlign:"center"}}>
+            <div style={{fontSize:54,marginBottom:14,animation:"float 3s ease-in-out infinite"}}>🔔</div>
+            <div style={{fontSize:23,fontWeight:900,marginBottom:8,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
+              Stay on track gently
+            </div>
+            <div style={{fontSize:14,color:"rgba(255,255,255,0.52)",lineHeight:1.65,marginBottom:18}}>
+              HabitFlow can send reminders at the times you choose for each habit. We will only show the browser permission prompt after you tap enable.
+            </div>
+            <div style={{textAlign:"left",background:"rgba(255,255,255,0.04)",borderRadius:16,padding:16,marginBottom:18,border:"1px solid rgba(255,255,255,0.07)"}}>
+              {[
+                "Daily nudges use your habit reminder times",
+                "You can change each habit's time anytime",
+                "No reminder is sent until notifications are enabled",
+              ].map(f=>(
+                <div key={f} style={{display:"flex",gap:10,marginBottom:10,fontSize:13,color:"rgba(255,255,255,0.72)",lineHeight:1.4}}>
+                  <span style={{color:"#6BCB77"}}>✓</span>{f}
+                </div>
+              ))}
+            </div>
+            {notificationMessage && (
+              <div style={{fontSize:12,lineHeight:1.5,color:"#B9F7CB",background:"rgba(107,203,119,0.12)",border:"1px solid rgba(107,203,119,0.25)",borderRadius:12,padding:"10px 12px",marginBottom:12,fontWeight:700}}>
+                {notificationMessage}
+              </div>
+            )}
+            {notificationError && (
+              <div style={{fontSize:12,lineHeight:1.5,color:"#FFB4B4",background:"rgba(255,107,107,0.12)",border:"1px solid rgba(255,107,107,0.28)",borderRadius:12,padding:"10px 12px",marginBottom:12,fontWeight:700}}>
+                {notificationError}
+              </div>
+            )}
+            <button onClick={async()=>{ const ok = await setupPushNotifications(); if(ok) setTimeout(()=>setShowNotifications(false), 900) }} disabled={notificationLoading} className="btn-grad" style={{width:"100%",padding:15,fontSize:15,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",marginBottom:10,opacity:notificationLoading?0.65:1}}>
+              {notificationLoading ? "Turning on reminders..." : "Enable Reminders"}
+            </button>
+            <button onClick={dismissNotificationPrompt} className="btn-glass" style={{width:"100%",padding:12,fontSize:13}}>Maybe later</button>
           </div>
         </div>
       )}
