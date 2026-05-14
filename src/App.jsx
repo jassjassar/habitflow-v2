@@ -54,6 +54,26 @@ const ONBOARDING_HABITS = {
   ],
 } 
 
+const THEMES = {
+  aurora: { name:"Dark Aurora",    bg:"#0d0d1a", accent:"#A78BFA", card:"rgba(255,255,255,0.07)", text:"#ffffff", sub:"rgba(255,255,255,0.5)"  },
+  mint:   { name:"Fresh Mint",     bg:"#f0fdf6", accent:"#10b981", card:"rgba(255,255,255,0.9)",  text:"#111827", sub:"rgba(0,0,0,0.4)"         },
+  ocean:  { name:"Ocean Deep",     bg:"#0c1929", accent:"#0ea5e9", card:"rgba(14,165,233,0.08)",  text:"#f0f9ff", sub:"rgba(255,255,255,0.45)"  },
+  coral:  { name:"Sunset Coral",   bg:"#fff8f5", accent:"#f97316", card:"rgba(255,255,255,0.9)",  text:"#1c0a00", sub:"rgba(0,0,0,0.4)"         },
+  rose:   { name:"Rose Gold",      bg:"#fff5f7", accent:"#e11d48", card:"rgba(255,255,255,0.9)",  text:"#1a0010", sub:"rgba(0,0,0,0.4)"         },
+  slate:  { name:"Midnight Slate", bg:"#0f172a", accent:"#6366f1", card:"rgba(99,102,241,0.08)",  text:"#f1f5f9", sub:"rgba(255,255,255,0.45)"  },
+}
+
+const applyTheme = (themeId) => {
+  const t = THEMES[themeId] || THEMES.aurora
+  const r = document.documentElement
+  r.style.setProperty("--bg", t.bg)
+  r.style.setProperty("--accent", t.accent)
+  r.style.setProperty("--card", t.card)
+  r.style.setProperty("--text", t.text)
+  r.style.setProperty("--sub", t.sub)
+  localStorage.setItem("hf_theme", themeId)
+}
+
 const LEVELS = [
   { level:1, title:"Beginner",  icon:"🌱", minXP:0    },
   { level:2, title:"Explorer",  icon:"🚀", minXP:100  },
