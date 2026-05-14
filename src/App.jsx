@@ -315,12 +315,14 @@ function LevelUpBurst({ show, level }) {
   )
 }
 
-function OnboardingQuiz({ user, supabase, onComplete }) {
+function OnboardingQuiz({ onComplete, onDone }) {
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
   const [animating, setAnimating] = useState(false)
   const [completing, setCompleting] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
+  const [createdHabits, setCreatedHabits] = useState([])
+  const [error, setError] = useState("")
  
   const STEPS = [
     {
@@ -362,25 +364,47 @@ function OnboardingQuiz({ user, supabase, onComplete }) {
  
   const currentStep = STEPS[step]
   const totalSteps = STEPS.length
-  const progress = step / totalSteps
  
   const selectOption = (optId) => {
+    if (completing) return
+    setError("")
     setAnswers(prev => ({ ...prev, [currentStep.id]: optId }))
+  }
+
+  const goBack = () => {
+    if (step === 0 || animating || completing) return
+    setError("")
+    setAnimating(true)
+    setTimeout(() => { setStep(s => Math.max(0, s - 1)); setAnimating(false) }, 220)
+  }
+
+  const finishSetup = async (selectedHabits) => {
+    if (completing) return
+    setCompleting(true)
+    setError("")
+
+    try {
+      const created = await onComplete(selectedHabits)
+      if (!created?.length) throw new Error("No habits were created.")
+
+      setCreatedHabits(created)
+      setCelebrating(true)
+      setTimeout(() => onDone?.(), 1800)
+    } catch (err) {
+      setError(err?.message || "We couldn't create your starter habits. Please try again.")
+    } finally {
+      setCompleting(false)
+    }
   }
  
   const goNext = async () => {
-    if (!answers[currentStep.id] || animating) return
+    if (!answers[currentStep.id] || animating || completing) return
     if (step < totalSteps - 1) {
+      setError("")
       setAnimating(true)
       setTimeout(() => { setStep(s => s + 1); setAnimating(false) }, 320)
     } else {
-      // Final — show celebration then complete
-      setCelebrating(true)
-      setTimeout(async () => {
-        setCompleting(true)
-        const habits = buildHabits(answers)
-        await onComplete(habits)
-      }, 2200)
+      await finishSetup(buildHabits(answers))
     }
   }
  
@@ -398,7 +422,7 @@ function OnboardingQuiz({ user, supabase, onComplete }) {
  
   // CELEBRATION SCREEN
   if (celebrating) {
-    const habitCount = parseInt(answers.count || "3")
+    const habitCount = createdHabits.length
     const goalLabels = { health:"fitness", mind:"mental clarity", work:"productivity", personal:"personal growth" }
     const goal = goalLabels[answers.goal] || "your goals"
     return (
@@ -416,7 +440,7 @@ function OnboardingQuiz({ user, supabase, onComplete }) {
           We've created {habitCount} habits focused on <span style={{color:"#A78BFA", fontWeight:700}}>{goal}</span>. Your journey starts now.
         </div>
         <div style={{display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:280}}>
-          {buildHabits(answers).map((h, i) => (
+          {createdHabits.map((h, i) => (
             <div key={i} style={{
               background:`${h.color}22`, border:`1px solid ${h.color}44`,
               borderRadius:16, padding:"12px 16px",
@@ -432,11 +456,9 @@ function OnboardingQuiz({ user, supabase, onComplete }) {
             </div>
           ))}
         </div>
-        {completing && (
-          <div style={{marginTop:24, fontSize:14, color:"rgba(255,255,255,0.4)"}}>
-            Setting up your app...
-          </div>
-        )}
+        <div style={{marginTop:24, fontSize:14, color:"rgba(255,255,255,0.4)"}}>
+          Opening your dashboard...
+        </div>
         <style>{`
           @keyframes celebPop {
             0%{transform:scale(0) rotate(-20deg);opacity:0}
@@ -481,6 +503,20 @@ function OnboardingQuiz({ user, supabase, onComplete }) {
  
       {/* HEADER */}
       <div style={{padding:"20px 24px 0", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+        <button
+          onClick={goBack}
+          disabled={step === 0 || animating || completing}
+          style={{
+            width:38,height:38,borderRadius:12,border:"1px solid rgba(255,255,255,0.1)",
+            background:step === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)",
+            color:step === 0 ? "rgba(255,255,255,0.18)" : "#fff",
+            cursor:step === 0 || animating || completing ? "not-allowed" : "pointer",
+            fontSize:18,fontWeight:800,fontFamily:"'Inter',sans-serif",
+          }}
+          aria-label="Back"
+        >
+          ←
+        </button>
         <div style={{fontSize:16, fontWeight:900, background:"linear-gradient(135deg,#A78BFA,#4ECDC4)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>
           ⚡ HabitFlow
         </div>
@@ -545,7 +581,7 @@ function OnboardingQuiz({ user, supabase, onComplete }) {
                     : "1px solid rgba(255,255,255,0.1)",
                   borderRadius:18,
                   padding:"16px 18px",
-                  cursor:"pointer",
+                  cursor:completing?"wait":"pointer",
                   display:"flex",
                   alignItems:"center",
                   gap:14,
@@ -589,36 +625,50 @@ function OnboardingQuiz({ user, supabase, onComplete }) {
             )
           })}
         </div>
+
+        {error && (
+          <div style={{
+            marginBottom:14,padding:"12px 14px",borderRadius:14,
+            background:"rgba(255,107,107,0.12)",border:"1px solid rgba(255,107,107,0.28)",
+            color:"#FFB4B4",fontSize:12,lineHeight:1.45,fontWeight:650,
+          }}>
+            {error}
+          </div>
+        )}
  
         {/* NEXT BUTTON */}
         <button
           onClick={goNext}
-          disabled={!answers[currentStep.id] || animating}
+          disabled={!answers[currentStep.id] || animating || completing}
           style={{
             width:"100%", padding:"17px",
             borderRadius:18, border:"none",
-            background: answers[currentStep.id]
+            background: answers[currentStep.id] && !completing
               ? "linear-gradient(135deg,#A78BFA,#4ECDC4)"
               : "rgba(255,255,255,0.08)",
-            color: answers[currentStep.id] ? "#fff" : "rgba(255,255,255,0.3)",
+            color: answers[currentStep.id] && !completing ? "#fff" : "rgba(255,255,255,0.3)",
             fontSize:16, fontWeight:800,
-            cursor: answers[currentStep.id] ? "pointer" : "not-allowed",
+            cursor: answers[currentStep.id] && !completing ? "pointer" : "not-allowed",
             transition:"all 0.25s",
-            boxShadow: answers[currentStep.id] ? "0 8px 28px rgba(167,139,250,0.35)" : "none",
-            transform: answers[currentStep.id] ? "none" : "scale(0.98)",
+            boxShadow: answers[currentStep.id] && !completing ? "0 8px 28px rgba(167,139,250,0.35)" : "none",
+            transform: answers[currentStep.id] && !completing ? "none" : "scale(0.98)",
             fontFamily:"'Inter',sans-serif",
           }}
         >
-          {step === totalSteps - 1 ? "Build My Habits 🚀" : "Continue →"}
+          {completing ? "Creating your habits..." : step === totalSteps - 1 ? "Build My Habits 🚀" : "Continue →"}
         </button>
  
         {/* SKIP */}
         {step === 0 && (
           <div
-            onClick={() => onComplete(ONBOARDING_HABITS.health.slice(0,3))}
-            style={{textAlign:"center", marginTop:16, fontSize:12, color:"rgba(255,255,255,0.25)", cursor:"pointer", fontWeight:600}}
+            onClick={() => finishSetup(ONBOARDING_HABITS.health.slice(0,3))}
+            style={{
+              textAlign:"center", marginTop:16, fontSize:12,
+              color:completing?"rgba(255,255,255,0.16)":"rgba(255,255,255,0.32)",
+              cursor:completing?"wait":"pointer", fontWeight:700,
+            }}
           >
-            Skip setup →
+            Use starter setup instead →
           </div>
         )}
       </div>
@@ -1280,20 +1330,26 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
 
       {showOnboarding && (
   <OnboardingQuiz
-    user={user}
-    supabase={supabase}
     onComplete={async (selectedHabits) => {
-      for (const h of selectedHabits) {
-        const {data} = await supabase.from("habits").insert({
+      const rows = selectedHabits.map(h => ({
           user_id: user.id,
           name: h.name,
           emoji: h.emoji,
           color: h.color,
           reminder_time: h.time,
-        }).select().single()
-        if (data) setHabits(prev => [...prev, {...data, completions:{}}])
-      }
+      }))
+
+      const {data, error} = await supabase.from("habits").insert(rows).select()
+      if (error) throw error
+
+      const createdHabits = (data || []).map(h => ({...h, completions:{}}))
+
+      if (createdHabits.length === 0) throw new Error("No habits were created.")
+      setHabits(prev => [...prev, ...createdHabits])
       triggerParticles()
+      return createdHabits
+    }}
+    onDone={() => {
       setShowOnboarding(false)
     }}
   />
