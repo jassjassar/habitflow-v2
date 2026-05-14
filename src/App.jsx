@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from "react"
 import { createClient } from "@supabase/supabase-js"
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || "https://ykmftbsglhoxoopzwbwd.supabase.co",
-  import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbWZ0YnNnbGhveG9vcHp3YndkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NjI3MTAsImV4cCI6MjA5MzEzODcxMH0.L3VZxCH7ObRGkhLOuCvqxMoluEFKiKuYQo1Wnq5AR0U"
-)
+const env = {
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  vapidPublicKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
+}
+
+const hasSupabaseConfig = Boolean(env.supabaseUrl && env.supabaseAnonKey)
+const supabase = hasSupabaseConfig ? createClient(env.supabaseUrl, env.supabaseAnonKey) : null
 
 const PALETTE = ["#FF6B6B","#FF8E53","#FFD93D","#6BCB77","#4ECDC4","#45B7D1","#A78BFA","#F472B6"]
 
@@ -929,6 +933,11 @@ const [showTheme, setShowTheme] = useState(false)
   const prevXP = useRef(0)
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
     let pushTimer
     const schedulePushSetup = () => {
       clearTimeout(pushTimer)
@@ -1030,7 +1039,7 @@ if (newStreak > 0 && newStreak % 7 === 0) {
   const triggerParticles = () => { setParticles(true); setTimeout(()=>setParticles(false),2500) }
 
   const setupPushNotifications = async () => {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return
+    if (!env.vapidPublicKey || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return
 
     const permission = await Notification.requestPermission()
     if (permission !== "granted") return
@@ -1039,7 +1048,7 @@ if (newStreak > 0 && newStreak % 7 === 0) {
     const existingSubscription = await registration.pushManager.getSubscription()
     const subscription = existingSubscription || await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array("BC90s6CBLIksHNXOk_AQYPK4RJ6KIdGMLd2PTMDAxwY-Ej9gwYOYxn52Qq5eUMuIwX4mfCe3rmLzGYxkLZyUfrA"),
+      applicationServerKey: urlBase64ToUint8Array(env.vapidPublicKey),
     })
 
     const { data: { session } } = await supabase.auth.getSession()
@@ -1140,6 +1149,21 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
       <style>{css}</style>
       <div style={{fontSize:52,animation:"spin 1s linear infinite"}}>⚡</div>
       <div style={{fontSize:20,fontWeight:900,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>HabitFlow</div>
+    </div>
+  )
+
+  if (!hasSupabaseConfig) return (
+    <div style={{minHeight:"100vh",background:"#0d0d1a",display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Inter',sans-serif"}}>
+      <style>{css}</style>
+      <div className="card" style={{maxWidth:420,width:"100%",padding:28,textAlign:"center"}}>
+        <div style={{fontSize:46,marginBottom:14}}>⚡</div>
+        <div style={{fontSize:22,fontWeight:900,marginBottom:8,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
+          HabitFlow setup needed
+        </div>
+        <div style={{fontSize:14,lineHeight:1.6,color:"rgba(255,255,255,0.55)"}}>
+          Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to your environment, then restart the app.
+        </div>
+      </div>
     </div>
   )
 
