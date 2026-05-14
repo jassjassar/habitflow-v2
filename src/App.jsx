@@ -917,6 +917,7 @@ const [showTheme, setShowTheme] = useState(false)
 if (p) {
   setIsPro(p.is_pro)
   if (p.total_xp) setTotalXP(p.total_xp)
+  if (p.theme) { setCurrentTheme(p.theme); applyTheme(p.theme) }
 }
     const isNewUser = !hd || hd.length === 0
 if (isNewUser) setShowOnboarding(true)
