@@ -1,22 +1,34 @@
-import { createClient } from "@supabase/supabase-js"
 import webpush from "web-push"
+import { createClient } from "@supabase/supabase-js"
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-)
+const getRequiredEnv = () => ({
+  supabaseUrl: process.env.VITE_SUPABASE_URL,
+  serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY,
+  vapidEmail: process.env.VAPID_EMAIL,
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY,
+  cronSecret: process.env.CRON_SECRET,
+})
 
-webpush.setVapidDetails(
-  `mailto:${process.env.VAPID_EMAIL}`,
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-)
+const createPushClient = ({ vapidEmail, vapidPublicKey, vapidPrivateKey }) => {
+  webpush.setVapidDetails(
+    `mailto:${vapidEmail}`,
+    vapidPublicKey,
+    vapidPrivateKey
+  )
+
+  return webpush
+}
 
 export default async function handler(req, res) {
+  const env = getRequiredEnv()
+  const hasConfig = Object.values(env).every(Boolean)
+  if (!hasConfig) return res.status(500).json({ error: "Server configuration is incomplete" })
+
   const authHeader = req.headers.authorization || ""
   const token = authHeader.replace("Bearer ", "")
 
-  if (!process.env.CRON_SECRET || token !== process.env.CRON_SECRET) {
+  if (token !== env.cronSecret) {
     return res.status(401).json({ error: "Unauthorized" })
   }
 
@@ -28,6 +40,9 @@ export default async function handler(req, res) {
   const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
 
   try {
+    const supabase = createClient(env.supabaseUrl, env.serviceKey)
+    const pushClient = createPushClient(env)
+
     const { data: habits, error: habitsError } = await supabase
       .from("habits")
       .select("id,user_id,name,emoji,reminder_time")
@@ -56,7 +71,7 @@ export default async function handler(req, res) {
         url: process.env.APP_URL || "https://habitflow-v2.vercel.app",
       })
 
-      return webpush.sendNotification(subscription, payload)
+      return pushClient.sendNotification(subscription, payload)
     })
 
     const results = await Promise.allSettled(sends)
