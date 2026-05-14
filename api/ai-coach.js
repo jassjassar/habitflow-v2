@@ -1,37 +1,61 @@
-// api/ai-coach.js
-// Vercel Serverless Function — proxies Claude API so key is never in browser
-// Place this file at: habitflow-v2/api/ai-coach.js
+import { createClient } from "@supabase/supabase-js"
+
+const allowedOrigins = new Set([
+  "https://thehabitflow.app",
+  process.env.APP_URL,
+].filter(Boolean))
+
+const setCorsHeaders = (req, res) => {
+  const origin = req.headers.origin
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin)
+  }
+  res.setHeader("Vary", "Origin")
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+}
+
+const getRequiredEnv = () => {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
+  const anthropicKey = process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_KEY
+
+  return { supabaseUrl, serviceKey, anthropicKey }
+}
 
 export default async function handler(req, res) {
-  // Only allow POST
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" })
+  setCorsHeaders(req, res)
+
+  if (req.method === "OPTIONS") return res.status(204).end()
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" })
+
+  const { supabaseUrl, serviceKey, anthropicKey } = getRequiredEnv()
+  if (!supabaseUrl || !serviceKey || !anthropicKey) {
+    return res.status(500).json({ error: "Server configuration is incomplete" })
   }
 
-  // Basic CORS for your domain
-  res.setHeader("Access-Control-Allow-Origin", "https://thehabitflow.app")
-  res.setHeader("Access-Control-Allow-Methods", "POST")
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-  // Verify user is authenticated via Supabase JWT
   const authHeader = req.headers.authorization
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized" })
   }
 
   try {
+    const supabase = createClient(supabaseUrl, serviceKey)
+    const token = authHeader.replace("Bearer ", "")
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !user) return res.status(401).json({ error: "Invalid token" })
+
     const { messages, systemPrompt } = req.body
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: "Invalid request body" })
     }
 
-    // Call Claude API server-side — key never reaches browser
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_KEY, // ✅ server env only
+        "x-api-key": anthropicKey,
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({

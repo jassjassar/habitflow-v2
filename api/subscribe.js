@@ -1,12 +1,36 @@
 import { createClient } from "@supabase/supabase-js"
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-)
+const allowedOrigins = new Set([
+  "https://thehabitflow.app",
+  process.env.APP_URL,
+].filter(Boolean))
+
+const setCorsHeaders = (req, res) => {
+  const origin = req.headers.origin
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin)
+  }
+  res.setHeader("Vary", "Origin")
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization")
+}
+
+const getSupabaseClient = () => {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
+
+  if (!supabaseUrl || !serviceKey) return null
+  return createClient(supabaseUrl, serviceKey)
+}
 
 export default async function handler(req, res) {
+  setCorsHeaders(req, res)
+
+  if (req.method === "OPTIONS") return res.status(204).end()
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" })
+
+  const supabase = getSupabaseClient()
+  if (!supabase) return res.status(500).json({ error: "Server configuration is incomplete" })
 
   const authHeader = req.headers.authorization
   if (!authHeader) return res.status(401).json({ error: "Unauthorized" })
