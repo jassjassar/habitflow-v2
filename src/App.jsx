@@ -343,6 +343,24 @@ function MilestoneToast({ milestone }) {
   )
 }
 
+function FreezeToast({ type }) {
+  if (!type) return null
+  const isEarned = type === "shield_earned"
+  return (
+    <div style={{position:"fixed",top:74,left:"50%",transform:"translateX(-50%)",zIndex:9999,width:"calc(100% - 32px)",maxWidth:420,pointerEvents:"none",animation:"slideDown 0.35s ease"}}>
+      <div className="card" style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:12,background:isEarned?"linear-gradient(135deg,rgba(69,183,209,0.2),rgba(167,139,250,0.18))":"linear-gradient(135deg,rgba(255,142,83,0.2),rgba(255,217,61,0.14))",border:"1px solid rgba(255,255,255,0.14)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
+        <div style={{width:42,height:42,borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,background:"rgba(255,255,255,0.1)",boxShadow:isEarned?"0 0 20px rgba(69,183,209,0.3)":"0 0 20px rgba(255,217,61,0.3)"}}>🛡️</div>
+        <div>
+          <div style={{fontSize:14,fontWeight:900,color:"#fff",marginBottom:2}}>{isEarned ? "Streak shield earned" : "Your streak was protected"}</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.58)",fontWeight:700,lineHeight:1.35}}>
+            {isEarned ? "You reached a 7-day rhythm. One missed day can be forgiven." : "A shield covered yesterday so your streak could keep going."}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function OnboardingQuiz({ onComplete, onDone }) {
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
@@ -1445,6 +1463,10 @@ const xpPct = getLevelProgress(displayXP, currentLevel, nextLevel)
 const levelXP = displayXP - currentLevel.minXP
 const levelXPNeeded = nextLevel ? nextLevel.minXP - currentLevel.minXP : currentLevel.minXP
 const lifetimeCompletions = Math.max(lifetimeCompletedCount, habits.reduce((s,h)=>s+Object.keys(h.completions||{}).length,0))
+const maxFreezes = isPro ? 99 : 1
+const shieldProgress = bestStreak > 0 ? bestStreak % 7 : 0
+const daysToNextShield = shieldProgress === 0 ? 7 : 7 - shieldProgress
+const lastFreezeDate = freezeDates.length ? [...freezeDates].sort().at(-1) : ""
   useEffect(() => {
   if (habits.length === 0 || freezes === 0) return
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1)
@@ -1594,6 +1616,7 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
       <Particles active={particles}/>
       <LevelUpBurst show={levelUpShow} level={levelUpData}/> 
       <MilestoneToast milestone={milestone}/>
+      <FreezeToast type={freezeToast}/>
       {statsError && (
         <div style={{position:"fixed",top:76,left:"50%",transform:"translateX(-50%)",zIndex:130,width:"calc(100% - 32px)",maxWidth:440}}>
           <div className="card" style={{padding:"12px 14px",fontSize:13,fontWeight:700,color:"#FFB4B4",textAlign:"center",background:"rgba(255,107,107,0.14)",border:"1px solid rgba(255,107,107,0.28)"}}>
@@ -1705,21 +1728,28 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
 
                 {/* Streak Card */}
 <div className="card" style={{padding:"14px 16px",background:"linear-gradient(135deg,rgba(255,142,83,0.15),rgba(255,107,107,0.08))"}}>
-  <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>BEST STREAK</div>
-  <FireStreak streak={bestStreak}/>
-  <div style={{display:"flex",alignItems:"center",gap:6,marginTop:8,padding:"5px 10px",background:"rgba(255,255,255,0.07)",borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",width:"fit-content"}}>
-    <span style={{fontSize:16}}>🛡️</span>
-    <span style={{fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.8)"}}>{freezes} {freezes===1?"shield":"shields"}</span>
-    {freezes===0 && <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontWeight:600}}>· earn at 7 days</span>}
-  </div>
-  {bestStreak>0 && bestStreak<7 && (
-    <div style={{marginTop:8}}>
-      <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontWeight:600,marginBottom:4}}>🛡️ next shield in {7-(bestStreak%7)} days</div>
-      <div style={{height:3,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
-        <div style={{height:"100%",borderRadius:999,background:"linear-gradient(90deg,#FF8E53,#FFD93D)",width:`${(bestStreak%7)/7*100}%`,transition:"width 0.6s ease"}}/>
-      </div>
+  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:8}}>
+    <div>
+      <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>PROTECTED STREAK</div>
+      <FireStreak streak={bestStreak}/>
     </div>
-  )}
+    <div style={{textAlign:"right",minWidth:70}}>
+      <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontWeight:700,marginBottom:4}}>SHIELDS</div>
+      <div style={{fontSize:20,fontWeight:900,color:freezes>0?"#4ECDC4":"rgba(255,255,255,0.32)",filter:freezes>0?"drop-shadow(0 0 8px rgba(78,205,196,0.45))":"none"}}>{freezes}/{maxFreezes}</div>
+    </div>
+  </div>
+  <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",lineHeight:1.45,fontWeight:600,marginBottom:10}}>
+    {freezes>0 ? "You have a safety net if life interrupts a habit day." : "Reach 7 streak days to earn a shield for one missed day."}
+  </div>
+  <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:8}}>
+    {Array.from({length:7},(_,i)=>(
+      <div key={i} style={{height:5,borderRadius:999,background:i<shieldProgress||bestStreak>0&&shieldProgress===0?"linear-gradient(90deg,#4ECDC4,#A78BFA)":"rgba(255,255,255,0.08)",boxShadow:i<shieldProgress||bestStreak>0&&shieldProgress===0?"0 0 8px rgba(78,205,196,0.35)":"none"}}/>
+    ))}
+  </div>
+  <div style={{display:"flex",justifyContent:"space-between",gap:8,fontSize:10,color:"rgba(255,255,255,0.36)",fontWeight:700,lineHeight:1.35}}>
+    <span>{bestStreak>0 && shieldProgress===0 ? "Shield earned at this milestone" : `${daysToNextShield} day${daysToNextShield===1?"":"s"} to next shield`}</span>
+    {lastFreezeDate && <span>Last used {lastFreezeDate}</span>}
+  </div>
 </div>
 </div>
 </div>
