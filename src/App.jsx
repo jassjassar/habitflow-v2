@@ -2,10 +2,19 @@ import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { createClient } from "@supabase/supabase-js"
 
+const normalizeVapidPublicKey = (value) => {
+  let key = String(value || "").trim()
+  key = key.replace(/^['"]|['"]$/g, "").trim()
+  key = key.replace(/^(?:VITE_)?VAPID_PUBLIC_KEY\s*=\s*/i, "").trim()
+  return key.replace(/^['"]|['"]$/g, "").trim()
+}
+
+const PUSH_CONFIG_ERROR = "Push reminders are not configured correctly yet. Please contact support or try again later."
+
 const env = {
   supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
   supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-  vapidPublicKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
+  vapidPublicKey: normalizeVapidPublicKey(import.meta.env.VITE_VAPID_PUBLIC_KEY),
 }
 
 const hasSupabaseConfig = Boolean(env.supabaseUrl && env.supabaseAnonKey)
@@ -1328,6 +1337,7 @@ if (newStreak > 0 && newStreak % 7 === 0) {
     setNotificationMessage("")
 
     try {
+      const applicationServerKey = urlBase64ToUint8Array(env.vapidPublicKey)
       const permission = await Notification.requestPermission()
       if (permission !== "granted") {
         setNotificationLoading(false)
@@ -1339,7 +1349,7 @@ if (newStreak > 0 && newStreak % 7 === 0) {
       const existingSubscription = await registration.pushManager.getSubscription()
       const subscription = existingSubscription || await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(env.vapidPublicKey),
+        applicationServerKey,
       })
 
       const { data: { session } } = await supabase.auth.getSession()
@@ -1367,9 +1377,22 @@ if (newStreak > 0 && newStreak % 7 === 0) {
   }
 
   const urlBase64ToUint8Array = (base64String) => {
-    const padding = "=".repeat((4 - base64String.length % 4) % 4)
-    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/")
-    const rawData = window.atob(base64)
+    const key = normalizeVapidPublicKey(base64String)
+    if (!key) throw new Error(PUSH_CONFIG_ERROR)
+    if (/\s/.test(key) || !/^[A-Za-z0-9_-]+={0,2}$/.test(key)) throw new Error(PUSH_CONFIG_ERROR)
+
+    const unpaddedKey = key.replace(/=+$/, "")
+    const padding = "=".repeat((4 - unpaddedKey.length % 4) % 4)
+    const base64 = (unpaddedKey + padding).replace(/-/g, "+").replace(/_/g, "/")
+    let rawData = ""
+
+    try {
+      rawData = window.atob(base64)
+    } catch {
+      throw new Error(PUSH_CONFIG_ERROR)
+    }
+
+    if (rawData.length !== 65) throw new Error(PUSH_CONFIG_ERROR)
     return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)))
   }
 
