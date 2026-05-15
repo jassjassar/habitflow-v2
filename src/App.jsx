@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import { createClient } from "@supabase/supabase-js"
 
 const env = {
@@ -896,10 +897,27 @@ function OnboardingQuiz({ onComplete, onDone }) {
   )
 } 
 
+function ModalOverlay({ children, onClose, zIndex = 200 }) {
+  if (typeof document === "undefined") return null
+
+  return createPortal(
+    <div
+      className="overlay"
+      onClick={e => {
+        if (e.target === e.currentTarget) onClose?.()
+      }}
+      style={{zIndex}}
+    >
+      {children}
+    </div>,
+    document.body
+  )
+}
+
 function ThemeSwitcher({ current, onSelect, onClose }) {
   return (
-    <div className="overlay" onClick={onClose} style={{zIndex:200}}>
-      <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:400,width:"100%",padding:24,margin:20}}>
+    <ModalOverlay onClose={onClose}>
+      <div className="card" style={{maxWidth:400,width:"100%",padding:24,margin:20}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <div style={{fontSize:18,fontWeight:900}}>🎨 Choose Theme</div>
           <button onClick={onClose} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
@@ -933,7 +951,7 @@ function ThemeSwitcher({ current, onSelect, onClose }) {
         </div>
         <button onClick={onClose} className="btn-glass" style={{width:"100%",marginTop:16,padding:12,fontSize:14}}>Done</button>
       </div>
-    </div>
+    </ModalOverlay>
   )
 }
 export default function App() {
@@ -2003,8 +2021,8 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
 
       {/* NOTIFICATION OPT-IN */}
       {showNotifications && (
-        <div className="overlay" onClick={dismissNotificationPrompt} style={{zIndex:200}}>
-          <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:390,width:"100%",padding:28,textAlign:"center"}}>
+        <ModalOverlay onClose={dismissNotificationPrompt}>
+          <div className="card" style={{maxWidth:390,width:"100%",padding:28,textAlign:"center"}}>
             <div style={{fontSize:54,marginBottom:14,animation:"float 3s ease-in-out infinite"}}>🔔</div>
             <div style={{fontSize:23,fontWeight:900,marginBottom:8,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
               Stay on track gently
@@ -2038,7 +2056,7 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
             </button>
             <button onClick={dismissNotificationPrompt} className="btn-glass" style={{width:"100%",padding:12,fontSize:13}}>Maybe later</button>
           </div>
-        </div>
+        </ModalOverlay>
       )}
 
       {/* PRO PAYWALL */}
