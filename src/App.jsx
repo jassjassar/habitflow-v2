@@ -105,6 +105,8 @@ const getNextLevel = (level) => LEVELS.find(l=>l.level===level.level+1)
 const getLevelProgress = (xp, level, nextLevel) => nextLevel ? Math.min(100, Math.max(0, Math.round(((xp-level.minXP)/(nextLevel.minXP-level.minXP))*100))) : 100
 const getStreak = (habit, days, freezeDates=[]) => { let s=0; const rev=[...days].reverse(); for(let d of rev){ if(habit.completions?.[d]) s++; else if(freezeDates.includes(d)) s++; else break }; return s }
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+const DAILY_QUEST_BONUS_XP = 20
+const getFreshQuestState = () => ({ date: todayStr, awardedQuestIds: [], beforeNoonHabitIds: [] })
 const getHour = () => new Date().getHours()
 const getGreeting = () => { const h=getHour(); return h<12?"Good morning":h<17?"Good afternoon":"Good evening" }
 
@@ -1036,6 +1038,7 @@ const [showTheme, setShowTheme] = useState(false)
   const [levelUpData, setLevelUpData] = useState(null)
   const [milestone, setMilestone] = useState(null)
   const [statsError, setStatsError] = useState("")
+  const [dailyQuestState, setDailyQuestState] = useState(() => getFreshQuestState())
   const [authMode, setAuthMode] = useState("login")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -1054,6 +1057,7 @@ const [showTheme, setShowTheme] = useState(false)
 
   const days = getLast7()
   const savingCompletionKeys = useRef(new Set())
+  const awardingQuestIds = useRef(new Set())
   useEffect(() => {
     if (!supabase) {
       setLoading(false)
@@ -1072,6 +1076,23 @@ const [showTheme, setShowTheme] = useState(false)
       subscription.unsubscribe()
     }
   }, [])
+
+  const dailyQuestStorageKey = `hf_daily_quests_${user?.id || "guest"}_${todayStr}`
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(dailyQuestStorageKey) || "null")
+      if (saved?.date === todayStr) {
+        setDailyQuestState({
+          date: todayStr,
+          awardedQuestIds: Array.isArray(saved.awardedQuestIds) ? saved.awardedQuestIds : [],
+          beforeNoonHabitIds: Array.isArray(saved.beforeNoonHabitIds) ? saved.beforeNoonHabitIds : [],
+        })
+        return
+      }
+    } catch {}
+    setDailyQuestState(getFreshQuestState())
+  }, [dailyQuestStorageKey])
 
   useEffect(() => {
     if (!user || !supabase) return
@@ -1190,6 +1211,15 @@ if (profile) {
     return {error:lastError}
   }
 
+  const saveDailyQuestState = (updater) => {
+    setDailyQuestState(prev => {
+      const base = prev?.date === todayStr ? prev : getFreshQuestState()
+      const next = updater(base)
+      localStorage.setItem(dailyQuestStorageKey, JSON.stringify(next))
+      return next
+    })
+  }
+
   const toggle = async (id, date) => {
     const h = habits.find(x=>x.id===id)
     if (!h || !user) return
@@ -1238,6 +1268,12 @@ if (profile) {
       }
       setTotalXP(newTotalXP)
       setLifetimeCompletedCount(newLifetimeCount)
+      if (date === todayStr && getHour() < 12) {
+        saveDailyQuestState(state => ({
+          ...state,
+          beforeNoonHabitIds: [...new Set([...(state.beforeNoonHabitIds || []), id])],
+        }))
+      }
 if (newStreak > 0 && newStreak % 7 === 0) {
   const maxFreezes = isPro ? 99 : 1
   if (freezes < maxFreezes) {
@@ -1463,6 +1499,7 @@ const xpPct = getLevelProgress(displayXP, currentLevel, nextLevel)
 const levelXP = displayXP - currentLevel.minXP
 const levelXPNeeded = nextLevel ? nextLevel.minXP - currentLevel.minXP : currentLevel.minXP
 const lifetimeCompletions = Math.max(lifetimeCompletedCount, habits.reduce((s,h)=>s+Object.keys(h.completions||{}).length,0))
+const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,freezeDates))) : 0
 const maxFreezes = isPro ? 99 : 1
 const shieldProgress = bestStreak > 0 ? bestStreak % 7 : 0
 const daysToNextShield = shieldProgress === 0 ? 7 : 7 - shieldProgress
@@ -1485,13 +1522,87 @@ const lastFreezeDate = freezeDates.length ? [...freezeDates].sort().at(-1) : ""
   }
 }, [habits])
 
-const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,freezeDates))) : 0
   const doneToday = habits.filter(h=>h.completions?.[todayStr]).length
   const todayPct = habits.length ? Math.round((doneToday/habits.length)*100) : 0
   const stepsPct = Math.min((steps/10000)*100,100)
   const waterPct = Math.min((water/8)*100,100)
   const userEmail = user?.email || ""
   const userName = userEmail.split("@")[0] || "there"
+  const priorDays = days.filter(d => d !== todayStr)
+  const streakHabitIds = habits.filter(h => getStreak(h, priorDays, freezeDates) > 0).map(h => h.id)
+  const beforeNoonDone = habits.some(h => h.completions?.[todayStr] && dailyQuestState.beforeNoonHabitIds?.includes(h.id))
+  const habitQuestTarget = Math.min(3, Math.max(1, habits.length))
+  const streakQuestTarget = streakHabitIds.length ? Math.min(2, streakHabitIds.length) : 1
+  const streakQuestProgress = streakHabitIds.length
+    ? habits.filter(h => streakHabitIds.includes(h.id) && h.completions?.[todayStr]).length
+    : doneToday
+  const dailyQuests = habits.length === 0 ? [] : [
+    {
+      id: "complete-habits",
+      icon: "✅",
+      title: `Complete ${habitQuestTarget} habit${habitQuestTarget===1?"":"s"}`,
+      detail: habitQuestTarget === habits.length ? "Give today's whole routine a clean finish." : "A steady little run beats a perfect plan.",
+      progress: Math.min(doneToday, habitQuestTarget),
+      target: habitQuestTarget,
+      complete: doneToday >= habitQuestTarget,
+      bonusXP: DAILY_QUEST_BONUS_XP,
+    },
+    {
+      id: "before-noon",
+      icon: "🌅",
+      title: "Finish one before noon",
+      detail: "Start early and let the day feel lighter.",
+      progress: beforeNoonDone ? 1 : 0,
+      target: 1,
+      complete: beforeNoonDone,
+      bonusXP: DAILY_QUEST_BONUS_XP,
+    },
+    {
+      id: "protect-streaks",
+      icon: "🔥",
+      title: streakHabitIds.length ? "Maintain streaks today" : "Start a streak today",
+      detail: streakHabitIds.length ? "Protect the habits that already have momentum." : "One completion is enough to begin the rhythm.",
+      progress: Math.min(streakQuestProgress, streakQuestTarget),
+      target: streakQuestTarget,
+      complete: streakQuestProgress >= streakQuestTarget,
+      bonusXP: DAILY_QUEST_BONUS_XP,
+    },
+  ].map(q => ({...q, awarded: dailyQuestState.awardedQuestIds?.includes(q.id)}))
+  const dailyQuestSignature = dailyQuests.map(q => `${q.id}:${q.progress}:${q.complete}:${q.awarded}`).join("|")
+
+  const awardDailyQuest = async (quest) => {
+    if (!user || !supabase || quest.awarded || awardingQuestIds.current.has(quest.id)) return
+    awardingQuestIds.current.add(quest.id)
+    try {
+      const {data:profileStats, error:profileStatsError} = await supabase.from("profiles").select("total_xp").eq("id",user.id).maybeSingle()
+      if (profileStatsError) {
+        showStatsError("Quest complete, but bonus XP did not sync. We'll try again soon.")
+        return
+      }
+
+      const baseXP = Number(profileStats?.total_xp ?? totalXP ?? 0)
+      const newTotalXP = baseXP + quest.bonusXP
+      const {error:profileError} = await upsertProfileStats({id:user.id,total_xp:newTotalXP})
+      if (profileError) {
+        showStatsError("Quest complete, but bonus XP did not sync. We'll try again soon.")
+        return
+      }
+
+      setTotalXP(newTotalXP)
+      saveDailyQuestState(state => ({
+        ...state,
+        awardedQuestIds: [...new Set([...(state.awardedQuestIds || []), quest.id])],
+      }))
+      showMilestone({icon:quest.icon,title:`Daily quest complete +${quest.bonusXP} XP`,detail:quest.title})
+    } finally {
+      awardingQuestIds.current.delete(quest.id)
+    }
+  }
+
+  useEffect(() => {
+    const nextQuest = dailyQuests.find(q => q.complete && !q.awarded)
+    if (nextQuest) awardDailyQuest(nextQuest)
+  }, [dailyQuestSignature, user?.id])
 
   // LOADING
   if (loading) return (
@@ -1753,6 +1864,37 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
 </div>
 </div>
 </div>
+
+            {/* DAILY QUESTS */}
+            {dailyQuests.length > 0 && (
+              <div className="card" style={{padding:"16px 18px",marginBottom:14,background:"linear-gradient(135deg,rgba(255,217,61,0.12),rgba(167,139,250,0.08))"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12}}>
+                  <div>
+                    <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>DAILY QUESTS</div>
+                    <div style={{fontSize:17,fontWeight:900}}>Small wins for today</div>
+                  </div>
+                  <div style={{fontSize:11,color:"#FFD93D",fontWeight:900,background:"rgba(255,217,61,0.1)",border:"1px solid rgba(255,217,61,0.22)",borderRadius:10,padding:"5px 8px"}}>+{DAILY_QUEST_BONUS_XP} XP each</div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:9}}>
+                  {dailyQuests.map(q=>{
+                    const pct = Math.min(100, Math.round((q.progress/q.target)*100))
+                    return (
+                      <div key={q.id} style={{display:"grid",gridTemplateColumns:"34px 1fr auto",gap:10,alignItems:"center",padding:"10px 12px",borderRadius:14,background:q.awarded?"rgba(107,203,119,0.12)":"rgba(255,255,255,0.045)",border:q.awarded?"1px solid rgba(107,203,119,0.24)":"1px solid rgba(255,255,255,0.07)"}}>
+                        <div style={{width:34,height:34,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,background:q.complete?"rgba(107,203,119,0.16)":"rgba(255,255,255,0.07)"}}>{q.awarded?"✓":q.icon}</div>
+                        <div style={{minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:850,color:"#fff",marginBottom:2}}>{q.title}</div>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.42)",fontWeight:650,marginBottom:6,lineHeight:1.35}}>{q.awarded ? "Bonus XP added. Nicely done." : q.detail}</div>
+                          <div style={{height:4,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
+                            <div style={{height:"100%",width:pct+"%",borderRadius:999,background:q.complete?"linear-gradient(90deg,#6BCB77,#4ECDC4)":"linear-gradient(90deg,#FFD93D,#A78BFA)",transition:"width 0.5s ease"}}/>
+                          </div>
+                        </div>
+                        <div style={{fontSize:11,fontWeight:900,color:q.awarded?"#6BCB77":"rgba(255,255,255,0.48)",whiteSpace:"nowrap"}}>{q.progress}/{q.target}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* STEPS CARD */}
             <div className="card" style={{padding:"16px 18px",marginBottom:14,background:"linear-gradient(135deg,rgba(78,205,196,0.12),rgba(69,183,209,0.06))"}}>
