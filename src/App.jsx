@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createClient } from "@supabase/supabase-js"
 
 const env = {
@@ -94,6 +94,7 @@ const getLevel = (xp) => LEVELS.slice().reverse().find(l=>xp>=l.minXP)||LEVELS[0
 const getNextLevel = (level) => LEVELS.find(l=>l.level===level.level+1)
 const getLevelProgress = (xp, level, nextLevel) => nextLevel ? Math.min(100, Math.max(0, Math.round(((xp-level.minXP)/(nextLevel.minXP-level.minXP))*100))) : 100
 const getStreak = (habit, days, freezeDates=[]) => { let s=0; const rev=[...days].reverse(); for(let d of rev){ if(habit.completions?.[d]) s++; else if(freezeDates.includes(d)) s++; else break }; return s }
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 const getHour = () => new Date().getHours()
 const getGreeting = () => { const h=getHour(); return h<12?"Good morning":h<17?"Good afternoon":"Good evening" }
 
@@ -989,6 +990,7 @@ const [showTheme, setShowTheme] = useState(false)
   const [levelUpShow, setLevelUpShow] = useState(false)
   const [levelUpData, setLevelUpData] = useState(null)
   const [milestone, setMilestone] = useState(null)
+  const [statsError, setStatsError] = useState("")
   const [authMode, setAuthMode] = useState("login")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -1006,6 +1008,7 @@ const [showTheme, setShowTheme] = useState(false)
   const [mood, setMood] = useState(() => localStorage.getItem("hf_mood_"+todayStr)||"")
 
   const days = getLast7()
+  const savingCompletionKeys = useRef(new Set())
   useEffect(() => {
     if (!supabase) {
       setLoading(false)
@@ -1126,35 +1129,70 @@ if (profile) {
     setTimeout(() => setMilestone(null), 2600)
   }
 
+  const showStatsError = (message) => {
+    setStatsError(message)
+    setTimeout(() => setStatsError(""), 4000)
+  }
+
+  const upsertProfileStats = async (stats) => {
+    let lastError = null
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const {error} = await supabase.from("profiles").upsert(stats)
+      if (!error) return {error:null}
+      lastError = error
+      if (attempt === 0) await wait(300)
+    }
+    return {error:lastError}
+  }
+
   const toggle = async (id, date) => {
     const h = habits.find(x=>x.id===id)
     if (!h || !user) return
+    const completionKey = `${id}:${date}`
+    if (savingCompletionKeys.current.has(completionKey)) return
+    savingCompletionKeys.current.add(completionKey)
+    setStatsError("")
     const done = h.completions?.[date]
-    if (done) {
-      const {error} = await supabase.from("completions").delete().eq("habit_id",id).eq("date",date)
-      if (error) return
-    } else {
+    try {
+      if (done) {
+        const {error} = await supabase.from("completions").delete().eq("habit_id",id).eq("date",date)
+        if (error) {
+          showStatsError("Could not update that habit. Please try again.")
+          return
+        }
+      } else {
       const {error:completionError} = await supabase.from("completions").insert({habit_id:id,user_id:user.id,date})
-      if (completionError) return
+      if (completionError) {
+        showStatsError("Could not save that completion. Please try again.")
+        return
+      }
       triggerParticles() 
       const nextHabit = {...h, completions:{...h.completions,[date]:true}}
       const newStreak = getStreak(nextHabit, days, freezeDates)
       const streakBonus = newStreak * 5
       const xpEarned = 10 + streakBonus
-      const {data:profileStats} = await supabase.from("profiles").select("total_xp, lifetime_completed_count").eq("id",user.id).maybeSingle()
+      const {data:profileStats, error:profileStatsError} = await supabase.from("profiles").select("total_xp, lifetime_completed_count").eq("id",user.id).maybeSingle()
+      if (profileStatsError) {
+        await supabase.from("completions").delete().eq("habit_id",id).eq("user_id",user.id).eq("date",date)
+        showStatsError("Could not sync XP, so the completion was not saved. Please try again.")
+        return
+      }
       const baseXP = Number(profileStats?.total_xp ?? totalXP ?? 0)
       const baseLifetimeCount = Number(profileStats?.lifetime_completed_count ?? lifetimeCompletedCount ?? 0)
       const newTotalXP = baseXP + xpEarned
       const newLifetimeCount = baseLifetimeCount + 1
-      const {error:profileError} = await supabase.from("profiles").upsert({
+      const {error:profileError} = await upsertProfileStats({
         id:user.id,
         total_xp:newTotalXP,
         lifetime_completed_count:newLifetimeCount,
       })
-      if (!profileError) {
-        setTotalXP(newTotalXP)
-        setLifetimeCompletedCount(newLifetimeCount)
+      if (profileError) {
+        await supabase.from("completions").delete().eq("habit_id",id).eq("user_id",user.id).eq("date",date)
+        showStatsError("Could not sync XP, so the completion was rolled back. Please try again.")
+        return
       }
+      setTotalXP(newTotalXP)
+      setLifetimeCompletedCount(newLifetimeCount)
 if (newStreak > 0 && newStreak % 7 === 0) {
   const maxFreezes = isPro ? 99 : 1
   if (freezes < maxFreezes) {
@@ -1167,11 +1205,14 @@ if (newStreak > 0 && newStreak % 7 === 0) {
 } 
       const oldLevel = getLevel(baseXP)
       const newLevel = getLevel(newTotalXP)
-      if (!profileError && newLevel.level > oldLevel.level) { setLevelUpData(newLevel); setLevelUpShow(true); setTimeout(()=>setLevelUpShow(false),2500) }
-      else if (!profileError && Math.floor(baseXP / 100) < Math.floor(newTotalXP / 100)) showMilestone({icon:"⚡",title:`${Math.floor(newTotalXP / 100) * 100} XP reached`,detail:"Your lifetime progress is saved"})
-      else if (!profileError && newStreak > 0 && newStreak % 7 === 0) showMilestone({icon:"🔥",title:`${newStreak}-day streak`,detail:`+${xpEarned} XP earned today`})
+      if (newLevel.level > oldLevel.level) { setLevelUpData(newLevel); setLevelUpShow(true); setTimeout(()=>setLevelUpShow(false),2500) }
+      else if (Math.floor(baseXP / 100) < Math.floor(newTotalXP / 100)) showMilestone({icon:"⚡",title:`${Math.floor(newTotalXP / 100) * 100} XP reached`,detail:"Your lifetime progress is saved"})
+      else if (newStreak > 0 && newStreak % 7 === 0) showMilestone({icon:"🔥",title:`${newStreak}-day streak`,detail:`+${xpEarned} XP earned today`})
+      }
+      setHabits(h=>h.map(x=>x.id===id?{...x,completions:{...x.completions,[date]:!done}}:x))
+    } finally {
+      savingCompletionKeys.current.delete(completionKey)
     }
-    setHabits(h=>h.map(x=>x.id===id?{...x,completions:{...x.completions,[date]:!done}}:x))
   }
 
   const addHabit = async () => {
@@ -1512,6 +1553,13 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
       <Particles active={particles}/>
       <LevelUpBurst show={levelUpShow} level={levelUpData}/> 
       <MilestoneToast milestone={milestone}/>
+      {statsError && (
+        <div style={{position:"fixed",top:76,left:"50%",transform:"translateX(-50%)",zIndex:130,width:"calc(100% - 32px)",maxWidth:440}}>
+          <div className="card" style={{padding:"12px 14px",fontSize:13,fontWeight:700,color:"#FFB4B4",textAlign:"center",background:"rgba(255,107,107,0.14)",border:"1px solid rgba(255,107,107,0.28)"}}>
+            {statsError}
+          </div>
+        </div>
+      )}
       {checkoutNotice && !showPaywall && (
         <div style={{position:"fixed",top:76,left:"50%",transform:"translateX(-50%)",zIndex:120,width:"calc(100% - 32px)",maxWidth:440}}>
           <div className="card" style={{padding:"12px 14px",fontSize:13,fontWeight:700,color:"#fff",textAlign:"center",background:"rgba(107,203,119,0.16)",border:"1px solid rgba(107,203,119,0.28)"}}>
