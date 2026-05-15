@@ -77,6 +77,15 @@ const THEMES = {
   slate:  { name:"Midnight Slate", bg:"#0f172a", accent:"#6366f1", card:"rgba(99,102,241,0.08)",  text:"#f1f5f9", sub:"rgba(255,255,255,0.45)"  },
 }
 
+const THEME_REWARDS = {
+  aurora: { reason:"Starter theme" },
+  mint: { xp:100, reason:"Unlock at 100 XP" },
+  ocean: { streak:3, reason:"Unlock with a 3-day streak" },
+  coral: { xp:250, reason:"Unlock at 250 XP" },
+  rose: { pro:true, reason:"Unlock with Pro" },
+  slate: { xp:500, reason:"Unlock at 500 XP" },
+}
+
 const applyTheme = (themeId) => {
   const t = THEMES[themeId] || THEMES.aurora
   const r = document.documentElement
@@ -976,7 +985,7 @@ function ModalOverlay({ children, onClose, zIndex = 200 }) {
   )
 }
 
-function ThemeSwitcher({ current, onSelect, onClose }) {
+function ThemeSwitcher({ current, unlockedThemes, onSelect, onClose }) {
   return (
     <ModalOverlay onClose={onClose}>
       <div className="card" style={{maxWidth:400,width:"100%",padding:24,margin:20}}>
@@ -985,14 +994,22 @@ function ThemeSwitcher({ current, onSelect, onClose }) {
           <button onClick={onClose} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          {Object.entries(THEMES).map(([id, t]) => (
-            <div key={id} onClick={()=>onSelect(id)} style={{
+          {Object.entries(THEMES).map(([id, t]) => {
+            const reward = unlockedThemes[id] || {}
+            const locked = !reward.unlocked
+            return (
+            <div key={id} onClick={()=>!locked&&onSelect(id)} style={{
               borderRadius:16, overflow:"hidden",
               border: current===id ? `2px solid ${t.accent}` : "2px solid transparent",
-              cursor:"pointer", transition:"all .2s",
+              cursor:locked?"not-allowed":"pointer", transition:"all .2s",
               transform: current===id ? "scale(1.03)" : "scale(1)",
               boxShadow: current===id ? `0 0 20px ${t.accent}44` : "none",
+              opacity: locked ? 0.58 : 1,
+              position:"relative",
             }}>
+              {locked && (
+                <div style={{position:"absolute",inset:0,zIndex:2,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.28)",fontSize:22}}>🔒</div>
+              )}
               <div style={{background:t.bg, padding:14, height:70, display:"flex", flexDirection:"column", gap:6}}>
                 <div style={{display:"flex",gap:5}}>
                   <div style={{width:8,height:8,borderRadius:"50%",background:t.accent}}/>
@@ -1006,10 +1023,11 @@ function ThemeSwitcher({ current, onSelect, onClose }) {
                 color: t.text==="#ffffff"||t.text==="#f0f9ff"||t.text==="#f1f5f9" ? "#fff" : "#374151",
                 padding:"8px 10px", fontSize:11, fontWeight:800, textAlign:"center"
               }}>
-                {current===id ? "✓ " : ""}{t.name}
+                <div>{current===id ? "✓ " : locked ? "🔒 " : ""}{t.name}</div>
+                <div style={{fontSize:9,fontWeight:700,opacity:.62,marginTop:2,lineHeight:1.25}}>{locked ? reward.reason : "Unlocked"}</div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
         <button onClick={onClose} className="btn-glass" style={{width:"100%",marginTop:16,padding:12,fontSize:14}}>Done</button>
       </div>
@@ -1052,6 +1070,7 @@ const [showTheme, setShowTheme] = useState(false)
   const [levelUpShow, setLevelUpShow] = useState(false)
   const [levelUpData, setLevelUpData] = useState(null)
   const [milestone, setMilestone] = useState(null)
+  const [themeReward, setThemeReward] = useState(null)
   const [statsError, setStatsError] = useState("")
   const [dailyQuestState, setDailyQuestState] = useState(() => getFreshQuestState())
   const [authMode, setAuthMode] = useState("login")
@@ -1208,6 +1227,11 @@ if (profile) {
   const showMilestone = (nextMilestone) => {
     setMilestone(nextMilestone)
     setTimeout(() => setMilestone(null), 2600)
+  }
+
+  const showThemeReward = (themeName) => {
+    setThemeReward(themeName)
+    setTimeout(() => setThemeReward(null), 3200)
   }
 
   const showStatsError = (message) => {
@@ -1519,6 +1543,25 @@ const maxFreezes = isPro ? 99 : 1
 const shieldProgress = bestStreak > 0 ? bestStreak % 7 : 0
 const daysToNextShield = shieldProgress === 0 ? 7 : 7 - shieldProgress
 const lastFreezeDate = freezeDates.length ? [...freezeDates].sort().at(-1) : ""
+const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme]) => {
+  const reward = THEME_REWARDS[id] || {}
+  const unlocked = !reward.xp && !reward.streak && !reward.pro
+    || Boolean(reward.xp && displayXP >= reward.xp)
+    || Boolean(reward.streak && bestStreak >= reward.streak)
+    || Boolean(reward.pro && isPro)
+  return [id, {...reward, name:theme.name, unlocked, reason:unlocked?"Unlocked":reward.reason}]
+}))
+  useEffect(() => {
+    const storageKey = `hf_unlocked_themes_seen_${user?.id || "guest"}`
+    let seen = []
+    try { seen = JSON.parse(localStorage.getItem(storageKey) || "[]") } catch {}
+    const newlyUnlocked = Object.entries(unlockedThemes).find(([id, reward]) => reward.unlocked && id !== "aurora" && !seen.includes(id))
+    if (!newlyUnlocked) return
+    const nextSeen = [...new Set([...seen, newlyUnlocked[0]])]
+    localStorage.setItem(storageKey, JSON.stringify(nextSeen))
+    showThemeReward(newlyUnlocked[1].name)
+  }, [displayXP, bestStreak, isPro, user?.id])
+
   useEffect(() => {
   if (habits.length === 0 || freezes === 0) return
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1)
@@ -1770,6 +1813,17 @@ const lastFreezeDate = freezeDates.length ? [...freezeDates].sort().at(-1) : ""
       <Particles active={particles}/>
       <LevelUpBurst show={levelUpShow} level={levelUpData}/> 
       <MilestoneToast milestone={milestone}/>
+      {themeReward && (
+        <div style={{position:"fixed",top:74,left:"50%",transform:"translateX(-50%)",zIndex:9999,width:"calc(100% - 32px)",maxWidth:420,pointerEvents:"none",animation:"slideDown 0.35s ease"}}>
+          <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,rgba(167,139,250,0.2),rgba(244,114,182,0.14))",border:"1px solid rgba(255,255,255,0.14)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
+            <div style={{width:38,height:38,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(255,255,255,0.1)",boxShadow:"0 0 18px rgba(167,139,250,0.28)"}}>🎨</div>
+            <div>
+              <div style={{fontSize:13,fontWeight:900,color:"#fff",marginBottom:2}}>New theme unlocked</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",fontWeight:700}}>{themeReward} is ready in Settings.</div>
+            </div>
+          </div>
+        </div>
+      )}
       <FreezeToast type={freezeToast}/>
       {statsError && (
         <div style={{position:"fixed",top:76,left:"50%",transform:"translateX(-50%)",zIndex:130,width:"calc(100% - 32px)",maxWidth:440}}>
@@ -1788,6 +1842,7 @@ const lastFreezeDate = freezeDates.length ? [...freezeDates].sort().at(-1) : ""
       {showTheme && (
   <ThemeSwitcher
     current={currentTheme}
+    unlockedThemes={unlockedThemes}
     onClose={()=>setShowTheme(false)}
     onSelect={async(themeId)=>{
       setCurrentTheme(themeId)
