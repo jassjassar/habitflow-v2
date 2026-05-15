@@ -1632,6 +1632,36 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
   const dailyQuestSignature = dailyQuests.map(q => `${q.id}:${q.progress}:${q.complete}:${q.awarded}`).join("|")
   const awardedQuestCount = dailyQuests.filter(q => q.awarded).length
   const completedQuestCount = dailyQuests.filter(q => q.complete).length
+  const dayProgress = Math.min(1, Math.max(0, (getHour() - 7) / 15))
+  const expectedDoneByNow = habits.length ? Math.min(habits.length, Math.ceil(habits.length * dayProgress)) : 0
+  const questMomentum = dailyQuests.length ? completedQuestCount / dailyQuests.length : 0
+  const streakMomentum = bestStreak >= 7 ? 0.2 : bestStreak >= 3 ? 0.1 : 0
+  const paceScore = habits.length ? (doneToday / habits.length) + (questMomentum * 0.2) + streakMomentum : 1
+  const expectedPace = habits.length ? expectedDoneByNow / habits.length : 0
+  const pacerState = habits.length === 0
+    ? "on track"
+    : paceScore >= Math.min(1, expectedPace + 0.25)
+      ? "ahead"
+      : paceScore + 0.15 < expectedPace
+        ? "behind"
+        : "on track"
+  const pacerCopy = {
+    behind: {
+      label: "Behind today",
+      detail: `A gentle reset is enough. One small habit brings you back toward the day.`,
+      color: "#FFD93D",
+    },
+    "on track": {
+      label: "On track today",
+      detail: `You are moving at a kind pace. The next tiny action can keep it smooth.`,
+      color: "#4ECDC4",
+    },
+    ahead: {
+      label: "Ahead today",
+      detail: `You have a little breathing room. Enjoy it, then protect the rhythm later.`,
+      color: "#6BCB77",
+    },
+  }[pacerState]
   const companionMood = awardedQuestCount > 0 || completedQuestCount >= 2 || displayXP > 0 && displayXP % 100 < 35 || bestStreak >= 7
     ? "excited"
     : missedYesterdayForCompanion && freezes === 0
@@ -1974,6 +2004,16 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                     <div style={{fontSize:9,fontWeight:900,color:"#4ECDC4",letterSpacing:.6,textTransform:"uppercase",background:"rgba(78,205,196,0.1)",border:"1px solid rgba(78,205,196,0.22)",borderRadius:999,padding:"3px 7px"}}>{companionStatus}</div>
                   </div>
                   <div style={{fontSize:12,color:"rgba(255,255,255,0.56)",lineHeight:1.5,fontWeight:650}}>{companionMessage}</div>
+                  <div style={{marginTop:10,padding:"9px 11px",borderRadius:13,background:`${pacerCopy.color}14`,border:`1px solid ${pacerCopy.color}33`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,marginBottom:5}}>
+                      <div style={{fontSize:10,fontWeight:900,color:pacerCopy.color,letterSpacing:.6,textTransform:"uppercase"}}>{pacerCopy.label}</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.38)",fontWeight:800}}>{doneToday}/{habits.length || 0} done</div>
+                    </div>
+                    <div style={{height:4,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden",marginBottom:6}}>
+                      <div style={{height:"100%",width:`${todayPct}%`,borderRadius:999,background:pacerCopy.color,transition:"width 0.5s ease"}}/>
+                    </div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.46)",fontWeight:650,lineHeight:1.4}}>{pacerCopy.detail}</div>
+                  </div>
                 </div>
               </div>
             </div>
