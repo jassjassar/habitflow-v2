@@ -123,7 +123,7 @@ const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overscroll-behavior:none}
-  body{font-family:'Inter',sans-serif;background:#0d0d1a;color:#fff;overflow-x:hidden}
+  body{font-family:'Inter',sans-serif;background:var(--bg,#0d0d1a);color:var(--text,#fff);overflow-x:hidden}
   ::-webkit-scrollbar{width:3px}
   ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:10px}
 
@@ -151,7 +151,7 @@ const css = `
 
   /* GLASSMORPHISM CARD */
   .card{
-    background:rgba(255,255,255,0.055);
+    background:var(--card,rgba(255,255,255,0.055));
     backdrop-filter:blur(24px);
     -webkit-backdrop-filter:blur(24px);
     border:1px solid rgba(255,255,255,0.1);
@@ -240,7 +240,7 @@ const css = `
   /* TOP NAV */
   .top-nav{
     position:sticky;top:0;z-index:50;
-    background:rgba(13,13,26,0.85);
+    background:color-mix(in srgb,var(--bg,#0d0d1a) 86%,transparent);
     backdrop-filter:blur(20px);
     border-bottom:1px solid rgba(255,255,255,0.07);
     padding:14px 20px;
@@ -251,7 +251,7 @@ const css = `
   .tab-bar{
     position:fixed;bottom:0;left:50%;transform:translateX(-50%);
     width:100%;max-width:480px;
-    background:rgba(10,10,22,0.95);
+    background:color-mix(in srgb,var(--bg,#0d0d1a) 94%,#000 6%);
     backdrop-filter:blur(24px);
     border-top:1px solid rgba(255,255,255,0.07);
     display:flex;z-index:50;padding:10px 0 26px;
@@ -264,9 +264,9 @@ const css = `
   .tab-icon{font-size:20px;line-height:1;transition:transform 0.2s}
   .tab-item.active .tab-icon{transform:scale(1.15)}
   .tab-label{font-size:9px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:rgba(255,255,255,0.4);transition:color 0.2s}
-  .tab-item.active .tab-label{color:#A78BFA}
+  .tab-item.active .tab-label{color:var(--accent,#A78BFA)}
   .tab-dot{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:1px;transition:background 0.2s}
-  .tab-item.active .tab-dot{background:#A78BFA}
+  .tab-item.active .tab-dot{background:var(--accent,#A78BFA)}
 
   /* PARTICLES */
   .particle{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:9999;animation:confettiFall 2s ease forwards}
@@ -1808,7 +1808,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
   // MAIN APP
   return (
-    <div style={{minHeight:"100vh",background:"#0d0d1a",color:"#fff",paddingBottom:96,maxWidth:480,margin:"0 auto",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:"var(--bg,#0d0d1a)",color:"var(--text,#fff)",paddingBottom:96,maxWidth:480,margin:"0 auto",position:"relative"}}>
       <style>{css}</style>
       <Particles active={particles}/>
       <LevelUpBurst show={levelUpShow} level={levelUpData}/> 
@@ -1845,6 +1845,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
     unlockedThemes={unlockedThemes}
     onClose={()=>setShowTheme(false)}
     onSelect={async(themeId)=>{
+      if (!unlockedThemes[themeId]?.unlocked) return
       setCurrentTheme(themeId)
       applyTheme(themeId)
       setShowTheme(false)
