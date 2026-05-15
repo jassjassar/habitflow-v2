@@ -363,6 +363,21 @@ function FreezeToast({ type }) {
   )
 }
 
+function CompanionAvatar({ mood }) {
+  const face = {
+    happy: "•‿•",
+    sleepy: "—_—",
+    excited: "★‿★",
+    worried: "•︵•",
+  }[mood] || "•‿•"
+
+  return (
+    <div style={{width:62,height:62,borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:900,color:"#fff",background:"linear-gradient(135deg,rgba(167,139,250,0.95),rgba(78,205,196,0.86))",boxShadow:"0 12px 32px rgba(78,205,196,0.25), inset 0 1px 0 rgba(255,255,255,0.3)",border:"1px solid rgba(255,255,255,0.2)",animation:mood==="excited"?"pulse 1.4s ease-in-out infinite":mood==="sleepy"?"float 4s ease-in-out infinite":"float 3s ease-in-out infinite"}}>
+      {face}
+    </div>
+  )
+}
+
 function OnboardingQuiz({ onComplete, onDone }) {
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
@@ -1524,6 +1539,9 @@ const lastFreezeDate = freezeDates.length ? [...freezeDates].sort().at(-1) : ""
 
   const doneToday = habits.filter(h=>h.completions?.[todayStr]).length
   const todayPct = habits.length ? Math.round((doneToday/habits.length)*100) : 0
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1)
+  const yesterdayStr = yesterday.toISOString().slice(0,10)
+  const missedYesterdayForCompanion = habits.length > 0 && habits.some(h => !h.completions?.[yesterdayStr])
   const stepsPct = Math.min((steps/10000)*100,100)
   const waterPct = Math.min((water/8)*100,100)
   const userEmail = user?.email || ""
@@ -1569,6 +1587,31 @@ const lastFreezeDate = freezeDates.length ? [...freezeDates].sort().at(-1) : ""
     },
   ].map(q => ({...q, awarded: dailyQuestState.awardedQuestIds?.includes(q.id)}))
   const dailyQuestSignature = dailyQuests.map(q => `${q.id}:${q.progress}:${q.complete}:${q.awarded}`).join("|")
+  const awardedQuestCount = dailyQuests.filter(q => q.awarded).length
+  const completedQuestCount = dailyQuests.filter(q => q.complete).length
+  const companionMood = awardedQuestCount > 0 || completedQuestCount >= 2 || displayXP > 0 && displayXP % 100 < 35 || bestStreak >= 7
+    ? "excited"
+    : missedYesterdayForCompanion && freezes === 0
+      ? "worried"
+      : doneToday === 0
+        ? "sleepy"
+        : "happy"
+  const companionMessage = {
+    excited: awardedQuestCount > 0
+      ? "I saw that quest land. Tiny wins like that are how momentum starts feeling real."
+      : bestStreak >= 7
+        ? "That streak has a heartbeat now. Keep it warm with one gentle action today."
+        : "Your energy is picking up. Let’s catch one more small win while it feels easy.",
+    worried: "Yesterday looked a little heavy. No shame here. Let’s make today small enough to begin.",
+    sleepy: "I’m warming up with you. One easy habit is enough to wake the day up.",
+    happy: "Nice, you’re moving. Keep it kind and steady; the day does not need to be perfect.",
+  }[companionMood]
+  const companionStatus = {
+    excited: "Celebrating",
+    worried: "Checking in",
+    sleepy: "Waking up",
+    happy: "Steady",
+  }[companionMood]
 
   const awardDailyQuest = async (quest) => {
     if (!user || !supabase || quest.awarded || awardingQuestIds.current.has(quest.id)) return
@@ -1864,6 +1907,20 @@ const lastFreezeDate = freezeDates.length ? [...freezeDates].sort().at(-1) : ""
 </div>
 </div>
 </div>
+
+            {/* COMPANION */}
+            <div className="card" style={{padding:"16px 18px",marginBottom:14,background:"linear-gradient(135deg,rgba(167,139,250,0.13),rgba(78,205,196,0.08))",overflow:"hidden"}}>
+              <div style={{display:"flex",alignItems:"center",gap:14}}>
+                <CompanionAvatar mood={companionMood}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
+                    <div style={{fontSize:15,fontWeight:900}}>Flow Buddy</div>
+                    <div style={{fontSize:9,fontWeight:900,color:"#4ECDC4",letterSpacing:.6,textTransform:"uppercase",background:"rgba(78,205,196,0.1)",border:"1px solid rgba(78,205,196,0.22)",borderRadius:999,padding:"3px 7px"}}>{companionStatus}</div>
+                  </div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.56)",lineHeight:1.5,fontWeight:650}}>{companionMessage}</div>
+                </div>
+              </div>
+            </div>
 
             {/* DAILY QUESTS */}
             {dailyQuests.length > 0 && (
