@@ -898,7 +898,7 @@ function OnboardingQuiz({ onComplete, onDone }) {
 
 function ThemeSwitcher({ current, onSelect, onClose }) {
   return (
-    <div className="overlay" onClick={onClose}>
+    <div className="overlay" onClick={onClose} style={{zIndex:200}}>
       <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:400,width:"100%",padding:24,margin:20}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <div style={{fontSize:18,fontWeight:900}}>🎨 Choose Theme</div>
@@ -1172,6 +1172,18 @@ if (newStreak > 0 && newStreak % 7 === 0) {
   const dismissNotificationPrompt = () => {
     localStorage.setItem("hf_notifications_prompt_dismissed", "true")
     setShowNotifications(false)
+  }
+
+  const openThemeSwitcher = () => {
+    setShowNotifications(false)
+    setShowTheme(true)
+  }
+
+  const openNotificationExplainer = () => {
+    setNotificationError("")
+    setNotificationMessage("")
+    setShowTheme(false)
+    setShowNotifications(true)
   }
 
   const startCheckout = async () => {
@@ -1811,13 +1823,13 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
             <div className="card" style={{padding:4,marginBottom:14,overflow:"hidden"}}>
               {[
   {icon:"⭐",lbl:isPro?"Pro Active ✓":"Upgrade to Pro",fn:()=>setShowPaywall(true),color:"#FFD93D"},
-  {icon:"🎨",lbl:"Change Theme",fn:()=>setShowTheme(true),color:"#A78BFA"},
-  {icon:"🔔",lbl:"Reminder Notifications",fn:()=>setShowNotifications(true),color:"#4ECDC4"},
+  {icon:"🎨",lbl:"Change Theme",fn:openThemeSwitcher,color:"#A78BFA"},
+  {icon:"🔔",lbl:"Reminder Notifications",fn:openNotificationExplainer,color:"#4ECDC4"},
   {icon:"🤖",lbl:"AI Coach",fn:()=>setShowAI(true),color:"#A78BFA"},
   {icon:"📋",lbl:"Templates",fn:()=>setShowTemplates(true),color:"#4ECDC4"},
   {icon:"↪",lbl:"Sign Out",fn:signOut,color:"#FF6B6B"},
               ].map((item,i,arr)=>(
-                <button key={i} onClick={item.fn} className="btn-glass" style={{width:"100%",padding:"16px 18px",borderRadius:0,border:"none",borderBottom:i<arr.length-1?"1px solid rgba(255,255,255,0.06)":"none",display:"flex",alignItems:"center",gap:14,fontSize:14,background:"transparent",textAlign:"left"}}>
+                <button key={i} type="button" onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); item.fn() }} className="btn-glass" style={{width:"100%",padding:"16px 18px",borderRadius:0,border:"none",borderBottom:i<arr.length-1?"1px solid rgba(255,255,255,0.06)":"none",display:"flex",alignItems:"center",gap:14,fontSize:14,background:"transparent",textAlign:"left"}}>
                   <span style={{fontSize:22,filter:`drop-shadow(0 0 6px ${item.color})`}}>{item.icon}</span>
                   <span style={{fontWeight:600}}>{item.lbl}</span>
                   <span style={{marginLeft:"auto",color:"rgba(255,255,255,0.25)"}}>›</span>
@@ -1991,7 +2003,7 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
 
       {/* NOTIFICATION OPT-IN */}
       {showNotifications && (
-        <div className="overlay" onClick={dismissNotificationPrompt}>
+        <div className="overlay" onClick={dismissNotificationPrompt} style={{zIndex:200}}>
           <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:390,width:"100%",padding:28,textAlign:"center"}}>
             <div style={{fontSize:54,marginBottom:14,animation:"float 3s ease-in-out infinite"}}>🔔</div>
             <div style={{fontSize:23,fontWeight:900,marginBottom:8,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
