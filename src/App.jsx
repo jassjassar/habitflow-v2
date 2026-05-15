@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@supabase/supabase-js"
 
 const env = {
@@ -91,6 +91,8 @@ const getLast7 = () => Array.from({length:7},(_,i)=>{ const d=new Date(); d.setD
 const todayStr = new Date().toISOString().slice(0,10)
 const calcXP = (habits, days) => { let xp=0; habits.forEach(h=>{ let s=0; days.forEach(d=>{ if(h.completions?.[d]){xp+=10;s++;xp+=s*5}else s=0 }) }); return xp }
 const getLevel = (xp) => LEVELS.slice().reverse().find(l=>xp>=l.minXP)||LEVELS[0] 
+const getNextLevel = (level) => LEVELS.find(l=>l.level===level.level+1)
+const getLevelProgress = (xp, level, nextLevel) => nextLevel ? Math.min(100, Math.max(0, Math.round(((xp-level.minXP)/(nextLevel.minXP-level.minXP))*100))) : 100
 const getStreak = (habit, days, freezeDates=[]) => { let s=0; const rev=[...days].reverse(); for(let d of rev){ if(habit.completions?.[d]) s++; else if(freezeDates.includes(d)) s++; else break }; return s }
 const getHour = () => new Date().getHours()
 const getGreeting = () => { const h=getHour(); return h<12?"Good morning":h<17?"Good afternoon":"Good evening" }
@@ -310,6 +312,21 @@ function LevelUpBurst({ show, level }) {
         <div style={{fontSize:90,filter:"drop-shadow(0 0 30px #FFD93D)"}}>{level?.icon}</div>
         <div style={{fontSize:28,fontWeight:900,color:"#FFD93D",marginTop:8,textShadow:"0 0 30px #FFD93D"}}>LEVEL UP!</div>
         <div style={{fontSize:18,color:"rgba(255,255,255,0.8)",marginTop:6,fontWeight:600}}>{level?.title}</div>
+      </div>
+    </div>
+  )
+}
+
+function MilestoneToast({ milestone }) {
+  if (!milestone) return null
+  return (
+    <div style={{position:"fixed",top:74,left:"50%",transform:"translateX(-50%)",zIndex:9999,width:"calc(100% - 32px)",maxWidth:420,pointerEvents:"none",animation:"slideDown 0.35s ease"}}>
+      <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,rgba(255,217,61,0.18),rgba(167,139,250,0.16))",border:"1px solid rgba(255,255,255,0.14)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
+        <div style={{width:38,height:38,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(255,255,255,0.1)",boxShadow:"0 0 18px rgba(255,217,61,0.25)"}}>{milestone.icon}</div>
+        <div>
+          <div style={{fontSize:13,fontWeight:900,color:"#fff",marginBottom:2}}>{milestone.title}</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",fontWeight:700}}>{milestone.detail}</div>
+        </div>
       </div>
     </div>
   )
@@ -943,6 +960,7 @@ export default function App() {
   const [isPro, setIsPro] = useState(false)
   const [loading, setLoading] = useState(true) 
   const [totalXP, setTotalXP] = useState(0)
+  const [lifetimeCompletedCount, setLifetimeCompletedCount] = useState(0)
   const [currentTheme, setCurrentTheme] = useState(() => {
   const saved = localStorage.getItem("hf_theme") || "aurora"
   applyTheme(saved)
@@ -970,6 +988,7 @@ const [showTheme, setShowTheme] = useState(false)
   const [particles, setParticles] = useState(false)
   const [levelUpShow, setLevelUpShow] = useState(false)
   const [levelUpData, setLevelUpData] = useState(null)
+  const [milestone, setMilestone] = useState(null)
   const [authMode, setAuthMode] = useState("login")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -987,8 +1006,6 @@ const [showTheme, setShowTheme] = useState(false)
   const [mood, setMood] = useState(() => localStorage.getItem("hf_mood_"+todayStr)||"")
 
   const days = getLast7()
-  const prevXP = useRef(0)
-
   useEffect(() => {
     if (!supabase) {
       setLoading(false)
@@ -1069,19 +1086,24 @@ const [showTheme, setShowTheme] = useState(false)
   const loadHabits = async (uid) => { 
     const {data:hd} = await supabase.from("habits").select("*").eq("user_id",uid).order("created_at")
     const {data:cd} = await supabase.from("completions").select("*").eq("user_id",uid)
-    if (hd) setHabits(hd.map(h=>({...h,completions:Object.fromEntries((cd||[]).filter(c=>c.habit_id===h.id).map(c=>[c.date,true]))})))
-    const {data:p, error:profileError} = await supabase.from("profiles").select("is_pro, total_xp, theme, onboarding_completed").eq("id",uid).maybeSingle()
+    const loadedHabits = (hd||[]).map(h=>({...h,completions:Object.fromEntries((cd||[]).filter(c=>c.habit_id===h.id).map(c=>[c.date,true]))}))
+    if (hd) setHabits(loadedHabits)
+    const {data:p, error:profileError} = await supabase.from("profiles").select("is_pro, total_xp, lifetime_completed_count, theme, onboarding_completed").eq("id",uid).maybeSingle()
     let profile = p
 
-    if (profileError?.message?.includes("onboarding_completed")) {
+    if (profileError?.message?.includes("onboarding_completed") || profileError?.message?.includes("lifetime_completed_count")) {
       const {data:fallbackProfile} = await supabase.from("profiles").select("is_pro, total_xp, theme").eq("id",uid).maybeSingle()
       profile = fallbackProfile
     }
 
 if (profile) {
   setIsPro(profile.is_pro)
-  if (profile.total_xp) setTotalXP(profile.total_xp)
+  setTotalXP(Number(profile.total_xp || 0))
+  setLifetimeCompletedCount(Number(profile.lifetime_completed_count ?? cd?.length ?? 0))
   if (profile.theme) { setCurrentTheme(profile.theme); applyTheme(profile.theme) }
+} else {
+  setTotalXP(calcXP(loadedHabits, days))
+  setLifetimeCompletedCount(cd?.length || 0)
 }
     const hasExistingHabits = Boolean(hd?.length)
     const hasCompletedOnboarding = profile?.onboarding_completed === true || hasExistingHabits
@@ -1099,20 +1121,40 @@ if (profile) {
   }
   const signOut = async () => supabase.auth.signOut()
 
+  const showMilestone = (nextMilestone) => {
+    setMilestone(nextMilestone)
+    setTimeout(() => setMilestone(null), 2600)
+  }
+
   const toggle = async (id, date) => {
     const h = habits.find(x=>x.id===id)
+    if (!h || !user) return
     const done = h.completions?.[date]
     if (done) {
-      await supabase.from("completions").delete().eq("habit_id",id).eq("date",date)
+      const {error} = await supabase.from("completions").delete().eq("habit_id",id).eq("date",date)
+      if (error) return
     } else {
-      await supabase.from("completions").insert({habit_id:id,user_id:user.id,date})
+      const {error:completionError} = await supabase.from("completions").insert({habit_id:id,user_id:user.id,date})
+      if (completionError) return
       triggerParticles() 
-      const streakBonus = getStreak({...h, completions:{...h.completions,[date]:true}}, days) * 5
-const xpEarned = 10 + streakBonus
-const newTotalXP = totalXP + xpEarned
-setTotalXP(newTotalXP)
-supabase.from("profiles").upsert({id:user.id, total_xp:newTotalXP})
-      const newStreak = getStreak({...h, completions:{...h.completions,[date]:true}}, days)
+      const nextHabit = {...h, completions:{...h.completions,[date]:true}}
+      const newStreak = getStreak(nextHabit, days, freezeDates)
+      const streakBonus = newStreak * 5
+      const xpEarned = 10 + streakBonus
+      const {data:profileStats} = await supabase.from("profiles").select("total_xp, lifetime_completed_count").eq("id",user.id).maybeSingle()
+      const baseXP = Number(profileStats?.total_xp ?? totalXP ?? 0)
+      const baseLifetimeCount = Number(profileStats?.lifetime_completed_count ?? lifetimeCompletedCount ?? 0)
+      const newTotalXP = baseXP + xpEarned
+      const newLifetimeCount = baseLifetimeCount + 1
+      const {error:profileError} = await supabase.from("profiles").upsert({
+        id:user.id,
+        total_xp:newTotalXP,
+        lifetime_completed_count:newLifetimeCount,
+      })
+      if (!profileError) {
+        setTotalXP(newTotalXP)
+        setLifetimeCompletedCount(newLifetimeCount)
+      }
 if (newStreak > 0 && newStreak % 7 === 0) {
   const maxFreezes = isPro ? 99 : 1
   if (freezes < maxFreezes) {
@@ -1123,11 +1165,11 @@ if (newStreak > 0 && newStreak % 7 === 0) {
     setTimeout(() => setFreezeToast(false), 3000)
   }
 } 
-      const newXP = calcXP([...habits.map(x=>x.id===id?{...x,completions:{...x.completions,[date]:true}}:x)], days)
-      const oldLevel = getLevel(prevXP.current)
-      const newLevel = getLevel(newXP)
-      if (newLevel.level > oldLevel.level) { setLevelUpData(newLevel); setLevelUpShow(true); setTimeout(()=>setLevelUpShow(false),2500) }
-      prevXP.current = newXP
+      const oldLevel = getLevel(baseXP)
+      const newLevel = getLevel(newTotalXP)
+      if (!profileError && newLevel.level > oldLevel.level) { setLevelUpData(newLevel); setLevelUpShow(true); setTimeout(()=>setLevelUpShow(false),2500) }
+      else if (!profileError && Math.floor(baseXP / 100) < Math.floor(newTotalXP / 100)) showMilestone({icon:"⚡",title:`${Math.floor(newTotalXP / 100) * 100} XP reached`,detail:"Your lifetime progress is saved"})
+      else if (!profileError && newStreak > 0 && newStreak % 7 === 0) showMilestone({icon:"🔥",title:`${newStreak}-day streak`,detail:`+${xpEarned} XP earned today`})
     }
     setHabits(h=>h.map(x=>x.id===id?{...x,completions:{...x.completions,[date]:!done}}:x))
   }
@@ -1283,7 +1325,7 @@ if (newStreak > 0 && newStreak % 7 === 0) {
 - Their habits: ${habitList}
 - Habits completed today: ${todayDoneList}
 - Best streak: ${bestStreak} days
-- Total XP: ${xp} (Level: ${currentLevel.title} ${currentLevel.icon})
+- Total XP: ${displayXP} (Level: ${currentLevel.title} ${currentLevel.icon})
 - Steps today: ${steps.toLocaleString()}
 - Water today: ${water}/8 cups
 - Mood today: ${mood||"not logged"}
@@ -1316,8 +1358,11 @@ Rules: Be conversational, warm, personal. Keep under 120 words. Use 1-2 emojis. 
   const xp = calcXP(habits, days)
 const displayXP = totalXP > 0 ? totalXP : xp
 const currentLevel = getLevel(displayXP)
-const nextLevel = LEVELS.find(l=>l.level===currentLevel.level+1)
-const xpPct = nextLevel ? Math.round(((displayXP-currentLevel.minXP)/(nextLevel.minXP-currentLevel.minXP))*100) : 100
+const nextLevel = getNextLevel(currentLevel)
+const xpPct = getLevelProgress(displayXP, currentLevel, nextLevel)
+const levelXP = displayXP - currentLevel.minXP
+const levelXPNeeded = nextLevel ? nextLevel.minXP - currentLevel.minXP : currentLevel.minXP
+const lifetimeCompletions = Math.max(lifetimeCompletedCount, habits.reduce((s,h)=>s+Object.keys(h.completions||{}).length,0))
   useEffect(() => {
   if (habits.length === 0 || freezes === 0) return
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1)
@@ -1466,6 +1511,7 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
       <style>{css}</style>
       <Particles active={particles}/>
       <LevelUpBurst show={levelUpShow} level={levelUpData}/> 
+      <MilestoneToast milestone={milestone}/>
       {checkoutNotice && !showPaywall && (
         <div style={{position:"fixed",top:76,left:"50%",transform:"translateX(-50%)",zIndex:120,width:"calc(100% - 32px)",maxWidth:440}}>
           <div className="card" style={{padding:"12px 14px",fontSize:13,fontWeight:700,color:"#fff",textAlign:"center",background:"rgba(107,203,119,0.16)",border:"1px solid rgba(107,203,119,0.28)"}}>
@@ -1558,9 +1604,13 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
                 <div className="card" style={{padding:"14px 16px",background:"linear-gradient(135deg,rgba(255,215,0,0.12),rgba(107,203,119,0.08))"}}>
                   <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>LEVEL</div>
                   <div style={{fontSize:22,fontWeight:900,marginBottom:2}}>{currentLevel.icon} {currentLevel.title}</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",marginBottom:8}}>⚡ {xp} XP · {nextLevel?`${nextLevel.minXP-xp} to next`:"MAX!"}</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",marginBottom:8}}>⚡ {displayXP} XP · {nextLevel?`${nextLevel.minXP-displayXP} to next`:"MAX!"}</div>
                   <div style={{height:5,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
                     <div style={{height:"100%",width:xpPct+"%",background:"linear-gradient(90deg,#FFD93D,#6BCB77)",transition:"width 0.8s ease",borderRadius:999}}/>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"rgba(255,255,255,0.32)",fontWeight:700,marginTop:6}}>
+                    <span>{nextLevel ? `${xpPct}% complete` : "Top level"}</span>
+                    <span>{nextLevel ? `${levelXP}/${levelXPNeeded}` : `${displayXP} lifetime XP`}</span>
                   </div>
                 </div>
 
@@ -1758,12 +1808,15 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
           <div style={{marginTop:12,fontSize:13,color:"rgba(255,255,255,0.5)"}}>
             {nextLevel ? `${nextLevel.minXP-displayXP} XP to ${nextLevel.title}` : "MAX LEVEL! 👑"}
           </div>
+          <div style={{marginTop:6,fontSize:11,color:"rgba(255,255,255,0.34)",fontWeight:700}}>
+            {nextLevel ? `${levelXP}/${levelXPNeeded} XP in Level ${currentLevel.level}` : `${displayXP} lifetime XP saved`}
+          </div>
         </div>
  
         {/* Stats grid */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
           {[
-            {lbl:"Total Completions",val:habits.reduce((s,h)=>s+Object.keys(h.completions||{}).length,0),color:"#4ECDC4"},
+            {lbl:"Lifetime Completions",val:lifetimeCompletions,color:"#4ECDC4"},
             {lbl:"Best Streak",val:bestStreak+"🔥",color:"#FF8E53"},
             {lbl:"Total XP",val:displayXP+"⚡",color:"#A78BFA"},
             {lbl:"Habits Tracked",val:habits.length,color:"#F472B6"},
@@ -1812,7 +1865,7 @@ const bestStreak = habits.length ? Math.max(0,...habits.map(h=>getStreak(h,days,
                 </div>
                 <div>
                   <div style={{fontSize:17,fontWeight:800,marginBottom:2}}>{userName}</div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{currentLevel.icon} {currentLevel.title} · {xp} XP</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{currentLevel.icon} {currentLevel.title} · {displayXP} XP</div>
                 </div>
                 <div style={{marginLeft:"auto",textAlign:"right"}}>
                   {isPro && <div style={{background:"linear-gradient(135deg,#FFD93D,#FF8E53)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800}}>PRO ⭐</div>}
