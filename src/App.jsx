@@ -123,6 +123,14 @@ const getStreak = (habit, days, freezeDates=[]) => { let s=0; const rev=[...days
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 const DAILY_QUEST_BONUS_XP = 20
 const getFreshQuestState = () => ({ date: todayStr, awardedQuestIds: [], beforeNoonHabitIds: [] })
+const getStoredQuestCompletions = (userId, dates) => dates.reduce((total, date) => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(`hf_daily_quests_${userId || "guest"}_${date}`) || "null")
+    return total + (Array.isArray(saved?.awardedQuestIds) ? saved.awardedQuestIds.length : 0)
+  } catch {
+    return total
+  }
+}, 0)
 const getHour = () => new Date().getHours()
 const getGreeting = () => { const h=getHour(); return h<12?"Good morning":h<17?"Good afternoon":"Good evening" }
 
@@ -1092,6 +1100,9 @@ const [showTheme, setShowTheme] = useState(false)
   const [aiMsgs, setAiMsgs] = useState([])
   const [aiInput, setAiInput] = useState("")
   const [aiLoading, setAiLoading] = useState(false)
+  const [weeklyRecap, setWeeklyRecap] = useState("")
+  const [weeklyRecapLoading, setWeeklyRecapLoading] = useState(false)
+  const [weeklyRecapError, setWeeklyRecapError] = useState("")
   const [steps, setSteps] = useState(() => parseInt(localStorage.getItem("hf_steps")||"0"))
   const [water, setWater] = useState(() => parseInt(localStorage.getItem("hf_water_"+todayStr)||"0"))
   const [mood, setMood] = useState(() => localStorage.getItem("hf_mood_"+todayStr)||"")
@@ -1533,6 +1544,43 @@ Rules: Be conversational, warm, personal. Keep under 120 words. Use 1-2 emojis. 
     setAiLoading(false)
   }
 
+  const generateWeeklyRecap = async () => {
+    if (!user || weeklyRecapLoading) return
+    setWeeklyRecapLoading(true)
+    setWeeklyRecapError("")
+
+    const systemPrompt = `You are the HabitFlow AI coach. Generate a short weekly reflection using the user's long-term memory when helpful.
+Weekly summary:
+- Completed habit check-ins: ${weeklySummary.completed}
+- Missed habit opportunities: ${weeklySummary.missed}
+- Best current streak: ${weeklySummary.bestStreak} days
+- XP gained this week: ${weeklySummary.xpGained}
+- Daily quests completed: ${weeklySummary.questsCompleted}
+- Strongest habits: ${weeklySummary.strongHabits.join(", ") || "none yet"}
+- Habits needing a gentle reset: ${weeklySummary.resetHabits.join(", ") || "none yet"}
+Rules: Keep it under 90 words. Be supportive and specific. Mention one win, one gentle focus for next week, and no guilt or shame.`
+
+    try {
+      const { data:{ session } } = await supabase.auth.getSession()
+      const res = await fetch("/api/ai-coach", {
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${session?.access_token}`},
+        body:JSON.stringify({
+          messages:[{role:"user",content:"Write my supportive weekly HabitFlow recap."}],
+          systemPrompt,
+        })
+      })
+      const data = await res.json()
+      if (!data.reply) throw new Error(data.error || "No weekly recap")
+      setWeeklyRecap(data.reply)
+    } catch {
+      setWeeklyRecap("This week still gave you useful signal: every check-in counted, and the missed spots are just places to make next week smaller and kinder. Pick one habit to protect first, then let the rest follow.")
+      setWeeklyRecapError("AI recap had trouble connecting, so I wrote a local reflection for now.")
+    } finally {
+      setWeeklyRecapLoading(false)
+    }
+  }
+
   const addWater = (n) => { const v=Math.max(0,water+n); setWater(v); localStorage.setItem("hf_water_"+todayStr,v) }
   const addSteps = (n) => { const v=steps+n; setSteps(v); localStorage.setItem("hf_steps",v) }
   const saveMood = (m) => { setMood(m); localStorage.setItem("hf_mood_"+todayStr,m); setShowMood(false) }
@@ -1639,6 +1687,32 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
   const dailyQuestSignature = dailyQuests.map(q => `${q.id}:${q.progress}:${q.complete}:${q.awarded}`).join("|")
   const awardedQuestCount = dailyQuests.filter(q => q.awarded).length
   const completedQuestCount = dailyQuests.filter(q => q.complete).length
+  const weeklyHabitStats = habits.map(h => {
+    const completed = days.filter(d => h.completions?.[d]).length
+    return {...h, weeklyCompleted: completed, weeklyMissed: days.length - completed}
+  })
+  const weeklyCompletedHabits = weeklyHabitStats.reduce((sum, h) => sum + h.weeklyCompleted, 0)
+  const weeklyMissedHabits = weeklyHabitStats.reduce((sum, h) => sum + h.weeklyMissed, 0)
+  const weeklyStrongHabits = weeklyHabitStats
+    .filter(h => h.weeklyCompleted > 0)
+    .sort((a,b) => b.weeklyCompleted - a.weeklyCompleted)
+    .slice(0,3)
+    .map(h => h.name)
+  const weeklyResetHabits = weeklyHabitStats
+    .filter(h => h.weeklyMissed > 0)
+    .sort((a,b) => b.weeklyMissed - a.weeklyMissed)
+    .slice(0,3)
+    .map(h => h.name)
+  const weeklyQuestCompletions = getStoredQuestCompletions(user?.id, days)
+  const weeklySummary = {
+    completed: weeklyCompletedHabits,
+    missed: weeklyMissedHabits,
+    bestStreak,
+    xpGained: xp,
+    questsCompleted: Math.max(weeklyQuestCompletions, awardedQuestCount),
+    strongHabits: weeklyStrongHabits,
+    resetHabits: weeklyResetHabits,
+  }
   const dayProgress = Math.min(1, Math.max(0, (getHour() - 7) / 15))
   const expectedDoneByNow = habits.length ? Math.min(habits.length, Math.ceil(habits.length * dayProgress)) : 0
   const questMomentum = dailyQuests.length ? completedQuestCount / dailyQuests.length : 0
@@ -2024,6 +2098,60 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                 </div>
               </div>
             </div>
+
+            {/* WEEKLY REFLECTION */}
+            {habits.length > 0 && (
+              <div className="card" style={{padding:"16px 18px",marginBottom:14,background:"linear-gradient(135deg,rgba(167,139,250,0.12),rgba(255,217,61,0.07))"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:12}}>
+                  <div>
+                    <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>WEEKLY REFLECTION</div>
+                    <div style={{fontSize:17,fontWeight:900}}>Your last 7 days</div>
+                  </div>
+                  <button onClick={generateWeeklyRecap} disabled={weeklyRecapLoading} className="btn-glass" style={{padding:"7px 10px",fontSize:11,fontWeight:900,whiteSpace:"nowrap"}}>
+                    {weeklyRecapLoading ? "Writing..." : "AI recap"}
+                  </button>
+                </div>
+
+                <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:12}}>
+                  {[
+                    {label:"Completed",value:weeklySummary.completed,accent:"#6BCB77"},
+                    {label:"Missed",value:weeklySummary.missed,accent:"#FFD93D"},
+                    {label:"Best streak",value:`${weeklySummary.bestStreak}d`,accent:"#FF8E53"},
+                    {label:"XP gained",value:weeklySummary.xpGained,accent:"#A78BFA"},
+                  ].map(item=>(
+                    <div key={item.label} style={{padding:"10px 11px",borderRadius:13,background:"rgba(255,255,255,0.045)",border:"1px solid var(--border)"}}>
+                      <div style={{fontSize:9,fontWeight:800,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:.6,marginBottom:4}}>{item.label}</div>
+                      <div style={{fontSize:18,fontWeight:950,color:item.accent}}>{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:weeklyRecap || weeklyRecapError ? 12 : 0}}>
+                  <div style={{fontSize:11,color:"#4ECDC4",fontWeight:850,background:"rgba(78,205,196,0.1)",border:"1px solid rgba(78,205,196,0.22)",borderRadius:999,padding:"5px 8px"}}>
+                    {weeklySummary.questsCompleted} quest{weeklySummary.questsCompleted===1?"":"s"} completed
+                  </div>
+                  {weeklySummary.strongHabits.length > 0 && (
+                    <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:750,background:"rgba(255,255,255,0.045)",border:"1px solid var(--border)",borderRadius:999,padding:"5px 8px"}}>
+                      Strong: {weeklySummary.strongHabits.slice(0,2).join(", ")}
+                    </div>
+                  )}
+                  {weeklySummary.resetHabits.length > 0 && (
+                    <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:750,background:"rgba(255,255,255,0.045)",border:"1px solid var(--border)",borderRadius:999,padding:"5px 8px"}}>
+                      Reset gently: {weeklySummary.resetHabits[0]}
+                    </div>
+                  )}
+                </div>
+
+                {weeklyRecap && (
+                  <div style={{fontSize:12,color:"var(--text-secondary)",lineHeight:1.55,fontWeight:650,padding:"11px 12px",borderRadius:14,background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.22)"}}>
+                    {weeklyRecap}
+                  </div>
+                )}
+                {weeklyRecapError && (
+                  <div style={{fontSize:10,color:"var(--text-muted)",fontWeight:700,marginTop:8,lineHeight:1.35}}>{weeklyRecapError}</div>
+                )}
+              </div>
+            )}
 
             {/* DAILY QUESTS */}
             {dailyQuests.length > 0 && (
