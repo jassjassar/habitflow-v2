@@ -236,6 +236,7 @@ const css = `
     position:fixed;inset:0;background:rgba(0,0,0,0.75);
     backdrop-filter:blur(16px);z-index:100;
     display:flex;align-items:center;justify-content:center;padding:20px;
+    overflow-y:auto;
   }
   .sheet{
     position:fixed;inset:0;background:rgba(0,0,0,0.75);
@@ -243,8 +244,8 @@ const css = `
     display:flex;align-items:flex-end;
   }
   .sheet-inner{
-    background:linear-gradient(180deg,#1a1a2e,#13132a);
-    border:1px solid rgba(255,255,255,0.1);
+    background:var(--card-bg,var(--card,linear-gradient(180deg,#1a1a2e,#13132a)));
+    border:1px solid var(--border,rgba(255,255,255,0.1));
     border-radius:28px 28px 0 0;
     padding:8px 20px 40px;width:100%;
     max-height:92vh;overflow-y:auto;
@@ -282,6 +283,18 @@ const css = `
   .tab-item.active .tab-label{color:var(--accent,#A78BFA)}
   .tab-dot{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:1px;transition:background 0.2s}
   .tab-item.active .tab-dot{background:var(--accent,#A78BFA)}
+  .app-content{padding:16px 16px 116px;position:relative;z-index:5}
+  .home-hero-grid{display:grid;grid-template-columns:auto 1fr;gap:14px;margin-bottom:14px}
+  .modal-card{max-height:88vh;overflow-y:auto}
+  .template-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  @media (max-width:390px){
+    .top-nav{padding:12px 14px;gap:10px}
+    .home-hero-grid{grid-template-columns:1fr}
+    .template-grid{grid-template-columns:1fr}
+    .overlay{padding:14px;align-items:flex-start}
+    .modal-card{max-height:calc(100vh - 28px)}
+  }
 
   /* PARTICLES */
   .particle{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:9999;animation:confettiFall 2s ease forwards}
@@ -1003,7 +1016,7 @@ function ModalOverlay({ children, onClose, zIndex = 200 }) {
 function ThemeSwitcher({ current, unlockedThemes, onSelect, onClose }) {
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="card" style={{maxWidth:400,width:"100%",padding:24,margin:20}}>
+      <div className="card modal-card" style={{maxWidth:400,width:"100%",padding:24,margin:"auto"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <div style={{fontSize:18,fontWeight:900}}>🎨 Choose Theme</div>
           <button onClick={onClose} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
@@ -1097,6 +1110,7 @@ const [showTheme, setShowTheme] = useState(false)
   const [newEmoji, setNewEmoji] = useState("🎯")
   const [newColor, setNewColor] = useState("#A78BFA")
   const [newTime, setNewTime] = useState("08:00")
+  const [habitSaveError, setHabitSaveError] = useState("")
   const [aiMsgs, setAiMsgs] = useState([])
   const [aiInput, setAiInput] = useState("")
   const [aiLoading, setAiLoading] = useState(false)
@@ -1354,9 +1368,14 @@ if (newStreak > 0 && newStreak % 7 === 0) {
   }
 
   const addHabit = async () => {
+    setHabitSaveError("")
     if (!newName.trim()) return
     if (!isPro && habits.length >= 3) { setShowPaywall(true); return }
-    const {data} = await supabase.from("habits").insert({user_id:user.id,name:newName.trim(),emoji:newEmoji,color:newColor,reminder_time:newTime}).select().single()
+    const {data, error} = await supabase.from("habits").insert({user_id:user.id,name:newName.trim(),emoji:newEmoji,color:newColor,reminder_time:newTime}).select().single()
+    if (error) {
+      setHabitSaveError("Could not save that habit. Please try again.")
+      return
+    }
     if (data) {
       setHabits(h=>[...h,{...data,completions:{}}])
       triggerParticles()
@@ -1366,9 +1385,17 @@ if (newStreak > 0 && newStreak % 7 === 0) {
   }
 
   const addFromTemplate = async (t) => {
+    setHabitSaveError("")
     if (!isPro && habits.length >= 3) { setShowPaywall(true); return }
-    const {data} = await supabase.from("habits").insert({user_id:user.id,name:t.name,emoji:t.emoji,color:t.color,reminder_time:t.time}).select().single()
-    if (data) setHabits(h=>[...h,{...data,completions:{}}])
+    const {data, error} = await supabase.from("habits").insert({user_id:user.id,name:t.name,emoji:t.emoji,color:t.color,reminder_time:t.time}).select().single()
+    if (error) {
+      setHabitSaveError("Could not add that template. Please try again.")
+      return
+    }
+    if (data) {
+      setHabits(h=>[...h,{...data,completions:{}}])
+      triggerParticles()
+    }
     setShowTemplates(false)
   }
 
@@ -2004,9 +2031,9 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
       {/* TOP NAV */}
       <div className="top-nav">
-        <div>
+        <div style={{minWidth:0}}>
           <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:2}}>HABITFLOW</div>
-          <div style={{fontSize:20,fontWeight:900}}>Hello, {userName} 👋</div>
+          <div style={{fontSize:20,fontWeight:900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:210}}>Hello, {userName} 👋</div>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <div className="card" style={{padding:"6px 12px",display:"flex",alignItems:"center",gap:6,borderRadius:12}}>
@@ -2018,14 +2045,14 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         </div>
       </div>
 
-      <div style={{padding:"16px 16px 0",position:"relative",zIndex:5}}>
+      <div className="app-content">
 
         {/* HOME TAB */}
         {activeTab==="home" && (
           <div className="fade-up">
 
             {/* HERO ROW: Ring + Stats */}
-            <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:14,marginBottom:14}}>
+            <div className="home-hero-grid">
               {/* Ring Card */}
               <div className="card float-a" style={{padding:20,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,minWidth:160}}>
                 <Ring3D pct={todayPct} size={130} color="#A78BFA" label="TODAY'S PROGRESS" sublabel={`${doneToday}/${habits.length} done`}/>
@@ -2275,11 +2302,19 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                 </div>
               </>
             )}
+            {habits.length === 0 && (
+              <div className="card" style={{padding:"24px 20px",textAlign:"center",marginBottom:14}}>
+                <div style={{fontSize:42,marginBottom:10}}>🌱</div>
+                <div style={{fontSize:18,fontWeight:900,marginBottom:6}}>Start with one tiny habit</div>
+                <div style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.55,marginBottom:18}}>Choose a starter template or create something simple enough to repeat tomorrow.</div>
+                <button onClick={()=>{setHabitSaveError("");setShowTemplates(true)}} className="btn-grad" style={{padding:"12px 20px",fontSize:14,background:"linear-gradient(135deg,#FF6B6B,#FF8E53)"}}>Browse Templates</button>
+              </div>
+            )}
 
             {/* QUICK ACTIONS */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-              <button onClick={()=>setShowTemplates(true)} className="btn-grad" style={{padding:14,fontSize:13,background:"linear-gradient(135deg,#FF6B6B,#FF8E53)",borderRadius:16}}>📋 Templates</button>
-              <button onClick={()=>setShowAdd(true)} className="btn-grad" style={{padding:14,fontSize:13,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",borderRadius:16}}>+ New Habit</button>
+              <button onClick={()=>{setHabitSaveError("");setShowTemplates(true)}} className="btn-grad" style={{padding:14,fontSize:13,background:"linear-gradient(135deg,#FF6B6B,#FF8E53)",borderRadius:16}}>📋 Templates</button>
+              <button onClick={()=>{setHabitSaveError("");setShowAdd(true)}} className="btn-grad" style={{padding:14,fontSize:13,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",borderRadius:16}}>+ New Habit</button>
             </div>
           </div>
         )}
@@ -2289,14 +2324,14 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
           <div className="fade-up">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
               <div style={{fontSize:22,fontWeight:900}}>My Habits</div>
-              <button onClick={()=>setShowAdd(true)} className="btn-grad" style={{padding:"9px 18px",fontSize:13,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>+ Add</button>
+              <button onClick={()=>{setHabitSaveError("");setShowAdd(true)}} className="btn-grad" style={{padding:"9px 18px",fontSize:13,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>+ Add</button>
             </div>
             {habits.length===0 ? (
               <div className="card" style={{padding:48,textAlign:"center"}}>
                 <div style={{fontSize:64,marginBottom:16,animation:"float 3s ease-in-out infinite"}}>🌱</div>
                 <div style={{fontSize:20,fontWeight:800,marginBottom:8}}>No habits yet!</div>
                 <div style={{color:"var(--text-muted)",fontSize:14,marginBottom:24}}>Start with a template or create your own</div>
-                <button onClick={()=>setShowTemplates(true)} className="btn-grad" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FF6B6B,#FF8E53)"}}>Browse Templates 🎯</button>
+                <button onClick={()=>{setHabitSaveError("");setShowTemplates(true)}} className="btn-grad" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FF6B6B,#FF8E53)"}}>Browse Templates 🎯</button>
               </div>
             ) : (
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -2335,24 +2370,24 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         )}
 
         {/* ANALYTICS TAB */}
-        {activeTab==="analytics" && (
-  <div className="su">
+{activeTab==="analytics" && (
+  <div className="fade-up">
     <div style={{fontSize:20,fontWeight:900,marginBottom:14}}>Analytics</div>
  
     {/* HEATMAP — visible to ALL users */}
     <HeatmapCalendar habits={habits}/>
  
     {!isPro ? (
-      <div className="card-3d float-a" style={{padding:40,textAlign:"center"}}>
+      <div className="card float-a" style={{padding:40,textAlign:"center"}}>
         <div style={{fontSize:52,marginBottom:14}}>🔒</div>
         <div style={{fontSize:20,fontWeight:800,marginBottom:8}}>Pro Feature</div>
         <div style={{color:"var(--text-muted)",fontSize:14,marginBottom:22}}>Unlock detailed analytics and more</div>
-        <button onClick={()=>setShowPaywall(true)} className="color-btn" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FFD93D,#FF8E53)"}}>Upgrade to Pro ⭐</button>
+        <button onClick={()=>setShowPaywall(true)} className="btn-grad" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FFD93D,#FF8E53)"}}>Upgrade to Pro ⭐</button>
       </div>
     ) : (
       <>
         {/* XP Ring */}
-        <div className="card-3d float-b" style={{padding:24,textAlign:"center",marginBottom:14,background:"linear-gradient(135deg,#A78BFA22,#4ECDC422)"}}>
+        <div className="card float-b" style={{padding:24,textAlign:"center",marginBottom:14,background:"linear-gradient(135deg,#A78BFA22,#4ECDC422)"}}>
           <Ring3D pct={xpPct} size={160} color="#A78BFA" label="LEVEL PROGRESS" sublabel={currentLevel.title}/>
           <div style={{marginTop:12,fontSize:13,color:"var(--text-muted)"}}>
             {nextLevel ? `${nextLevel.minXP-displayXP} XP to ${nextLevel.title}` : "MAX LEVEL! 👑"}
@@ -2370,7 +2405,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
             {lbl:"Total XP",val:displayXP+"⚡",color:"#A78BFA"},
             {lbl:"Habits Tracked",val:habits.length,color:"#F472B6"},
           ].map(s=>(
-            <div key={s.lbl} className="card-3d" style={{padding:18,background:`linear-gradient(135deg,${s.color}22,${s.color}08)`}}>
+            <div key={s.lbl} className="card" style={{padding:18,background:`linear-gradient(135deg,${s.color}22,${s.color}08)`}}>
               <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:6,fontWeight:700,letterSpacing:.5}}>{s.lbl}</div>
               <div style={{fontSize:28,fontWeight:900,filter:`drop-shadow(0 0 8px ${s.color})`}}>{s.val}</div>
             </div>
@@ -2378,7 +2413,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         </div>
  
         {/* Habit completion bars */}
-        <div className="card-3d" style={{padding:20,marginBottom:14}}>
+        <div className="card" style={{padding:20,marginBottom:14}}>
           <div style={{fontSize:15,fontWeight:800,marginBottom:16}}>This Week</div>
           {habits.map(h=>{
             const cnt = days.filter(d=>h.completions?.[d]).length
@@ -2428,7 +2463,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
   {icon:"🎨",lbl:"Change Theme",fn:openThemeSwitcher,color:"#A78BFA"},
   {icon:"🔔",lbl:"Reminder Notifications",fn:openNotificationExplainer,color:"#4ECDC4"},
   {icon:"🤖",lbl:"AI Coach",fn:()=>setShowAI(true),color:"#A78BFA"},
-  {icon:"📋",lbl:"Templates",fn:()=>setShowTemplates(true),color:"#4ECDC4"},
+  {icon:"📋",lbl:"Templates",fn:()=>{setHabitSaveError("");setShowTemplates(true)},color:"#4ECDC4"},
   {icon:"↪",lbl:"Sign Out",fn:signOut,color:"#FF6B6B"},
               ].map((item,i,arr)=>(
                 <button key={i} type="button" onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); item.fn() }} className="btn-glass" style={{width:"100%",padding:"16px 18px",borderRadius:0,border:"none",borderBottom:i<arr.length-1?"1px solid var(--border)":"none",display:"flex",alignItems:"center",gap:14,fontSize:14,background:"transparent",textAlign:"left"}}>
@@ -2489,6 +2524,11 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
             <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,marginTop:-12,marginBottom:18}}>
               We'll ask before turning on notifications, then use this time for daily reminders.
             </div>
+            {habitSaveError && (
+              <div style={{fontSize:12,lineHeight:1.5,color:"#FFB4B4",background:"rgba(255,107,107,0.12)",border:"1px solid rgba(255,107,107,0.28)",borderRadius:12,padding:"10px 12px",marginBottom:12,fontWeight:700}}>
+                {habitSaveError}
+              </div>
+            )}
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>setShowAdd(false)} className="btn-glass" style={{flex:1,padding:14,fontSize:14}}>Cancel</button>
               <button onClick={addHabit} className="btn-grad" style={{flex:2,padding:14,fontSize:15,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>Add Habit 🚀</button>
@@ -2500,12 +2540,12 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       {/* TEMPLATES */}
       {showTemplates && (
         <div className="overlay" onClick={()=>setShowTemplates(false)}>
-          <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:480,width:"100%",maxHeight:"88vh",overflowY:"auto",padding:24}}>
+          <div onClick={e=>e.stopPropagation()} className="card modal-card" style={{maxWidth:480,width:"100%",padding:24}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
               <div style={{fontSize:20,fontWeight:900}}>📋 Templates</div>
               <button onClick={()=>setShowTemplates(false)} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <div className="template-grid">
               {HABIT_TEMPLATES.map(t=>(
                 <div key={t.name} onClick={()=>addFromTemplate(t)} className="habit-card" style={{background:`linear-gradient(135deg,${t.color}18,${t.color}06)`,border:`1px solid ${t.color}33`,cursor:"pointer",padding:16}}>
                   <div style={{fontSize:28,marginBottom:6}}>{t.emoji}</div>
@@ -2515,6 +2555,11 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                 </div>
               ))}
             </div>
+            {habitSaveError && (
+              <div style={{fontSize:12,lineHeight:1.5,color:"#FFB4B4",background:"rgba(255,107,107,0.12)",border:"1px solid rgba(255,107,107,0.28)",borderRadius:12,padding:"10px 12px",marginTop:12,fontWeight:700}}>
+                {habitSaveError}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -2522,7 +2567,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       {/* EDIT HABIT */}
       {editHabit && (
         <div className="overlay" onClick={()=>setEditHabit(null)}>
-          <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:420,width:"100%",padding:24}}>
+          <div onClick={e=>e.stopPropagation()} className="card modal-card" style={{maxWidth:420,width:"100%",padding:24}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
               <div style={{fontSize:20,fontWeight:900}}>Edit Habit</div>
               <button onClick={()=>setEditHabit(null)} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
@@ -2549,7 +2594,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       {/* AI COACH */}
       {showAI && (
         <div className="overlay" onClick={()=>setShowAI(false)}>
-          <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:480,width:"100%",maxHeight:"85vh",display:"flex",flexDirection:"column",padding:0,overflow:"hidden"}}>
+          <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:480,width:"100%",maxHeight:"88vh",display:"flex",flexDirection:"column",padding:0,overflow:"hidden",margin:"auto"}}>
             <div style={{padding:"18px 20px",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div style={{fontSize:18,fontWeight:900,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>🤖 AI Habit Coach</div>
               <button onClick={()=>setShowAI(false)} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
@@ -2578,7 +2623,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
               {aiLoading && <div style={{color:"var(--text-muted)",fontSize:13,padding:8}}>🤖 Thinking...</div>}
             </div>
             <div style={{padding:14,borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",gap:8}}>
-              <input value={aiInput} onChange={e=>setAiInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendAI()} placeholder="Ask your coach..." className="inp" style={{flex:1,marginBottom:0}}/>
+              <input value={aiInput} onChange={e=>setAiInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendAI()} placeholder="Ask your coach..." className="inp" style={{flex:1,minWidth:0,marginBottom:0}}/>
               <button onClick={sendAI} disabled={aiLoading} className="btn-grad" style={{padding:"10px 18px",background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>Send</button>
             </div>
           </div>
@@ -2588,7 +2633,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       {/* MOOD PICKER */}
       {showMood && (
         <div className="overlay" onClick={()=>setShowMood(false)}>
-          <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:360,width:"100%",padding:28,textAlign:"center"}}>
+          <div onClick={e=>e.stopPropagation()} className="card modal-card" style={{maxWidth:360,width:"100%",padding:28,textAlign:"center"}}>
             <div style={{fontSize:20,fontWeight:900,marginBottom:6}}>How are you feeling? 😊</div>
             <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24}}>Daily mood check-in</div>
             <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:16}}>
@@ -2606,7 +2651,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       {/* NOTIFICATION OPT-IN */}
       {showNotifications && (
         <ModalOverlay onClose={dismissNotificationPrompt}>
-          <div className="card" style={{maxWidth:390,width:"100%",padding:28,textAlign:"center"}}>
+          <div className="card modal-card" style={{maxWidth:390,width:"100%",padding:28,textAlign:"center"}}>
             <div style={{fontSize:54,marginBottom:14,animation:"float 3s ease-in-out infinite"}}>🔔</div>
             <div style={{fontSize:23,fontWeight:900,marginBottom:8,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
               Stay on track gently
@@ -2646,7 +2691,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       {/* PRO PAYWALL */}
       {showPaywall && (
         <div className="overlay" onClick={()=>setShowPaywall(false)}>
-          <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:400,width:"100%",padding:32,textAlign:"center"}}>
+          <div onClick={e=>e.stopPropagation()} className="card modal-card" style={{maxWidth:400,width:"100%",padding:32,textAlign:"center"}}>
             <div style={{fontSize:60,marginBottom:14,animation:"float 3s ease-in-out infinite"}}>⭐</div>
             <div style={{fontSize:26,fontWeight:900,marginBottom:6,background:"linear-gradient(135deg,#FFD93D,#FF8E53)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Upgrade to Pro</div>
             <div style={{fontSize:42,fontWeight:900,marginBottom:22}}>
