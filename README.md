@@ -14,6 +14,11 @@ Required public client values:
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_VAPID_PUBLIC_KEY`
 
+Optional analytics values:
+
+- `VITE_POSTHOG_KEY`
+- `VITE_POSTHOG_HOST` (defaults to `https://us.i.posthog.com`)
+
 Required server values:
 
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -29,3 +34,5 @@ Required server values:
 Stripe checkout uses `STRIPE_PRICE_ID` for the recurring Pro subscription Price. `APP_URL` is used for Checkout success and cancel redirects.
 
 Checkout confirmation stores `stripe_customer_id` and `stripe_subscription_id` on the user's profile for later subscription management.
+
+PostHog analytics is disabled unless `VITE_POSTHOG_KEY` is set. The client tracks core MVP events only and does not send AI message or recap content.

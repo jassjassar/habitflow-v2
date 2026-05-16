@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { createClient } from "@supabase/supabase-js"
+import { identifyUser, resetAnalytics, trackEvent } from "./analytics"
 
 const normalizeVapidPublicKey = (value) => {
   let key = String(value || "").trim()
@@ -1131,12 +1132,22 @@ const [showTheme, setShowTheme] = useState(false)
     }
 
     supabase.auth.getSession().then(({data:{session}}) => {
-      if (session?.user) { setUser(session.user); loadHabits(session.user.id) }
+      if (session?.user) {
+        identifyUser(session.user)
+        setUser(session.user); loadHabits(session.user.id)
+      }
       setLoading(false)
     })
-    const {data:{subscription}} = supabase.auth.onAuthStateChange((_,session) => {
-      if (session?.user) { setUser(session.user); setPage("app"); loadHabits(session.user.id) }
-      else { setUser(null); setHabits([]); setPage("landing") }
+    const {data:{subscription}} = supabase.auth.onAuthStateChange((event,session) => {
+      if (session?.user) {
+        identifyUser(session.user)
+        if (event === "SIGNED_IN") trackEvent("login", { method:"supabase" })
+        setUser(session.user); setPage("app"); loadHabits(session.user.id)
+      }
+      else {
+        resetAnalytics()
+        setUser(null); setHabits([]); setPage("landing")
+      }
     })
     return () => {
       subscription.unsubscribe()
@@ -1172,7 +1183,7 @@ const [showTheme, setShowTheme] = useState(false)
 
     if (checkoutResult === "cancel") {
       setCheckoutNotice("Checkout canceled. You can restart anytime.")
-      setShowPaywall(true)
+      openPaywall("checkout_cancel")
       return
     }
 
@@ -1204,11 +1215,11 @@ const [showTheme, setShowTheme] = useState(false)
           setCheckoutNotice("You're Pro now. Welcome aboard.")
           triggerParticles()
         } else {
-          setShowPaywall(true)
+          openPaywall("checkout_incomplete")
           setCheckoutNotice("Checkout is not complete yet. Please try again.")
         }
       } catch (err) {
-        setShowPaywall(true)
+        openPaywall("checkout_error")
         setCheckoutError(err?.message || "Could not confirm checkout.")
       } finally {
         setCheckoutLoading(false)
@@ -1245,13 +1256,21 @@ if (profile) {
     setShowOnboarding(!hasCompletedOnboarding)
   }
 
-  const signInGoogle = async () => await supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin}})
+  const signInGoogle = async () => {
+    trackEvent("login", { method:"google_oauth_started" })
+    await supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin}})
+  }
   const signInEmail = async () => {
     setAuthLoading(true); setAuthErr("")
     const fn = authMode==="login" ? supabase.auth.signInWithPassword : supabase.auth.signUp
     const {error} = await fn.call(supabase.auth,{email,password})
     if (error) setAuthErr(error.message)
-    else if (authMode==="signup") setAuthErr("✅ Check your email!")
+    else if (authMode==="signup") {
+      trackEvent("signup", { method:"email" })
+      setAuthErr("✅ Check your email!")
+    } else {
+      trackEvent("login", { method:"email" })
+    }
     setAuthLoading(false)
   }
   const signOut = async () => supabase.auth.signOut()
@@ -1360,6 +1379,7 @@ if (newStreak > 0 && newStreak % 7 === 0) {
       if (newLevel.level > oldLevel.level) { setLevelUpData(newLevel); setLevelUpShow(true); setTimeout(()=>setLevelUpShow(false),2500) }
       else if (Math.floor(baseXP / 100) < Math.floor(newTotalXP / 100)) showMilestone({icon:"⚡",title:`${Math.floor(newTotalXP / 100) * 100} XP reached`,detail:"Your lifetime progress is saved"})
       else if (newStreak > 0 && newStreak % 7 === 0) showMilestone({icon:"🔥",title:`${newStreak}-day streak`,detail:`+${xpEarned} XP earned today`})
+      trackEvent("habit_completed", { date, streak:newStreak, xp_earned:xpEarned })
       }
       setHabits(h=>h.map(x=>x.id===id?{...x,completions:{...x.completions,[date]:!done}}:x))
     } finally {
@@ -1370,7 +1390,7 @@ if (newStreak > 0 && newStreak % 7 === 0) {
   const addHabit = async () => {
     setHabitSaveError("")
     if (!newName.trim()) return
-    if (!isPro && habits.length >= 3) { setShowPaywall(true); return }
+    if (!isPro && habits.length >= 3) { openPaywall("habit_limit"); return }
     const {data, error} = await supabase.from("habits").insert({user_id:user.id,name:newName.trim(),emoji:newEmoji,color:newColor,reminder_time:newTime}).select().single()
     if (error) {
       setHabitSaveError("Could not save that habit. Please try again.")
@@ -1380,13 +1400,14 @@ if (newStreak > 0 && newStreak % 7 === 0) {
       setHabits(h=>[...h,{...data,completions:{}}])
       triggerParticles()
       maybeOpenNotificationPrompt()
+      trackEvent("habit_created", { source:"manual", has_reminder:Boolean(newTime) })
     }
     setNewName(""); setShowAdd(false)
   }
 
   const addFromTemplate = async (t) => {
     setHabitSaveError("")
-    if (!isPro && habits.length >= 3) { setShowPaywall(true); return }
+    if (!isPro && habits.length >= 3) { openPaywall("habit_limit"); return }
     const {data, error} = await supabase.from("habits").insert({user_id:user.id,name:t.name,emoji:t.emoji,color:t.color,reminder_time:t.time}).select().single()
     if (error) {
       setHabitSaveError("Could not add that template. Please try again.")
@@ -1395,6 +1416,7 @@ if (newStreak > 0 && newStreak % 7 === 0) {
     if (data) {
       setHabits(h=>[...h,{...data,completions:{}}])
       triggerParticles()
+      trackEvent("habit_created", { source:"template", has_reminder:Boolean(t.time) })
     }
     setShowTemplates(false)
   }
@@ -1434,8 +1456,19 @@ if (newStreak > 0 && newStreak % 7 === 0) {
     setShowNotifications(true)
   }
 
+  const openAICoach = () => {
+    trackEvent("ai_coach_opened", { source:"app" })
+    setShowAI(true)
+  }
+
+  const openPaywall = (source) => {
+    trackEvent("paywall_opened", { source })
+    setShowPaywall(true)
+  }
+
   const startCheckout = async () => {
     if (checkoutLoading) return
+    trackEvent("checkout_started", { source:"paywall" })
     setCheckoutLoading(true)
     setCheckoutError("")
     setCheckoutNotice("")
@@ -1505,6 +1538,7 @@ if (newStreak > 0 && newStreak % 7 === 0) {
       if (!res.ok) throw new Error(data.error || "Could not save your reminder settings.")
 
       setNotificationMessage("Reminders are on. We'll nudge you at your habit times.")
+      trackEvent("reminder_enabled", { source:"notification_explainer" })
       return true
     } catch (err) {
       setNotificationError(err?.message || "Could not enable reminders.")
@@ -1600,9 +1634,11 @@ Rules: Keep it under 90 words. Be supportive and specific. Mention one win, one 
       const data = await res.json()
       if (!data.reply) throw new Error(data.error || "No weekly recap")
       setWeeklyRecap(data.reply)
+      trackEvent("ai_recap_generated", { source:"weekly_reflection", fallback:false })
     } catch {
       setWeeklyRecap("This week still gave you useful signal: every check-in counted, and the missed spots are just places to make next week smaller and kinder. Pick one habit to protect first, then let the rest follow.")
       setWeeklyRecapError("AI recap had trouble connecting, so I wrote a local reflection for now.")
+      trackEvent("ai_recap_generated", { source:"weekly_reflection", fallback:true })
     } finally {
       setWeeklyRecapLoading(false)
     }
@@ -1818,6 +1854,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         awardedQuestIds: [...new Set([...(state.awardedQuestIds || []), quest.id])],
       }))
       showMilestone({icon:quest.icon,title:`Daily quest complete +${quest.bonusXP} XP`,detail:quest.title})
+      trackEvent("quest_completed", { quest_id:quest.id, bonus_xp:quest.bonusXP })
     } finally {
       awardingQuestIds.current.delete(quest.id)
     }
@@ -1988,6 +2025,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       applyTheme(themeId)
       setShowTheme(false)
       if(user) await supabase.from("profiles").upsert({id:user.id, theme:themeId})
+      trackEvent("theme_changed", { theme_id:themeId })
     }}
   />
 )}
@@ -2013,6 +2051,8 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       if (profileError) throw profileError
 
       setHabits(prev => [...prev, ...createdHabits])
+      trackEvent("onboarding_completed", { habit_count:createdHabits.length })
+      createdHabits.forEach(() => trackEvent("habit_created", { source:"onboarding", has_reminder:true }))
       triggerParticles()
       return createdHabits
     }}
@@ -2040,7 +2080,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
             <span style={{fontSize:14}}>{currentLevel.icon}</span>
             <span style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)"}}>Lv {currentLevel.level}</span>
           </div>
-          <button onClick={()=>setShowAI(true)} className="btn-grad" style={{padding:"7px 14px",fontSize:12,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>🤖 AI</button>
+          <button onClick={openAICoach} className="btn-grad" style={{padding:"7px 14px",fontSize:12,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>🤖 AI</button>
           <button onClick={signOut} className="btn-glass" style={{padding:"7px 11px",fontSize:13}}>↪</button>
         </div>
       </div>
@@ -2382,7 +2422,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         <div style={{fontSize:52,marginBottom:14}}>🔒</div>
         <div style={{fontSize:20,fontWeight:800,marginBottom:8}}>Pro Feature</div>
         <div style={{color:"var(--text-muted)",fontSize:14,marginBottom:22}}>Unlock detailed analytics and more</div>
-        <button onClick={()=>setShowPaywall(true)} className="btn-grad" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FFD93D,#FF8E53)"}}>Upgrade to Pro ⭐</button>
+        <button onClick={()=>openPaywall("stats")} className="btn-grad" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FFD93D,#FF8E53)"}}>Upgrade to Pro ⭐</button>
       </div>
     ) : (
       <>
@@ -2459,10 +2499,10 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
             <div className="card" style={{padding:4,marginBottom:14,overflow:"hidden"}}>
               {[
-  {icon:"⭐",lbl:isPro?"Pro Active ✓":"Upgrade to Pro",fn:()=>setShowPaywall(true),color:"#FFD93D"},
+  {icon:"⭐",lbl:isPro?"Pro Active ✓":"Upgrade to Pro",fn:()=>openPaywall("settings"),color:"#FFD93D"},
   {icon:"🎨",lbl:"Change Theme",fn:openThemeSwitcher,color:"#A78BFA"},
   {icon:"🔔",lbl:"Reminder Notifications",fn:openNotificationExplainer,color:"#4ECDC4"},
-  {icon:"🤖",lbl:"AI Coach",fn:()=>setShowAI(true),color:"#A78BFA"},
+  {icon:"🤖",lbl:"AI Coach",fn:openAICoach,color:"#A78BFA"},
   {icon:"📋",lbl:"Templates",fn:()=>{setHabitSaveError("");setShowTemplates(true)},color:"#4ECDC4"},
   {icon:"↪",lbl:"Sign Out",fn:signOut,color:"#FF6B6B"},
               ].map((item,i,arr)=>(
