@@ -69,12 +69,12 @@ const ONBOARDING_HABITS = {
 } 
 
 const THEMES = {
-  aurora: { name:"Dark Aurora",    bg:"#0d0d1a", accent:"#A78BFA", card:"rgba(255,255,255,0.07)", text:"#ffffff", sub:"rgba(255,255,255,0.5)"  },
-  mint:   { name:"Fresh Mint",     bg:"#f0fdf6", accent:"#10b981", card:"rgba(255,255,255,0.9)",  text:"#111827", sub:"rgba(0,0,0,0.4)"         },
-  ocean:  { name:"Ocean Deep",     bg:"#0c1929", accent:"#0ea5e9", card:"rgba(14,165,233,0.08)",  text:"#f0f9ff", sub:"rgba(255,255,255,0.45)"  },
-  coral:  { name:"Sunset Coral",   bg:"#fff8f5", accent:"#f97316", card:"rgba(255,255,255,0.9)",  text:"#1c0a00", sub:"rgba(0,0,0,0.4)"         },
-  rose:   { name:"Rose Gold",      bg:"#fff5f7", accent:"#e11d48", card:"rgba(255,255,255,0.9)",  text:"#1a0010", sub:"rgba(0,0,0,0.4)"         },
-  slate:  { name:"Midnight Slate", bg:"#0f172a", accent:"#6366f1", card:"rgba(99,102,241,0.08)",  text:"#f1f5f9", sub:"rgba(255,255,255,0.45)"  },
+  aurora: { name:"Dark Aurora",    bg:"#0d0d1a", accent:"#A78BFA", card:"rgba(255,255,255,0.07)", text:"#ffffff", sub:"rgba(255,255,255,0.5)",  textSecondary:"rgba(255,255,255,0.72)", muted:"rgba(255,255,255,0.45)", border:"rgba(255,255,255,0.1)",  button:"rgba(255,255,255,0.08)", input:"rgba(255,255,255,0.07)" },
+  mint:   { name:"Fresh Mint",     bg:"#f0fdf6", accent:"#10b981", card:"rgba(255,255,255,0.94)", text:"#111827", sub:"rgba(17,24,39,0.58)",   textSecondary:"rgba(17,24,39,0.74)",  muted:"rgba(17,24,39,0.52)",  border:"rgba(17,24,39,0.12)",   button:"rgba(17,24,39,0.06)",  input:"rgba(255,255,255,0.86)" },
+  ocean:  { name:"Ocean Deep",     bg:"#0c1929", accent:"#0ea5e9", card:"rgba(14,165,233,0.08)",  text:"#f0f9ff", sub:"rgba(255,255,255,0.45)", textSecondary:"rgba(240,249,255,0.72)", muted:"rgba(240,249,255,0.46)", border:"rgba(240,249,255,0.1)", button:"rgba(255,255,255,0.08)", input:"rgba(255,255,255,0.07)" },
+  coral:  { name:"Sunset Coral",   bg:"#fff8f5", accent:"#f97316", card:"rgba(255,255,255,0.94)", text:"#1c0a00", sub:"rgba(28,10,0,0.56)",    textSecondary:"rgba(28,10,0,0.74)",   muted:"rgba(28,10,0,0.5)",    border:"rgba(28,10,0,0.12)",    button:"rgba(28,10,0,0.06)",   input:"rgba(255,255,255,0.86)" },
+  rose:   { name:"Rose Gold",      bg:"#fff5f7", accent:"#e11d48", card:"rgba(255,255,255,0.94)", text:"#1a0010", sub:"rgba(26,0,16,0.56)",    textSecondary:"rgba(26,0,16,0.74)",   muted:"rgba(26,0,16,0.5)",    border:"rgba(26,0,16,0.12)",    button:"rgba(26,0,16,0.06)",   input:"rgba(255,255,255,0.86)" },
+  slate:  { name:"Midnight Slate", bg:"#0f172a", accent:"#6366f1", card:"rgba(99,102,241,0.08)",  text:"#f1f5f9", sub:"rgba(255,255,255,0.45)", textSecondary:"rgba(241,245,249,0.72)", muted:"rgba(241,245,249,0.46)", border:"rgba(241,245,249,0.1)", button:"rgba(255,255,255,0.08)", input:"rgba(255,255,255,0.07)" },
 }
 
 const THEME_REWARDS = {
@@ -94,6 +94,13 @@ const applyTheme = (themeId) => {
   r.style.setProperty("--card", t.card)
   r.style.setProperty("--text", t.text)
   r.style.setProperty("--sub", t.sub)
+  r.style.setProperty("--text-primary", t.text)
+  r.style.setProperty("--text-secondary", t.textSecondary || t.sub)
+  r.style.setProperty("--text-muted", t.muted || t.sub)
+  r.style.setProperty("--card-bg", t.card)
+  r.style.setProperty("--border", t.border || "rgba(255,255,255,0.1)")
+  r.style.setProperty("--button-bg", t.button || "rgba(255,255,255,0.08)")
+  r.style.setProperty("--input-bg", t.input || "rgba(255,255,255,0.07)")
   localStorage.setItem("hf_theme", themeId)
 }
 
@@ -123,9 +130,9 @@ const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overscroll-behavior:none}
-  body{font-family:'Inter',sans-serif;background:var(--bg,#0d0d1a);color:var(--text,#fff);overflow-x:hidden}
+  body{font-family:'Inter',sans-serif;background:var(--bg,#0d0d1a);color:var(--text-primary,#fff);overflow-x:hidden}
   ::-webkit-scrollbar{width:3px}
-  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:10px}
+  ::-webkit-scrollbar-thumb{background:var(--border,rgba(255,255,255,0.1));border-radius:10px}
 
   @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
@@ -151,10 +158,10 @@ const css = `
 
   /* GLASSMORPHISM CARD */
   .card{
-    background:var(--card,rgba(255,255,255,0.055));
+    background:var(--card-bg,var(--card,rgba(255,255,255,0.055)));
     backdrop-filter:blur(24px);
     -webkit-backdrop-filter:blur(24px);
-    border:1px solid rgba(255,255,255,0.1);
+    border:1px solid var(--border,rgba(255,255,255,0.1));
     border-radius:20px;
     box-shadow:0 4px 24px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.08);
     transition:transform 0.3s ease,box-shadow 0.3s ease;
@@ -164,18 +171,18 @@ const css = `
 
   /* BUTTONS */
   .btn-glass{
-    background:rgba(255,255,255,0.08);
+    background:var(--button-bg,rgba(255,255,255,0.08));
     backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,0.15);
-    border-radius:12px;color:#fff;
+    border:1px solid var(--border,rgba(255,255,255,0.15));
+    border-radius:12px;color:var(--text-primary,#fff);
     font-family:'Inter',sans-serif;font-weight:700;
     cursor:pointer;transition:all 0.2s;
   }
-  .btn-glass:hover{background:rgba(255,255,255,0.15);transform:translateY(-1px)}
+  .btn-glass:hover{background:color-mix(in srgb,var(--button-bg,rgba(255,255,255,0.08)) 72%,var(--accent,#A78BFA) 28%);transform:translateY(-1px)}
   .btn-glass:active{transform:scale(0.97)}
 
   .btn-grad{
-    border:none;border-radius:14px;color:#fff;
+    border:none;border-radius:14px;color:var(--text-primary,#fff);
     font-family:'Inter',sans-serif;font-weight:800;
     cursor:pointer;
     box-shadow:0 4px 16px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.2);
@@ -187,20 +194,20 @@ const css = `
   /* INPUTS */
   .inp{
     width:100%;padding:14px 18px;
-    background:rgba(255,255,255,0.07);
-    border:1px solid rgba(255,255,255,0.12);
-    border-radius:14px;color:#fff;
+    background:var(--input-bg,rgba(255,255,255,0.07));
+    border:1px solid var(--border,rgba(255,255,255,0.12));
+    border-radius:14px;color:var(--text-primary,#fff);
     font-family:'Inter',sans-serif;font-size:14px;
     outline:none;margin-bottom:12px;
     transition:border-color 0.2s,box-shadow 0.2s;
   }
   .inp:focus{border-color:rgba(167,139,250,0.6);box-shadow:0 0 0 3px rgba(167,139,250,0.12)}
-  .inp::placeholder{color:rgba(255,255,255,0.25)}
+  .inp::placeholder{color:var(--text-muted,rgba(255,255,255,0.25))}
 
   /* HABIT CARD */
   .habit-card{
     border-radius:18px;
-    border:1px solid rgba(255,255,255,0.08);
+    border:1px solid var(--border,rgba(255,255,255,0.08));
     backdrop-filter:blur(20px);
     transition:all 0.3s ease;
     position:relative;overflow:hidden;
@@ -242,7 +249,7 @@ const css = `
     position:sticky;top:0;z-index:50;
     background:color-mix(in srgb,var(--bg,#0d0d1a) 86%,transparent);
     backdrop-filter:blur(20px);
-    border-bottom:1px solid rgba(255,255,255,0.07);
+    border-bottom:1px solid var(--border,rgba(255,255,255,0.07));
     padding:14px 20px;
     display:flex;align-items:center;justify-content:space-between;
   }
@@ -253,7 +260,7 @@ const css = `
     width:100%;max-width:480px;
     background:color-mix(in srgb,var(--bg,#0d0d1a) 94%,#000 6%);
     backdrop-filter:blur(24px);
-    border-top:1px solid rgba(255,255,255,0.07);
+    border-top:1px solid var(--border,rgba(255,255,255,0.07));
     display:flex;z-index:50;padding:10px 0 26px;
   }
   .tab-item{
@@ -263,7 +270,7 @@ const css = `
   .tab-item:hover{transform:translateY(-2px)}
   .tab-icon{font-size:20px;line-height:1;transition:transform 0.2s}
   .tab-item.active .tab-icon{transform:scale(1.15)}
-  .tab-label{font-size:9px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:rgba(255,255,255,0.4);transition:color 0.2s}
+  .tab-label{font-size:9px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-muted,rgba(255,255,255,0.4));transition:color 0.2s}
   .tab-item.active .tab-label{color:var(--accent,#A78BFA)}
   .tab-dot{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:1px;transition:background 0.2s}
   .tab-item.active .tab-dot{background:var(--accent,#A78BFA)}
@@ -308,16 +315,16 @@ function Ring3D({ pct, size=140, color="#A78BFA", label, sublabel }) {
           style={{filter:`drop-shadow(0 0 8px ${color})`}}/>
       </svg>
       <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-        <div style={{fontSize:size>100?30:20,fontWeight:900,color:"#fff",lineHeight:1}}>{Math.round(pct)}%</div>
-        {label && <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.45)",letterSpacing:.8,marginTop:3,textTransform:"uppercase"}}>{label}</div>}
-        {sublabel && <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:1}}>{sublabel}</div>}
+        <div style={{fontSize:size>100?30:20,fontWeight:900,color:"var(--text-primary,#fff)",lineHeight:1}}>{Math.round(pct)}%</div>
+        {label && <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:.8,marginTop:3,textTransform:"uppercase"}}>{label}</div>}
+        {sublabel && <div style={{fontSize:10,color:"var(--text-muted)",marginTop:1}}>{sublabel}</div>}
       </div>
     </div>
   )
 }
 
 function FireStreak({ streak }) {
-  if (streak === 0) return <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:28,opacity:0.4}}>🔥</span><span style={{fontSize:28,fontWeight:900,color:"rgba(255,255,255,0.3)"}}>0</span></div>
+  if (streak === 0) return <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:28,opacity:0.4}}>🔥</span><span style={{fontSize:28,fontWeight:900,color:"var(--text-muted)"}}>0</span></div>
   return (
     <div style={{display:"flex",alignItems:"center",gap:6}}>
       <div style={{fontSize:32,animation:"fireFlicker 0.4s ease-in-out infinite",filter:"drop-shadow(0 0 10px #FF8E53)"}}>🔥</div>
@@ -333,7 +340,7 @@ function LevelUpBurst({ show, level }) {
       <div style={{textAlign:"center",animation:"levelUp 0.6s cubic-bezier(.34,1.56,.64,1) forwards"}}>
         <div style={{fontSize:90,filter:"drop-shadow(0 0 30px #FFD93D)"}}>{level?.icon}</div>
         <div style={{fontSize:28,fontWeight:900,color:"#FFD93D",marginTop:8,textShadow:"0 0 30px #FFD93D"}}>LEVEL UP!</div>
-        <div style={{fontSize:18,color:"rgba(255,255,255,0.8)",marginTop:6,fontWeight:600}}>{level?.title}</div>
+        <div style={{fontSize:18,color:"var(--text-secondary)",marginTop:6,fontWeight:600}}>{level?.title}</div>
       </div>
     </div>
   )
@@ -343,11 +350,11 @@ function MilestoneToast({ milestone }) {
   if (!milestone) return null
   return (
     <div style={{position:"fixed",top:74,left:"50%",transform:"translateX(-50%)",zIndex:9999,width:"calc(100% - 32px)",maxWidth:420,pointerEvents:"none",animation:"slideDown 0.35s ease"}}>
-      <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,rgba(255,217,61,0.18),rgba(167,139,250,0.16))",border:"1px solid rgba(255,255,255,0.14)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
+      <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,rgba(255,217,61,0.18),rgba(167,139,250,0.16))",border:"1px solid var(--border)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
         <div style={{width:38,height:38,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(255,255,255,0.1)",boxShadow:"0 0 18px rgba(255,217,61,0.25)"}}>{milestone.icon}</div>
         <div>
-          <div style={{fontSize:13,fontWeight:900,color:"#fff",marginBottom:2}}>{milestone.title}</div>
-          <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",fontWeight:700}}>{milestone.detail}</div>
+          <div style={{fontSize:13,fontWeight:900,color:"var(--text-primary,#fff)",marginBottom:2}}>{milestone.title}</div>
+          <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:700}}>{milestone.detail}</div>
         </div>
       </div>
     </div>
@@ -359,11 +366,11 @@ function FreezeToast({ type }) {
   const isEarned = type === "shield_earned"
   return (
     <div style={{position:"fixed",top:74,left:"50%",transform:"translateX(-50%)",zIndex:9999,width:"calc(100% - 32px)",maxWidth:420,pointerEvents:"none",animation:"slideDown 0.35s ease"}}>
-      <div className="card" style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:12,background:isEarned?"linear-gradient(135deg,rgba(69,183,209,0.2),rgba(167,139,250,0.18))":"linear-gradient(135deg,rgba(255,142,83,0.2),rgba(255,217,61,0.14))",border:"1px solid rgba(255,255,255,0.14)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
+      <div className="card" style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:12,background:isEarned?"linear-gradient(135deg,rgba(69,183,209,0.2),rgba(167,139,250,0.18))":"linear-gradient(135deg,rgba(255,142,83,0.2),rgba(255,217,61,0.14))",border:"1px solid var(--border)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
         <div style={{width:42,height:42,borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,background:"rgba(255,255,255,0.1)",boxShadow:isEarned?"0 0 20px rgba(69,183,209,0.3)":"0 0 20px rgba(255,217,61,0.3)"}}>🛡️</div>
         <div>
-          <div style={{fontSize:14,fontWeight:900,color:"#fff",marginBottom:2}}>{isEarned ? "Streak shield earned" : "Your streak was protected"}</div>
-          <div style={{fontSize:11,color:"rgba(255,255,255,0.58)",fontWeight:700,lineHeight:1.35}}>
+          <div style={{fontSize:14,fontWeight:900,color:"var(--text-primary,#fff)",marginBottom:2}}>{isEarned ? "Streak shield earned" : "Your streak was protected"}</div>
+          <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:700,lineHeight:1.35}}>
             {isEarned ? "You reached a 7-day rhythm. One missed day can be forgiven." : "A shield covered yesterday so your streak could keep going."}
           </div>
         </div>
@@ -381,7 +388,7 @@ function CompanionAvatar({ mood }) {
   }[mood] || "•‿•"
 
   return (
-    <div style={{width:62,height:62,borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:900,color:"#fff",background:"linear-gradient(135deg,rgba(167,139,250,0.95),rgba(78,205,196,0.86))",boxShadow:"0 12px 32px rgba(78,205,196,0.25), inset 0 1px 0 rgba(255,255,255,0.3)",border:"1px solid rgba(255,255,255,0.2)",animation:mood==="excited"?"pulse 1.4s ease-in-out infinite":mood==="sleepy"?"float 4s ease-in-out infinite":"float 3s ease-in-out infinite"}}>
+    <div style={{width:62,height:62,borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:900,color:"var(--text-primary,#fff)",background:"linear-gradient(135deg,rgba(167,139,250,0.95),rgba(78,205,196,0.86))",boxShadow:"0 12px 32px rgba(78,205,196,0.25), inset 0 1px 0 rgba(255,255,255,0.3)",border:"1px solid rgba(255,255,255,0.2)",animation:mood==="excited"?"pulse 1.4s ease-in-out infinite":mood==="sleepy"?"float 4s ease-in-out infinite":"float 3s ease-in-out infinite"}}>
       {face}
     </div>
   )
@@ -505,10 +512,10 @@ function OnboardingQuiz({ onComplete, onDone }) {
         padding:32, textAlign:"center",
       }}>
         <div style={{animation:"celebPop 0.6s cubic-bezier(.34,1.56,.64,1) forwards", fontSize:80, marginBottom:24}}>🎉</div>
-        <div style={{fontSize:28, fontWeight:900, color:"#fff", marginBottom:10, lineHeight:1.2}}>
+        <div style={{fontSize:28, fontWeight:900, color:"var(--text-primary,#fff)", marginBottom:10, lineHeight:1.2}}>
           You're all set!
         </div>
-        <div style={{fontSize:16, color:"rgba(255,255,255,0.6)", marginBottom:32, lineHeight:1.6, maxWidth:300}}>
+        <div style={{fontSize:16, color:"var(--text-secondary)", marginBottom:32, lineHeight:1.6, maxWidth:300}}>
           We've created {habitCount} habits focused on <span style={{color:"#A78BFA", fontWeight:700}}>{goal}</span>. Your journey starts now.
         </div>
         <div style={{display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:280}}>
@@ -521,14 +528,14 @@ function OnboardingQuiz({ onComplete, onDone }) {
             }}>
               <div style={{fontSize:24}}>{h.emoji}</div>
               <div style={{textAlign:"left"}}>
-                <div style={{fontSize:14, fontWeight:700, color:"#fff"}}>{h.name}</div>
-                <div style={{fontSize:11, color:"rgba(255,255,255,0.45)"}}>⏰ {h.time}</div>
+                <div style={{fontSize:14, fontWeight:700, color:"var(--text-primary,#fff)"}}>{h.name}</div>
+                <div style={{fontSize:11, color:"var(--text-muted)"}}>⏰ {h.time}</div>
               </div>
               <div style={{marginLeft:"auto", color:h.color, fontWeight:800, fontSize:12}}>✓</div>
             </div>
           ))}
         </div>
-        <div style={{marginTop:24, fontSize:14, color:"rgba(255,255,255,0.4)"}}>
+        <div style={{marginTop:24, fontSize:14, color:"var(--text-muted)"}}>
           Opening your dashboard...
         </div>
         <style>{`
@@ -579,7 +586,7 @@ function OnboardingQuiz({ onComplete, onDone }) {
           onClick={goBack}
           disabled={step === 0 || animating || completing}
           style={{
-            width:38,height:38,borderRadius:12,border:"1px solid rgba(255,255,255,0.1)",
+            width:38,height:38,borderRadius:12,border:"1px solid var(--border)",
             background:step === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)",
             color:step === 0 ? "rgba(255,255,255,0.18)" : "#fff",
             cursor:step === 0 || animating || completing ? "not-allowed" : "pointer",
@@ -592,7 +599,7 @@ function OnboardingQuiz({ onComplete, onDone }) {
         <div style={{fontSize:16, fontWeight:900, background:"linear-gradient(135deg,#A78BFA,#4ECDC4)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>
           ⚡ HabitFlow
         </div>
-        <div style={{fontSize:12, color:"rgba(255,255,255,0.3)", fontWeight:600}}>
+        <div style={{fontSize:12, color:"var(--text-muted)", fontWeight:600}}>
           {step + 1} of {totalSteps}
         </div>
       </div>
@@ -627,10 +634,10 @@ function OnboardingQuiz({ onComplete, onDone }) {
           }}>
             {currentStep.emoji}
           </div>
-          <div style={{fontSize:24, fontWeight:900, color:"#fff", marginBottom:8, lineHeight:1.25}}>
+          <div style={{fontSize:24, fontWeight:900, color:"var(--text-primary,#fff)", marginBottom:8, lineHeight:1.25}}>
             {currentStep.title}
           </div>
-          <div style={{fontSize:14, color:"rgba(255,255,255,0.45)", lineHeight:1.5}}>
+          <div style={{fontSize:14, color:"var(--text-muted)", lineHeight:1.5}}>
             {currentStep.subtitle}
           </div>
         </div>
@@ -679,7 +686,7 @@ function OnboardingQuiz({ onComplete, onDone }) {
                   }}>
                     {opt.label}
                   </div>
-                  <div style={{fontSize:12, color:"rgba(255,255,255,0.4)", fontWeight:500}}>
+                  <div style={{fontSize:12, color:"var(--text-muted)", fontWeight:500}}>
                     {opt.desc}
                   </div>
                 </div>
@@ -688,7 +695,7 @@ function OnboardingQuiz({ onComplete, onDone }) {
                   background: isSelected ? "linear-gradient(135deg,#A78BFA,#4ECDC4)" : "rgba(255,255,255,0.08)",
                   border: isSelected ? "none" : "1.5px solid rgba(255,255,255,0.2)",
                   display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:12, color:"#fff",
+                  fontSize:12, color:"var(--text-primary,#fff)",
                   transition:"all 0.2s",
                 }}>
                   {isSelected ? "✓" : ""}
@@ -832,15 +839,15 @@ function OnboardingQuiz({ onComplete, onDone }) {
   return (
     <div style={{
       background:"rgba(255,255,255,0.04)",
-      border:"1px solid rgba(255,255,255,0.08)",
+      border:"1px solid var(--border)",
       borderRadius:20,
       padding:"18px 16px",
       marginBottom:14,
     }}>
       {/* Header */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-        <div style={{fontSize:14,fontWeight:800,color:"#fff"}}>Activity</div>
-        <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",fontWeight:600}}>Last 90 days</div>
+        <div style={{fontSize:14,fontWeight:800,color:"var(--text-primary,#fff)"}}>Activity</div>
+        <div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600}}>Last 90 days</div>
       </div>
  
       {/* Habit filter */}
@@ -875,7 +882,7 @@ function OnboardingQuiz({ onComplete, onDone }) {
         {weeks.map((_, wi) => {
           const label = monthLabels.find(m => m.wi === wi)
           return (
-            <div key={wi} style={{width:14,fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:700,flexShrink:0,marginRight:2}}>
+            <div key={wi} style={{width:14,fontSize:9,color:"var(--text-muted)",fontWeight:700,flexShrink:0,marginRight:2}}>
               {label ? label.label : ""}
             </div>
           )
@@ -887,7 +894,7 @@ function OnboardingQuiz({ onComplete, onDone }) {
         {/* Day labels */}
         <div style={{display:"flex",flexDirection:"column",gap:2,marginRight:4}}>
           {DAYS.map((d,i) => (
-            <div key={i} style={{height:12,fontSize:9,color:"rgba(255,255,255,0.25)",fontWeight:700,lineHeight:"12px"}}>
+            <div key={i} style={{height:12,fontSize:9,color:"var(--text-muted)",fontWeight:700,lineHeight:"12px"}}>
               {i % 2 === 1 ? d : ""}
             </div>
           ))}
@@ -922,11 +929,11 @@ function OnboardingQuiz({ onComplete, onDone }) {
  
       {/* Legend */}
       <div style={{display:"flex",alignItems:"center",gap:6,marginTop:10,justifyContent:"flex-end"}}>
-        <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:600}}>Less</div>
+        <div style={{fontSize:9,color:"var(--text-muted)",fontWeight:600}}>Less</div>
         {[0.06, 0.25, 0.45, 0.65, 0.9].map((o,i) => (
           <div key={i} style={{width:10,height:10,borderRadius:2,background:`rgba(16,185,129,${o})`}}/>
         ))}
-        <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:600}}>More</div>
+        <div style={{fontSize:9,color:"var(--text-muted)",fontWeight:600}}>More</div>
       </div>
  
       {/* Tooltip */}
@@ -934,8 +941,8 @@ function OnboardingQuiz({ onComplete, onDone }) {
         <div style={{
           marginTop:10,padding:"8px 12px",
           background:"rgba(255,255,255,0.08)",
-          borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",
-          fontSize:12,color:"rgba(255,255,255,0.8)",fontWeight:600,
+          borderRadius:10,border:"1px solid var(--border)",
+          fontSize:12,color:"var(--text-secondary)",fontWeight:600,
           textAlign:"center",
         }}>
           {tooltip.dateStr === todayStr ? "Today" : tooltip.date.toLocaleDateString("en",{month:"short",day:"numeric",year:"numeric"})}
@@ -957,10 +964,10 @@ function OnboardingQuiz({ onComplete, onDone }) {
           <div key={s.lbl} style={{
             background:"rgba(255,255,255,0.04)",borderRadius:12,
             padding:"10px 8px",textAlign:"center",
-            border:"1px solid rgba(255,255,255,0.06)",
+            border:"1px solid var(--border)",
           }}>
             <div style={{fontSize:18,fontWeight:900,color:s.color,filter:`drop-shadow(0 0 6px ${s.color})`}}>{s.val}</div>
-            <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontWeight:700,marginTop:3,textTransform:"uppercase",letterSpacing:.5}}>{s.lbl}</div>
+            <div style={{fontSize:9,color:"var(--text-muted)",fontWeight:700,marginTop:3,textTransform:"uppercase",letterSpacing:.5}}>{s.lbl}</div>
           </div>
         ))}
       </div>
@@ -1737,7 +1744,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         <div style={{fontSize:22,fontWeight:900,marginBottom:8,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
           HabitFlow setup needed
         </div>
-        <div style={{fontSize:14,lineHeight:1.6,color:"rgba(255,255,255,0.55)"}}>
+        <div style={{fontSize:14,lineHeight:1.6,color:"var(--text-secondary)"}}>
           Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to your environment, then restart the app.
         </div>
       </div>
@@ -1771,14 +1778,14 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
             change your life
           </span>
         </h1>
-        <p style={{fontSize:17,color:"rgba(255,255,255,0.55)",maxWidth:480,margin:"0 auto 40px",lineHeight:1.75}}>
+        <p style={{fontSize:17,color:"var(--text-secondary)",maxWidth:480,margin:"0 auto 40px",lineHeight:1.75}}>
           AI-powered habit tracking with 3D visuals, streaks, XP levels, and your personal coach.
         </p>
         <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:16}}>
           <button onClick={()=>setPage("auth")} className="btn-grad" style={{background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",padding:"16px 44px",fontSize:16,borderRadius:16,boxShadow:"0 8px 32px #A78BFA44"}}>Start Free →</button>
           <button onClick={signInGoogle} className="btn-glass" style={{padding:"16px 28px",fontSize:15}}>🔵 Google</button>
         </div>
-        <div style={{fontSize:12,color:"rgba(255,255,255,0.3)"}}>Free forever · No credit card needed</div>
+        <div style={{fontSize:12,color:"var(--text-muted)"}}>Free forever · No credit card needed</div>
       </div>
 
       <div style={{maxWidth:860,margin:"0 auto",padding:"0 20px 60px",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:14,position:"relative",zIndex:10}}>
@@ -1791,11 +1798,11 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
           <div key={i} className="card float-a" style={{padding:22,textAlign:"center",animationDelay:i*.1+"s",background:`linear-gradient(135deg,${f.color}18,${f.color}06)`}}>
             <div style={{fontSize:34,marginBottom:10,filter:`drop-shadow(0 0 12px ${f.color})`}}>{f.icon}</div>
             <div style={{fontSize:15,fontWeight:800,marginBottom:4}}>{f.t}</div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,0.45)"}}>{f.d}</div>
+            <div style={{fontSize:12,color:"var(--text-muted)"}}>{f.d}</div>
           </div>
         ))}
       </div>
-      <div style={{textAlign:"center",paddingBottom:32,fontSize:12,color:"rgba(255,255,255,0.2)"}}>© 2026 HabitFlow · contact@thehabitflow.app</div>
+      <div style={{textAlign:"center",paddingBottom:32,fontSize:12,color:"var(--text-muted)"}}>© 2026 HabitFlow · contact@thehabitflow.app</div>
     </div>
   )
 
@@ -1809,13 +1816,13 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{fontSize:42,marginBottom:8}}>⚡</div>
           <div style={{fontSize:22,fontWeight:900,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:6}}>HabitFlow</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.4)"}}>{authMode==="login"?"Welcome back! 👋":"Start your journey 🚀"}</div>
+          <div style={{fontSize:13,color:"var(--text-muted)"}}>{authMode==="login"?"Welcome back! 👋":"Start your journey 🚀"}</div>
         </div>
         <button onClick={signInGoogle} className="btn-glass" style={{width:"100%",padding:14,fontSize:14,marginBottom:16,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
           <span style={{fontWeight:900,color:"#4285F4",fontSize:16}}>G</span> Continue with Google
         </button>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-          <div style={{flex:1,height:1,background:"rgba(255,255,255,0.08)"}}/><span style={{fontSize:11,color:"rgba(255,255,255,0.25)"}}>OR</span><div style={{flex:1,height:1,background:"rgba(255,255,255,0.08)"}}/>
+          <div style={{flex:1,height:1,background:"rgba(255,255,255,0.08)"}}/><span style={{fontSize:11,color:"var(--text-muted)"}}>OR</span><div style={{flex:1,height:1,background:"rgba(255,255,255,0.08)"}}/>
         </div>
         <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" type="email" className="inp"/>
         <input value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" type="password" className="inp" onKeyDown={e=>e.key==="Enter"&&signInEmail()}/>
@@ -1823,14 +1830,14 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         <button onClick={signInEmail} disabled={authLoading} className="btn-grad" style={{width:"100%",padding:14,fontSize:15,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",opacity:authLoading?0.6:1,marginBottom:12}}>
           {authLoading?"Loading...":(authMode==="login"?"Sign In 🚀":"Create Account ✨")}
         </button>
-        <div style={{textAlign:"center",fontSize:13,color:"rgba(255,255,255,0.4)"}}>
+        <div style={{textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>
           {authMode==="login"?"Don't have an account? ":"Already have one? "}
           <span onClick={()=>{setAuthMode(authMode==="login"?"signup":"login");setAuthErr("")}} style={{color:"#A78BFA",cursor:"pointer",fontWeight:700}}>
             {authMode==="login"?"Sign Up":"Sign In"}
           </span>
         </div>
         <div style={{textAlign:"center",marginTop:12}}>
-          <span onClick={()=>setPage("landing")} style={{fontSize:12,color:"rgba(255,255,255,0.25)",cursor:"pointer"}}>← Back</span>
+          <span onClick={()=>setPage("landing")} style={{fontSize:12,color:"var(--text-muted)",cursor:"pointer"}}>← Back</span>
         </div>
       </div>
     </div>
@@ -1845,11 +1852,11 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       <MilestoneToast milestone={milestone}/>
       {themeReward && (
         <div style={{position:"fixed",top:74,left:"50%",transform:"translateX(-50%)",zIndex:9999,width:"calc(100% - 32px)",maxWidth:420,pointerEvents:"none",animation:"slideDown 0.35s ease"}}>
-          <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,rgba(167,139,250,0.2),rgba(244,114,182,0.14))",border:"1px solid rgba(255,255,255,0.14)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
+          <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,rgba(167,139,250,0.2),rgba(244,114,182,0.14))",border:"1px solid var(--border)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
             <div style={{width:38,height:38,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(255,255,255,0.1)",boxShadow:"0 0 18px rgba(167,139,250,0.28)"}}>🎨</div>
             <div>
-              <div style={{fontSize:13,fontWeight:900,color:"#fff",marginBottom:2}}>New theme unlocked</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",fontWeight:700}}>{themeReward} is ready in Settings.</div>
+              <div style={{fontSize:13,fontWeight:900,color:"var(--text-primary,#fff)",marginBottom:2}}>New theme unlocked</div>
+              <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:700}}>{themeReward} is ready in Settings.</div>
             </div>
           </div>
         </div>
@@ -1864,7 +1871,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       )}
       {checkoutNotice && !showPaywall && (
         <div style={{position:"fixed",top:76,left:"50%",transform:"translateX(-50%)",zIndex:120,width:"calc(100% - 32px)",maxWidth:440}}>
-          <div className="card" style={{padding:"12px 14px",fontSize:13,fontWeight:700,color:"#fff",textAlign:"center",background:"rgba(107,203,119,0.16)",border:"1px solid rgba(107,203,119,0.28)"}}>
+          <div className="card" style={{padding:"12px 14px",fontSize:13,fontWeight:700,color:"var(--text-primary,#fff)",textAlign:"center",background:"rgba(107,203,119,0.16)",border:"1px solid rgba(107,203,119,0.28)"}}>
             {checkoutNotice}
           </div>
         </div>
@@ -1924,13 +1931,13 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       {/* TOP NAV */}
       <div className="top-nav">
         <div>
-          <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:2}}>HABITFLOW</div>
+          <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:2}}>HABITFLOW</div>
           <div style={{fontSize:20,fontWeight:900}}>Hello, {userName} 👋</div>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <div className="card" style={{padding:"6px 12px",display:"flex",alignItems:"center",gap:6,borderRadius:12}}>
             <span style={{fontSize:14}}>{currentLevel.icon}</span>
-            <span style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.7)"}}>Lv {currentLevel.level}</span>
+            <span style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)"}}>Lv {currentLevel.level}</span>
           </div>
           <button onClick={()=>setShowAI(true)} className="btn-grad" style={{padding:"7px 14px",fontSize:12,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>🤖 AI</button>
           <button onClick={signOut} className="btn-glass" style={{padding:"7px 11px",fontSize:13}}>↪</button>
@@ -1954,13 +1961,13 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {/* Level Card */}
                 <div className="card" style={{padding:"14px 16px",background:"linear-gradient(135deg,rgba(255,215,0,0.12),rgba(107,203,119,0.08))"}}>
-                  <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>LEVEL</div>
+                  <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>LEVEL</div>
                   <div style={{fontSize:22,fontWeight:900,marginBottom:2}}>{currentLevel.icon} {currentLevel.title}</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",marginBottom:8}}>⚡ {displayXP} XP · {nextLevel?`${nextLevel.minXP-displayXP} to next`:"MAX!"}</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:8}}>⚡ {displayXP} XP · {nextLevel?`${nextLevel.minXP-displayXP} to next`:"MAX!"}</div>
                   <div style={{height:5,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
                     <div style={{height:"100%",width:xpPct+"%",background:"linear-gradient(90deg,#FFD93D,#6BCB77)",transition:"width 0.8s ease",borderRadius:999}}/>
                   </div>
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"rgba(255,255,255,0.32)",fontWeight:700,marginTop:6}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",fontWeight:700,marginTop:6}}>
                     <span>{nextLevel ? `${xpPct}% complete` : "Top level"}</span>
                     <span>{nextLevel ? `${levelXP}/${levelXPNeeded}` : `${displayXP} lifetime XP`}</span>
                   </div>
@@ -1970,15 +1977,15 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 <div className="card" style={{padding:"14px 16px",background:"linear-gradient(135deg,rgba(255,142,83,0.15),rgba(255,107,107,0.08))"}}>
   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:8}}>
     <div>
-      <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>PROTECTED STREAK</div>
+      <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>PROTECTED STREAK</div>
       <FireStreak streak={bestStreak}/>
     </div>
     <div style={{textAlign:"right",minWidth:70}}>
-      <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontWeight:700,marginBottom:4}}>SHIELDS</div>
+      <div style={{fontSize:10,color:"var(--text-muted)",fontWeight:700,marginBottom:4}}>SHIELDS</div>
       <div style={{fontSize:20,fontWeight:900,color:freezes>0?"#4ECDC4":"rgba(255,255,255,0.32)",filter:freezes>0?"drop-shadow(0 0 8px rgba(78,205,196,0.45))":"none"}}>{freezes}/{maxFreezes}</div>
     </div>
   </div>
-  <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",lineHeight:1.45,fontWeight:600,marginBottom:10}}>
+  <div style={{fontSize:11,color:"var(--text-muted)",lineHeight:1.45,fontWeight:600,marginBottom:10}}>
     {freezes>0 ? "You have a safety net if life interrupts a habit day." : "Reach 7 streak days to earn a shield for one missed day."}
   </div>
   <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:8}}>
@@ -1986,7 +1993,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       <div key={i} style={{height:5,borderRadius:999,background:i<shieldProgress||bestStreak>0&&shieldProgress===0?"linear-gradient(90deg,#4ECDC4,#A78BFA)":"rgba(255,255,255,0.08)",boxShadow:i<shieldProgress||bestStreak>0&&shieldProgress===0?"0 0 8px rgba(78,205,196,0.35)":"none"}}/>
     ))}
   </div>
-  <div style={{display:"flex",justifyContent:"space-between",gap:8,fontSize:10,color:"rgba(255,255,255,0.36)",fontWeight:700,lineHeight:1.35}}>
+  <div style={{display:"flex",justifyContent:"space-between",gap:8,fontSize:10,color:"var(--text-muted)",fontWeight:700,lineHeight:1.35}}>
     <span>{bestStreak>0 && shieldProgress===0 ? "Shield earned at this milestone" : `${daysToNextShield} day${daysToNextShield===1?"":"s"} to next shield`}</span>
     {lastFreezeDate && <span>Last used {lastFreezeDate}</span>}
   </div>
@@ -2003,16 +2010,16 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                     <div style={{fontSize:15,fontWeight:900}}>Flow Buddy</div>
                     <div style={{fontSize:9,fontWeight:900,color:"#4ECDC4",letterSpacing:.6,textTransform:"uppercase",background:"rgba(78,205,196,0.1)",border:"1px solid rgba(78,205,196,0.22)",borderRadius:999,padding:"3px 7px"}}>{companionStatus}</div>
                   </div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.56)",lineHeight:1.5,fontWeight:650}}>{companionMessage}</div>
+                  <div style={{fontSize:12,color:"var(--text-secondary)",lineHeight:1.5,fontWeight:650}}>{companionMessage}</div>
                   <div style={{marginTop:10,padding:"9px 11px",borderRadius:13,background:`${pacerCopy.color}14`,border:`1px solid ${pacerCopy.color}33`}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,marginBottom:5}}>
                       <div style={{fontSize:10,fontWeight:900,color:pacerCopy.color,letterSpacing:.6,textTransform:"uppercase"}}>{pacerCopy.label}</div>
-                      <div style={{fontSize:10,color:"rgba(255,255,255,0.38)",fontWeight:800}}>{doneToday}/{habits.length || 0} done</div>
+                      <div style={{fontSize:10,color:"var(--text-muted)",fontWeight:800}}>{doneToday}/{habits.length || 0} done</div>
                     </div>
                     <div style={{height:4,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden",marginBottom:6}}>
                       <div style={{height:"100%",width:`${todayPct}%`,borderRadius:999,background:pacerCopy.color,transition:"width 0.5s ease"}}/>
                     </div>
-                    <div style={{fontSize:10,color:"rgba(255,255,255,0.46)",fontWeight:650,lineHeight:1.4}}>{pacerCopy.detail}</div>
+                    <div style={{fontSize:10,color:"var(--text-muted)",fontWeight:650,lineHeight:1.4}}>{pacerCopy.detail}</div>
                   </div>
                 </div>
               </div>
@@ -2023,7 +2030,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
               <div className="card" style={{padding:"16px 18px",marginBottom:14,background:"linear-gradient(135deg,rgba(255,217,61,0.12),rgba(167,139,250,0.08))"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12}}>
                   <div>
-                    <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>DAILY QUESTS</div>
+                    <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>DAILY QUESTS</div>
                     <div style={{fontSize:17,fontWeight:900}}>Small wins for today</div>
                   </div>
                   <div style={{fontSize:11,color:"#FFD93D",fontWeight:900,background:"rgba(255,217,61,0.1)",border:"1px solid rgba(255,217,61,0.22)",borderRadius:10,padding:"5px 8px"}}>+{DAILY_QUEST_BONUS_XP} XP each</div>
@@ -2035,8 +2042,8 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                       <div key={q.id} style={{display:"grid",gridTemplateColumns:"34px 1fr auto",gap:10,alignItems:"center",padding:"10px 12px",borderRadius:14,background:q.awarded?"rgba(107,203,119,0.12)":"rgba(255,255,255,0.045)",border:q.awarded?"1px solid rgba(107,203,119,0.24)":"1px solid rgba(255,255,255,0.07)"}}>
                         <div style={{width:34,height:34,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,background:q.complete?"rgba(107,203,119,0.16)":"rgba(255,255,255,0.07)"}}>{q.awarded?"✓":q.icon}</div>
                         <div style={{minWidth:0}}>
-                          <div style={{fontSize:13,fontWeight:850,color:"#fff",marginBottom:2}}>{q.title}</div>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.42)",fontWeight:650,marginBottom:6,lineHeight:1.35}}>{q.awarded ? "Bonus XP added. Nicely done." : q.detail}</div>
+                          <div style={{fontSize:13,fontWeight:850,color:"var(--text-primary,#fff)",marginBottom:2}}>{q.title}</div>
+                          <div style={{fontSize:10,color:"var(--text-muted)",fontWeight:650,marginBottom:6,lineHeight:1.35}}>{q.awarded ? "Bonus XP added. Nicely done." : q.detail}</div>
                           <div style={{height:4,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
                             <div style={{height:"100%",width:pct+"%",borderRadius:999,background:q.complete?"linear-gradient(90deg,#6BCB77,#4ECDC4)":"linear-gradient(90deg,#FFD93D,#A78BFA)",transition:"width 0.5s ease"}}/>
                           </div>
@@ -2055,12 +2062,12 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                 <div style={{display:"flex",alignItems:"center",gap:12}}>
                   <div style={{width:44,height:44,borderRadius:14,background:"linear-gradient(135deg,#4ECDC4,#45B7D1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,boxShadow:"0 4px 16px rgba(78,205,196,0.4)"}}>🦶</div>
                   <div>
-                    <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase"}}>STEPS</div>
+                    <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase"}}>STEPS</div>
                     <div style={{fontSize:30,fontWeight:900,lineHeight:1,background:"linear-gradient(135deg,#4ECDC4,#45B7D1)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{steps.toLocaleString()}</div>
                   </div>
                 </div>
                 <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginBottom:6}}>/ 10,000</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:6}}>/ 10,000</div>
                   <div style={{display:"flex",gap:6}}>
                     <button onClick={()=>addSteps(500)} className="btn-grad" style={{padding:"5px 10px",fontSize:11,background:"linear-gradient(135deg,#4ECDC4,#45B7D1)"}}>+500</button>
                     <button onClick={()=>addSteps(1000)} className="btn-grad" style={{padding:"5px 10px",fontSize:11,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>+1k</button>
@@ -2083,7 +2090,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                 <div key={i} className="card" onClick={s.fn} style={{padding:"12px 8px",textAlign:"center",cursor:s.fn?"pointer":"default",background:`linear-gradient(135deg,${s.color}18,${s.color}06)`}}>
                   <div style={{fontSize:20,marginBottom:4,filter:`drop-shadow(0 0 6px ${s.color})`}}>{s.icon}</div>
                   <div style={{fontSize:13,fontWeight:900,marginBottom:2}}>{s.val}</div>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontWeight:700,textTransform:"uppercase",letterSpacing:.3}}>{s.lbl}</div>
+                  <div style={{fontSize:9,color:"var(--text-muted)",fontWeight:700,textTransform:"uppercase",letterSpacing:.3}}>{s.lbl}</div>
                   {s.pct!=null && <div style={{height:3,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden",marginTop:6}}><div style={{height:"100%",width:s.pct+"%",background:s.color,borderRadius:999}}/></div>}
                 </div>
               ))}
@@ -2093,8 +2100,8 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
             <div className="card" style={{padding:"16px 18px",marginBottom:14}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                 <div>
-                  <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>WATER TODAY</div>
-                  <div style={{fontSize:22,fontWeight:900}}>{water} <span style={{fontSize:13,color:"rgba(255,255,255,0.35)",fontWeight:400}}>/ 8 cups</span></div>
+                  <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>WATER TODAY</div>
+                  <div style={{fontSize:22,fontWeight:900}}>{water} <span style={{fontSize:13,color:"var(--text-muted)",fontWeight:400}}>/ 8 cups</span></div>
                 </div>
                 <div style={{display:"flex",gap:8}}>
                   <button onClick={()=>addWater(-1)} className="btn-glass" style={{padding:"8px 14px",fontSize:16}}>−</button>
@@ -2104,7 +2111,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
               <div style={{display:"flex",gap:5}}>
                 {Array.from({length:8},(_,i)=>(
                   <div key={i} onClick={()=>{setWater(i+1);localStorage.setItem("hf_water_"+todayStr,i+1)}}
-                    style={{flex:1,height:28,borderRadius:9,background:i<water?"linear-gradient(135deg,#45B7D1,#A78BFA)":"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.08)",cursor:"pointer",transition:"all .25s",boxShadow:i<water?"0 0 8px rgba(69,183,209,0.5)":"none"}}/>
+                    style={{flex:1,height:28,borderRadius:9,background:i<water?"linear-gradient(135deg,#45B7D1,#A78BFA)":"rgba(255,255,255,0.06)",border:"1px solid var(--border)",cursor:"pointer",transition:"all .25s",boxShadow:i<water?"0 0 8px rgba(69,183,209,0.5)":"none"}}/>
                 ))}
               </div>
             </div>
@@ -2126,7 +2133,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                           <div style={{width:46,height:46,borderRadius:14,background:`${h.color}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,border:`1px solid ${h.color}33`,boxShadow:`0 0 16px ${h.color}22`}}>{h.emoji}</div>
                           <div style={{flex:1,minWidth:0}}>
                             <div style={{fontSize:14,fontWeight:700,marginBottom:3}}>{h.name}</div>
-                            <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontWeight:600}}>🔥 {streak} streak · {days.filter(d=>h.completions?.[d]).length}/7 this week</div>
+                            <div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600}}>🔥 {streak} streak · {days.filter(d=>h.completions?.[d]).length}/7 this week</div>
                           </div>
                           <button onClick={()=>toggle(h.id,todayStr)} className="btn-grad" style={{
                             padding:"8px 16px",fontSize:12,flexShrink:0,
@@ -2160,7 +2167,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
               <div className="card" style={{padding:48,textAlign:"center"}}>
                 <div style={{fontSize:64,marginBottom:16,animation:"float 3s ease-in-out infinite"}}>🌱</div>
                 <div style={{fontSize:20,fontWeight:800,marginBottom:8}}>No habits yet!</div>
-                <div style={{color:"rgba(255,255,255,0.4)",fontSize:14,marginBottom:24}}>Start with a template or create your own</div>
+                <div style={{color:"var(--text-muted)",fontSize:14,marginBottom:24}}>Start with a template or create your own</div>
                 <button onClick={()=>setShowTemplates(true)} className="btn-grad" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FF6B6B,#FF8E53)"}}>Browse Templates 🎯</button>
               </div>
             ) : (
@@ -2175,7 +2182,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                         <div style={{width:52,height:52,borderRadius:16,background:`${h.color}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0,boxShadow:`0 0 20px ${h.color}33`,border:`1px solid ${h.color}33`}}>{h.emoji}</div>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:15,fontWeight:700,marginBottom:5}}>{h.name}</div>
-                          <div style={{display:"flex",gap:10,fontSize:11,color:"rgba(255,255,255,0.45)",flexWrap:"wrap",marginBottom:8}}>
+                          <div style={{display:"flex",gap:10,fontSize:11,color:"var(--text-muted)",flexWrap:"wrap",marginBottom:8}}>
                             <span style={{color:h.color,fontWeight:700}}>🔥 {streak} streak</span>
                             {h.reminder_time && <span>⏰ {h.reminder_time}</span>}
                             <span>{weekDone}/7 this week</span>
@@ -2211,7 +2218,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       <div className="card-3d float-a" style={{padding:40,textAlign:"center"}}>
         <div style={{fontSize:52,marginBottom:14}}>🔒</div>
         <div style={{fontSize:20,fontWeight:800,marginBottom:8}}>Pro Feature</div>
-        <div style={{color:"rgba(255,255,255,0.4)",fontSize:14,marginBottom:22}}>Unlock detailed analytics and more</div>
+        <div style={{color:"var(--text-muted)",fontSize:14,marginBottom:22}}>Unlock detailed analytics and more</div>
         <button onClick={()=>setShowPaywall(true)} className="color-btn" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FFD93D,#FF8E53)"}}>Upgrade to Pro ⭐</button>
       </div>
     ) : (
@@ -2219,10 +2226,10 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         {/* XP Ring */}
         <div className="card-3d float-b" style={{padding:24,textAlign:"center",marginBottom:14,background:"linear-gradient(135deg,#A78BFA22,#4ECDC422)"}}>
           <Ring3D pct={xpPct} size={160} color="#A78BFA" label="LEVEL PROGRESS" sublabel={currentLevel.title}/>
-          <div style={{marginTop:12,fontSize:13,color:"rgba(255,255,255,0.5)"}}>
+          <div style={{marginTop:12,fontSize:13,color:"var(--text-muted)"}}>
             {nextLevel ? `${nextLevel.minXP-displayXP} XP to ${nextLevel.title}` : "MAX LEVEL! 👑"}
           </div>
-          <div style={{marginTop:6,fontSize:11,color:"rgba(255,255,255,0.34)",fontWeight:700}}>
+          <div style={{marginTop:6,fontSize:11,color:"var(--text-muted)",fontWeight:700}}>
             {nextLevel ? `${levelXP}/${levelXPNeeded} XP in Level ${currentLevel.level}` : `${displayXP} lifetime XP saved`}
           </div>
         </div>
@@ -2236,7 +2243,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
             {lbl:"Habits Tracked",val:habits.length,color:"#F472B6"},
           ].map(s=>(
             <div key={s.lbl} className="card-3d" style={{padding:18,background:`linear-gradient(135deg,${s.color}22,${s.color}08)`}}>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:6,fontWeight:700,letterSpacing:.5}}>{s.lbl}</div>
+              <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:6,fontWeight:700,letterSpacing:.5}}>{s.lbl}</div>
               <div style={{fontSize:28,fontWeight:900,filter:`drop-shadow(0 0 8px ${s.color})`}}>{s.val}</div>
             </div>
           ))}
@@ -2279,7 +2286,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                 </div>
                 <div>
                   <div style={{fontSize:17,fontWeight:800,marginBottom:2}}>{userName}</div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{currentLevel.icon} {currentLevel.title} · {displayXP} XP</div>
+                  <div style={{fontSize:12,color:"var(--text-muted)"}}>{currentLevel.icon} {currentLevel.title} · {displayXP} XP</div>
                 </div>
                 <div style={{marginLeft:"auto",textAlign:"right"}}>
                   {isPro && <div style={{background:"linear-gradient(135deg,#FFD93D,#FF8E53)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800}}>PRO ⭐</div>}
@@ -2296,15 +2303,15 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
   {icon:"📋",lbl:"Templates",fn:()=>setShowTemplates(true),color:"#4ECDC4"},
   {icon:"↪",lbl:"Sign Out",fn:signOut,color:"#FF6B6B"},
               ].map((item,i,arr)=>(
-                <button key={i} type="button" onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); item.fn() }} className="btn-glass" style={{width:"100%",padding:"16px 18px",borderRadius:0,border:"none",borderBottom:i<arr.length-1?"1px solid rgba(255,255,255,0.06)":"none",display:"flex",alignItems:"center",gap:14,fontSize:14,background:"transparent",textAlign:"left"}}>
+                <button key={i} type="button" onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); item.fn() }} className="btn-glass" style={{width:"100%",padding:"16px 18px",borderRadius:0,border:"none",borderBottom:i<arr.length-1?"1px solid var(--border)":"none",display:"flex",alignItems:"center",gap:14,fontSize:14,background:"transparent",textAlign:"left"}}>
                   <span style={{fontSize:22,filter:`drop-shadow(0 0 6px ${item.color})`}}>{item.icon}</span>
                   <span style={{fontWeight:600}}>{item.lbl}</span>
-                  <span style={{marginLeft:"auto",color:"rgba(255,255,255,0.25)"}}>›</span>
+                  <span style={{marginLeft:"auto",color:"var(--text-muted)"}}>›</span>
                 </button>
               ))}
             </div>
 
-            <div style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,0.2)",padding:"10px 0"}}>
+            <div style={{textAlign:"center",fontSize:11,color:"var(--text-muted)",padding:"10px 0"}}>
               HabitFlow v3.0 · Made with 💜<br/>contact@thehabitflow.app
             </div>
           </div>
@@ -2337,21 +2344,21 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
               <button onClick={()=>setShowAdd(false)} className="btn-glass" style={{padding:"5px 11px",fontSize:14}}>✕</button>
             </div>
             <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Habit name..." className="inp"/>
-            <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.35)",letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Pick Emoji</div>
+            <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Pick Emoji</div>
             <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}}>
               {["🏃","💧","📚","🧘","🥗","💤","✍️","🎯","🎸","🌿","🧠","🏋️","🚴","🥤","🎨","💊","🌅","🚿"].map(e=>(
                 <button key={e} onClick={()=>setNewEmoji(e)} style={{width:40,height:40,borderRadius:11,border:`2px solid ${newEmoji===e?"#A78BFA":"rgba(255,255,255,0.1)"}`,background:newEmoji===e?"rgba(167,139,250,0.2)":"transparent",cursor:"pointer",fontSize:19,transition:"all .2s",boxShadow:newEmoji===e?"0 0 12px rgba(167,139,250,0.4)":"none"}}>{e}</button>
               ))}
             </div>
-            <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.35)",letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Pick Color</div>
+            <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Pick Color</div>
             <div style={{display:"flex",gap:9,flexWrap:"wrap",marginBottom:16}}>
               {PALETTE.map(c=>(
                 <button key={c} onClick={()=>setNewColor(c)} style={{width:32,height:32,borderRadius:"50%",background:c,border:newColor===c?"3px solid #fff":"2px solid transparent",cursor:"pointer",boxShadow:newColor===c?`0 0 14px ${c}`:"none",transition:"all .2s"}}/>
               ))}
             </div>
-            <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.35)",letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>⏰ Reminder Time</div>
+            <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>⏰ Reminder Time</div>
             <input type="time" value={newTime} onChange={e=>setNewTime(e.target.value)} className="inp" style={{width:"auto",marginBottom:20}}/>
-            <div style={{fontSize:12,color:"rgba(255,255,255,0.38)",lineHeight:1.5,marginTop:-12,marginBottom:18}}>
+            <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,marginTop:-12,marginBottom:18}}>
               We'll ask before turning on notifications, then use this time for daily reminders.
             </div>
             <div style={{display:"flex",gap:10}}>
@@ -2375,7 +2382,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                 <div key={t.name} onClick={()=>addFromTemplate(t)} className="habit-card" style={{background:`linear-gradient(135deg,${t.color}18,${t.color}06)`,border:`1px solid ${t.color}33`,cursor:"pointer",padding:16}}>
                   <div style={{fontSize:28,marginBottom:6}}>{t.emoji}</div>
                   <div style={{fontSize:13,fontWeight:700,marginBottom:3}}>{t.name}</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>⏰ {t.time}</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)"}}>⏰ {t.time}</div>
                   <div style={{fontSize:10,color:t.color,marginTop:4,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>{t.category}</div>
                 </div>
               ))}
@@ -2424,12 +2431,12 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                 <div style={{padding:16}}>
                   <div style={{textAlign:"center",marginBottom:22}}>
                     <div style={{fontSize:48,marginBottom:10,animation:"float 3s ease-in-out infinite"}}>🤖</div>
-                    <div style={{fontWeight:800,color:"#fff",marginBottom:4,fontSize:16}}>Your Personal AI Coach</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)"}}>I know your stats · Ask me anything</div>
+                    <div style={{fontWeight:800,color:"var(--text-primary,#fff)",marginBottom:4,fontSize:16}}>Your Personal AI Coach</div>
+                    <div style={{fontSize:12,color:"var(--text-muted)"}}>I know your stats · Ask me anything</div>
                   </div>
-                  <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.25)",letterSpacing:1,marginBottom:10,textAlign:"center",textTransform:"uppercase"}}>Suggested Questions</div>
+                  <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,marginBottom:10,textAlign:"center",textTransform:"uppercase"}}>Suggested Questions</div>
                   {["How can I improve my streak?","What habit should I focus on?","I'm struggling to stay consistent","Give me a morning routine tip","How do I build better sleep habits?"].map(q=>(
-                    <button key={q} onClick={()=>setAiInput(q)} style={{width:"100%",padding:"10px 14px",marginBottom:8,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,color:"rgba(255,255,255,0.65)",fontSize:13,cursor:"pointer",textAlign:"left",fontFamily:"'Inter',sans-serif",transition:"all .2s"}}
+                    <button key={q} onClick={()=>setAiInput(q)} style={{width:"100%",padding:"10px 14px",marginBottom:8,background:"rgba(255,255,255,0.04)",border:"1px solid var(--border)",borderRadius:12,color:"var(--text-secondary)",fontSize:13,cursor:"pointer",textAlign:"left",fontFamily:"'Inter',sans-serif",transition:"all .2s"}}
                     onMouseEnter={e=>e.target.style.background="rgba(255,255,255,0.09)"}
                     onMouseLeave={e=>e.target.style.background="rgba(255,255,255,0.04)"}>💬 {q}</button>
                   ))}
@@ -2440,7 +2447,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                   <div style={{maxWidth:"82%",padding:"11px 16px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",background:m.role==="user"?"linear-gradient(135deg,#A78BFA,#4ECDC4)":"rgba(255,255,255,0.07)",fontSize:13,lineHeight:1.6,border:m.role==="user"?"none":"1px solid rgba(255,255,255,0.08)"}}>{m.content}</div>
                 </div>
               ))}
-              {aiLoading && <div style={{color:"rgba(255,255,255,0.35)",fontSize:13,padding:8}}>🤖 Thinking...</div>}
+              {aiLoading && <div style={{color:"var(--text-muted)",fontSize:13,padding:8}}>🤖 Thinking...</div>}
             </div>
             <div style={{padding:14,borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",gap:8}}>
               <input value={aiInput} onChange={e=>setAiInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendAI()} placeholder="Ask your coach..." className="inp" style={{flex:1,marginBottom:0}}/>
@@ -2455,13 +2462,13 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         <div className="overlay" onClick={()=>setShowMood(false)}>
           <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:360,width:"100%",padding:28,textAlign:"center"}}>
             <div style={{fontSize:20,fontWeight:900,marginBottom:6}}>How are you feeling? 😊</div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,0.4)",marginBottom:24}}>Daily mood check-in</div>
+            <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24}}>Daily mood check-in</div>
             <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:16}}>
               {["😴","😐","🙂","😊","🔥"].map(m=>(
                 <button key={m} onClick={()=>saveMood(m)} style={{width:54,height:54,borderRadius:16,border:`2px solid ${mood===m?"#A78BFA":"rgba(255,255,255,0.1)"}`,background:mood===m?"rgba(167,139,250,0.2)":"transparent",fontSize:28,cursor:"pointer",transition:"all .2s",boxShadow:mood===m?"0 0 18px rgba(167,139,250,0.4)":"none",transform:mood===m?"scale(1.12)":"scale(1)"}}>{m}</button>
               ))}
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"rgba(255,255,255,0.25)",fontWeight:700,padding:"0 4px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",fontWeight:700,padding:"0 4px"}}>
               <span>Tired</span><span>Neutral</span><span>Good</span><span>Great</span><span>On fire!</span>
             </div>
           </div>
@@ -2476,16 +2483,16 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
             <div style={{fontSize:23,fontWeight:900,marginBottom:8,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
               Stay on track gently
             </div>
-            <div style={{fontSize:14,color:"rgba(255,255,255,0.52)",lineHeight:1.65,marginBottom:18}}>
+            <div style={{fontSize:14,color:"var(--text-secondary)",lineHeight:1.65,marginBottom:18}}>
               HabitFlow can send reminders at the times you choose for each habit. We will only show the browser permission prompt after you tap enable.
             </div>
-            <div style={{textAlign:"left",background:"rgba(255,255,255,0.04)",borderRadius:16,padding:16,marginBottom:18,border:"1px solid rgba(255,255,255,0.07)"}}>
+            <div style={{textAlign:"left",background:"rgba(255,255,255,0.04)",borderRadius:16,padding:16,marginBottom:18,border:"1px solid var(--border)"}}>
               {[
                 "Daily nudges use your habit reminder times",
                 "You can change each habit's time anytime",
                 "No reminder is sent until notifications are enabled",
               ].map(f=>(
-                <div key={f} style={{display:"flex",gap:10,marginBottom:10,fontSize:13,color:"rgba(255,255,255,0.72)",lineHeight:1.4}}>
+                <div key={f} style={{display:"flex",gap:10,marginBottom:10,fontSize:13,color:"var(--text-secondary)",lineHeight:1.4}}>
                   <span style={{color:"#6BCB77"}}>✓</span>{f}
                 </div>
               ))}
@@ -2516,7 +2523,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
             <div style={{fontSize:26,fontWeight:900,marginBottom:6,background:"linear-gradient(135deg,#FFD93D,#FF8E53)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Upgrade to Pro</div>
             <div style={{fontSize:42,fontWeight:900,marginBottom:22}}>
               <span style={{background:"linear-gradient(135deg,#FFD93D,#FF8E53)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>$1.99</span>
-              <span style={{fontSize:14,color:"rgba(255,255,255,0.35)",fontWeight:400}}>/month</span>
+              <span style={{fontSize:14,color:"var(--text-muted)",fontWeight:400}}>/month</span>
             </div>
             {checkoutNotice && (
               <div style={{fontSize:12,lineHeight:1.5,color:"#FFD93D",background:"rgba(255,217,61,0.1)",border:"1px solid rgba(255,217,61,0.22)",borderRadius:12,padding:"10px 12px",marginBottom:14,fontWeight:700}}>
@@ -2528,7 +2535,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                 {checkoutError}
               </div>
             )}
-            <div style={{textAlign:"left",background:"rgba(255,255,255,0.04)",borderRadius:16,padding:16,marginBottom:24,border:"1px solid rgba(255,255,255,0.07)"}}>
+            <div style={{textAlign:"left",background:"rgba(255,255,255,0.04)",borderRadius:16,padding:16,marginBottom:24,border:"1px solid var(--border)"}}>
               {["♾️ Unlimited habits","📊 Full analytics & XP","🤖 AI Coach unlimited","🏆 Leaderboard access","☁️ Priority cloud sync"].map(f=>(
                 <div key={f} style={{display:"flex",gap:10,marginBottom:10,fontSize:14}}>
                   <span style={{color:"#6BCB77"}}>✓</span>{f}
