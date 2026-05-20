@@ -257,9 +257,10 @@ const css = `
   /* TOP NAV */
   .top-nav{
     position:sticky;top:0;z-index:50;
-    background:color-mix(in srgb,var(--bg,#0d0d1a) 86%,transparent);
+    background:rgba(251,253,249,0.86);
     backdrop-filter:blur(20px);
-    border-bottom:1px solid var(--border,rgba(255,255,255,0.07));
+    -webkit-backdrop-filter:blur(20px);
+    border-bottom:1px solid rgba(31,53,40,0.08);
     padding:14px 20px;
     display:flex;align-items:center;justify-content:space-between;
   }
@@ -268,22 +269,23 @@ const css = `
   .tab-bar{
     position:fixed;bottom:0;left:50%;transform:translateX(-50%);
     width:100%;max-width:480px;
-    background:color-mix(in srgb,var(--bg,#0d0d1a) 94%,#000 6%);
+    background:rgba(255,255,255,0.9);
     backdrop-filter:blur(24px);
-    border-top:1px solid var(--border,rgba(255,255,255,0.07));
-    display:flex;z-index:50;padding:10px 0 26px;
+    -webkit-backdrop-filter:blur(24px);
+    border-top:1px solid rgba(31,53,40,0.08);
+    box-shadow:0 -12px 36px rgba(24,35,29,0.08);
+    display:flex;z-index:50;padding:10px 12px 24px;
   }
   .tab-item{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:3px;cursor:pointer;padding:4px 0;transition:all 0.2s;
+    gap:4px;cursor:pointer;padding:8px 0;border-radius:18px;transition:all 0.2s;color:#6d786f;
   }
-  .tab-item:hover{transform:translateY(-2px)}
-  .tab-icon{font-size:20px;line-height:1;transition:transform 0.2s}
-  .tab-item.active .tab-icon{transform:scale(1.15)}
-  .tab-label{font-size:9px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-muted,rgba(255,255,255,0.4));transition:color 0.2s}
-  .tab-item.active .tab-label{color:var(--accent,#A78BFA)}
-  .tab-dot{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:1px;transition:background 0.2s}
-  .tab-item.active .tab-dot{background:var(--accent,#A78BFA)}
+  .tab-item:hover{background:rgba(31,122,77,0.05)}
+  .tab-item.active{background:#eef8e9;color:#1f7a4d}
+  .tab-icon{font-size:18px;line-height:1;transition:transform 0.2s}
+  .tab-item.active .tab-icon{transform:scale(1.04)}
+  .tab-label{font-size:10px;font-weight:750;letter-spacing:0;color:inherit;transition:color 0.2s}
+  .tab-dot{display:none}
   .app-content{padding:16px 16px 116px;position:relative;z-index:5}
   .home-hero-grid{display:grid;grid-template-columns:auto 1fr;gap:14px;margin-bottom:14px}
   .modal-card{max-height:88vh;overflow-y:auto}
@@ -329,12 +331,12 @@ function Ring3D({ pct, size=140, color="#A78BFA", label, sublabel }) {
   const dash = (pct/100) * circ
   return (
     <div className="ring-wrap" style={{width:size,height:size}}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{transform:"rotate(-90deg)",filter:`drop-shadow(0 0 12px ${color}66)`}}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="11"/>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{transform:"rotate(-90deg)",filter:`drop-shadow(0 0 12px var(--ring-glow,${color}66))`}}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--ring-track,rgba(255,255,255,0.07))" strokeWidth="11"/>
         <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={`${color}22`} strokeWidth="11" strokeDasharray={`${circ} 0`}/>
         <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="11"
           strokeLinecap="round" strokeDasharray={`${dash} ${circ}`} className="progress-ring"
-          style={{filter:`drop-shadow(0 0 8px ${color})`}}/>
+          style={{filter:`drop-shadow(0 0 8px var(--ring-glow,${color}))`}}/>
       </svg>
       <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
         <div style={{fontSize:size>100?30:20,fontWeight:900,color:"var(--text-primary,#fff)",lineHeight:1}}>{Math.round(pct)}%</div>
@@ -1698,29 +1700,31 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
   }
 }, [habits])
 
-  const doneToday = habits.filter(h=>h.completions?.[todayStr]).length
-  const todayPct = habits.length ? Math.round((doneToday/habits.length)*100) : 0
+  const activeHabits = habits.filter(h => !h.archived && !h.archived_at && !h.deleted_at && h.active !== false)
+  const activeHabitsCount = activeHabits.length
+  const doneToday = activeHabits.filter(h=>h.completions?.[todayStr]).length
+  const todayPct = activeHabitsCount ? Math.round((doneToday/activeHabitsCount)*100) : 0
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1)
   const yesterdayStr = yesterday.toISOString().slice(0,10)
-  const missedYesterdayForCompanion = habits.length > 0 && habits.some(h => !h.completions?.[yesterdayStr])
+  const missedYesterdayForCompanion = activeHabitsCount > 0 && activeHabits.some(h => !h.completions?.[yesterdayStr])
   const stepsPct = Math.min((steps/10000)*100,100)
   const waterPct = Math.min((water/8)*100,100)
   const userEmail = user?.email || ""
   const userName = userEmail.split("@")[0] || "there"
   const priorDays = days.filter(d => d !== todayStr)
-  const streakHabitIds = habits.filter(h => getStreak(h, priorDays, freezeDates) > 0).map(h => h.id)
-  const beforeNoonDone = habits.some(h => h.completions?.[todayStr] && dailyQuestState.beforeNoonHabitIds?.includes(h.id))
-  const habitQuestTarget = Math.min(3, Math.max(1, habits.length))
+  const streakHabitIds = activeHabits.filter(h => getStreak(h, priorDays, freezeDates) > 0).map(h => h.id)
+  const beforeNoonDone = activeHabits.some(h => h.completions?.[todayStr] && dailyQuestState.beforeNoonHabitIds?.includes(h.id))
+  const habitQuestTarget = Math.min(3, Math.max(1, activeHabitsCount))
   const streakQuestTarget = streakHabitIds.length ? Math.min(2, streakHabitIds.length) : 1
   const streakQuestProgress = streakHabitIds.length
-    ? habits.filter(h => streakHabitIds.includes(h.id) && h.completions?.[todayStr]).length
+    ? activeHabits.filter(h => streakHabitIds.includes(h.id) && h.completions?.[todayStr]).length
     : doneToday
-  const dailyQuests = habits.length === 0 ? [] : [
+  const dailyQuests = activeHabitsCount === 0 ? [] : [
     {
       id: "complete-habits",
       icon: "✅",
       title: `Complete ${habitQuestTarget} habit${habitQuestTarget===1?"":"s"}`,
-      detail: habitQuestTarget === habits.length ? "Give today's whole routine a clean finish." : "A steady little run beats a perfect plan.",
+      detail: habitQuestTarget === activeHabitsCount ? "Give today's whole routine a clean finish." : "A steady little run beats a perfect plan.",
       progress: Math.min(doneToday, habitQuestTarget),
       target: habitQuestTarget,
       complete: doneToday >= habitQuestTarget,
@@ -1777,12 +1781,12 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
     resetHabits: weeklyResetHabits,
   }
   const dayProgress = Math.min(1, Math.max(0, (getHour() - 7) / 15))
-  const expectedDoneByNow = habits.length ? Math.min(habits.length, Math.ceil(habits.length * dayProgress)) : 0
+  const expectedDoneByNow = activeHabitsCount ? Math.min(activeHabitsCount, Math.ceil(activeHabitsCount * dayProgress)) : 0
   const questMomentum = dailyQuests.length ? completedQuestCount / dailyQuests.length : 0
   const streakMomentum = bestStreak >= 7 ? 0.2 : bestStreak >= 3 ? 0.1 : 0
-  const paceScore = habits.length ? (doneToday / habits.length) + (questMomentum * 0.2) + streakMomentum : 1
-  const expectedPace = habits.length ? expectedDoneByNow / habits.length : 0
-  const pacerState = habits.length === 0
+  const paceScore = activeHabitsCount ? (doneToday / activeHabitsCount) + (questMomentum * 0.2) + streakMomentum : 1
+  const expectedPace = activeHabitsCount ? expectedDoneByNow / activeHabitsCount : 0
+  const pacerState = activeHabitsCount === 0
     ? "on track"
     : paceScore >= Math.min(1, expectedPace + 0.25)
       ? "ahead"
@@ -2023,7 +2027,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
   // MAIN APP
   return (
-    <div style={{minHeight:"100vh",background:"var(--bg,#0d0d1a)",color:"var(--text,#fff)",paddingBottom:96,maxWidth:480,margin:"0 auto",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#fbfdf9 0%,#f4f8f2 62%,#ffffff 100%)",color:"#152118",paddingBottom:96,maxWidth:480,margin:"0 auto",position:"relative"}}>
       <style>{css}</style>
       <Particles active={particles}/>
       <LevelUpBurst show={levelUpShow} level={levelUpData}/> 
@@ -2105,23 +2109,22 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
       {/* BG */}
       <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,height:"100%",pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
-        <div style={{position:"absolute",top:"-10%",left:"-10%",width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle,#A78BFA18,transparent 70%)",animation:"bgMove 12s ease-in-out infinite"}}/>
-        <div style={{position:"absolute",bottom:"15%",right:"-10%",width:280,height:280,borderRadius:"50%",background:"radial-gradient(circle,#4ECDC418,transparent 70%)",animation:"bgMove 16s ease-in-out infinite reverse"}}/>
+        <div style={{position:"absolute",top:"-12%",left:"-16%",width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle,rgba(34,197,94,0.08),transparent 70%)",animation:"bgMove 12s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",bottom:"18%",right:"-18%",width:280,height:280,borderRadius:"50%",background:"radial-gradient(circle,rgba(20,184,166,0.08),transparent 70%)",animation:"bgMove 16s ease-in-out infinite reverse"}}/>
       </div>
 
       {/* TOP NAV */}
       <div className="top-nav">
         <div style={{minWidth:0}}>
-          <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:2}}>HABITFLOW</div>
-          <div style={{fontSize:20,fontWeight:900,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:210}}>Hello, {userName} 👋</div>
+          <div style={{fontSize:10,fontWeight:750,color:"#7a867d",letterSpacing:1.2,textTransform:"uppercase",marginBottom:2}}>HABITFLOW</div>
+          <div style={{fontSize:20,fontWeight:850,color:"#152118",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:210}}>Hello, {userName}</div>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <div className="card" style={{padding:"6px 12px",display:"flex",alignItems:"center",gap:6,borderRadius:12}}>
-            <span style={{fontSize:14}}>{currentLevel.icon}</span>
-            <span style={{fontSize:12,fontWeight:700,color:"var(--text-secondary)"}}>Lv {currentLevel.level}</span>
+          <div style={{padding:"7px 11px",display:"flex",alignItems:"center",gap:6,borderRadius:999,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 8px 20px rgba(24,35,29,0.05)"}}>
+            <span style={{fontSize:12,fontWeight:800,color:"#1f7a4d"}}>Lv {currentLevel.level}</span>
           </div>
-          <button onClick={openAICoach} className="btn-grad" style={{padding:"7px 14px",fontSize:12,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>🤖 AI</button>
-          <button onClick={signOut} className="btn-glass" style={{padding:"7px 11px",fontSize:13}}>↪</button>
+          <button onClick={openAICoach} style={{padding:"8px 13px",fontSize:12,fontWeight:800,borderRadius:999,border:"1px solid rgba(31,122,77,0.14)",background:"#eef8e9",color:"#1f7a4d",cursor:"pointer"}}>Coach</button>
+          <button onClick={signOut} style={{padding:"8px 11px",fontSize:13,fontWeight:800,borderRadius:999,border:"1px solid rgba(31,53,40,0.1)",background:"#ffffff",color:"#1f3528",cursor:"pointer"}}>↪</button>
         </div>
       </div>
 
@@ -2131,250 +2134,65 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
         {activeTab==="home" && (
           <div className="fade-up">
 
-            {/* HERO ROW: Ring + Stats */}
-            <div className="home-hero-grid">
-              {/* Ring Card */}
-              <div className="card float-a" style={{padding:20,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,minWidth:160}}>
-                <Ring3D pct={todayPct} size={130} color="#A78BFA" label="TODAY'S PROGRESS" sublabel={`${doneToday}/${habits.length} done`}/>
-              </div>
-
-              {/* Right stats */}
-              <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                {/* Level Card */}
-                <div className="card" style={{padding:"14px 16px",background:"linear-gradient(135deg,rgba(255,215,0,0.12),rgba(107,203,119,0.08))"}}>
-                  <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>LEVEL</div>
-                  <div style={{fontSize:22,fontWeight:900,marginBottom:2}}>{currentLevel.icon} {currentLevel.title}</div>
-                  <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:8}}>⚡ {displayXP} XP · {nextLevel?`${nextLevel.minXP-displayXP} to next`:"MAX!"}</div>
-                  <div style={{height:5,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
-                    <div style={{height:"100%",width:xpPct+"%",background:"linear-gradient(90deg,#FFD93D,#6BCB77)",transition:"width 0.8s ease",borderRadius:999}}/>
-                  </div>
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",fontWeight:700,marginTop:6}}>
-                    <span>{nextLevel ? `${xpPct}% complete` : "Top level"}</span>
-                    <span>{nextLevel ? `${levelXP}/${levelXPNeeded}` : `${displayXP} lifetime XP`}</span>
-                  </div>
-                </div>
-
-                {/* Streak Card */}
-<div className="card" style={{padding:"14px 16px",background:"linear-gradient(135deg,rgba(255,142,83,0.15),rgba(255,107,107,0.08))"}}>
-  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:8}}>
-    <div>
-      <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>PROTECTED STREAK</div>
-      <FireStreak streak={bestStreak}/>
-    </div>
-    <div style={{textAlign:"right",minWidth:70}}>
-      <div style={{fontSize:10,color:"var(--text-muted)",fontWeight:700,marginBottom:4}}>SHIELDS</div>
-      <div style={{fontSize:20,fontWeight:900,color:freezes>0?"#4ECDC4":"rgba(255,255,255,0.32)",filter:freezes>0?"drop-shadow(0 0 8px rgba(78,205,196,0.45))":"none"}}>{freezes}/{maxFreezes}</div>
-    </div>
-  </div>
-  <div style={{fontSize:11,color:"var(--text-muted)",lineHeight:1.45,fontWeight:600,marginBottom:10}}>
-    {freezes>0 ? "You have a safety net if life interrupts a habit day." : "Reach 7 streak days to earn a shield for one missed day."}
-  </div>
-  <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:8}}>
-    {Array.from({length:7},(_,i)=>(
-      <div key={i} style={{height:5,borderRadius:999,background:i<shieldProgress||bestStreak>0&&shieldProgress===0?"linear-gradient(90deg,#4ECDC4,#A78BFA)":"rgba(255,255,255,0.08)",boxShadow:i<shieldProgress||bestStreak>0&&shieldProgress===0?"0 0 8px rgba(78,205,196,0.35)":"none"}}/>
-    ))}
-  </div>
-  <div style={{display:"flex",justifyContent:"space-between",gap:8,fontSize:10,color:"var(--text-muted)",fontWeight:700,lineHeight:1.35}}>
-    <span>{bestStreak>0 && shieldProgress===0 ? "Shield earned at this milestone" : `${daysToNextShield} day${daysToNextShield===1?"":"s"} to next shield`}</span>
-    {lastFreezeDate && <span>Last used {lastFreezeDate}</span>}
-  </div>
-</div>
-</div>
-</div>
-
-            {/* COMPANION */}
-            <div className="card" style={{padding:"16px 18px",marginBottom:14,background:"linear-gradient(135deg,rgba(167,139,250,0.13),rgba(78,205,196,0.08))",overflow:"hidden"}}>
-              <div style={{display:"flex",alignItems:"center",gap:14}}>
+            {/* GROWTH HERO */}
+            <div style={{padding:"24px 22px",marginBottom:18,borderRadius:30,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 20px 54px rgba(24,35,29,0.08)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
                 <CompanionAvatar mood={companionMood}/>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
-                    <div style={{fontSize:15,fontWeight:900}}>Flow Buddy</div>
-                    <div style={{fontSize:9,fontWeight:900,color:"#4ECDC4",letterSpacing:.6,textTransform:"uppercase",background:"rgba(78,205,196,0.1)",border:"1px solid rgba(78,205,196,0.22)",borderRadius:999,padding:"3px 7px"}}>{companionStatus}</div>
-                  </div>
-                  <div style={{fontSize:12,color:"var(--text-secondary)",lineHeight:1.5,fontWeight:650}}>{companionMessage}</div>
-                  <div style={{marginTop:10,padding:"9px 11px",borderRadius:13,background:`${pacerCopy.color}14`,border:`1px solid ${pacerCopy.color}33`}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,marginBottom:5}}>
-                      <div style={{fontSize:10,fontWeight:900,color:pacerCopy.color,letterSpacing:.6,textTransform:"uppercase"}}>{pacerCopy.label}</div>
-                      <div style={{fontSize:10,color:"var(--text-muted)",fontWeight:800}}>{doneToday}/{habits.length || 0} done</div>
-                    </div>
-                    <div style={{height:4,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden",marginBottom:6}}>
-                      <div style={{height:"100%",width:`${todayPct}%`,borderRadius:999,background:pacerCopy.color,transition:"width 0.5s ease"}}/>
-                    </div>
-                    <div style={{fontSize:10,color:"var(--text-muted)",fontWeight:650,lineHeight:1.4}}>{pacerCopy.detail}</div>
+                  <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:5}}>Growth Companion</div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    <div style={{fontSize:24,fontWeight:850,color:"#152118",lineHeight:1.1}}>Today feels {companionStatus.toLowerCase()}.</div>
+                    <div style={{fontSize:11,fontWeight:800,color:"#1f7a4d",background:"#eef8e9",border:"1px solid rgba(31,122,77,0.12)",borderRadius:999,padding:"4px 8px"}}>{pacerCopy.label}</div>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* WEEKLY REFLECTION */}
-            {habits.length > 0 && (
-              <div className="card" style={{padding:"16px 18px",marginBottom:14,background:"linear-gradient(135deg,rgba(167,139,250,0.12),rgba(255,217,61,0.07))"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:12}}>
-                  <div>
-                    <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>WEEKLY REFLECTION</div>
-                    <div style={{fontSize:17,fontWeight:900}}>Your last 7 days</div>
-                  </div>
-                  <button onClick={generateWeeklyRecap} disabled={weeklyRecapLoading} className="btn-glass" style={{padding:"7px 10px",fontSize:11,fontWeight:900,whiteSpace:"nowrap"}}>
-                    {weeklyRecapLoading ? "Writing..." : "AI recap"}
-                  </button>
+              <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:20,alignItems:"center"}}>
+                <div style={{width:132,height:132,borderRadius:"50%",background:"#f6faf4",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid rgba(31,53,40,0.08)","--text-primary":"#152118","--text-muted":"#6d786f","--ring-track":"#e7efe5","--ring-glow":"rgba(31,122,77,0.14)"}}>
+                  <Ring3D pct={todayPct} size={116} color="#1f7a4d" label="TODAY" sublabel={`${doneToday}/${activeHabitsCount} done`}/>
                 </div>
-
-                <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:12}}>
-                  {[
-                    {label:"Completed",value:weeklySummary.completed,accent:"#6BCB77"},
-                    {label:"Missed",value:weeklySummary.missed,accent:"#FFD93D"},
-                    {label:"Best streak",value:`${weeklySummary.bestStreak}d`,accent:"#FF8E53"},
-                    {label:"XP gained",value:weeklySummary.xpGained,accent:"#A78BFA"},
-                  ].map(item=>(
-                    <div key={item.label} style={{padding:"10px 11px",borderRadius:13,background:"rgba(255,255,255,0.045)",border:"1px solid var(--border)"}}>
-                      <div style={{fontSize:9,fontWeight:800,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:.6,marginBottom:4}}>{item.label}</div>
-                      <div style={{fontSize:18,fontWeight:950,color:item.accent}}>{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:weeklyRecap || weeklyRecapError ? 12 : 0}}>
-                  <div style={{fontSize:11,color:"#4ECDC4",fontWeight:850,background:"rgba(78,205,196,0.1)",border:"1px solid rgba(78,205,196,0.22)",borderRadius:999,padding:"5px 8px"}}>
-                    {weeklySummary.questsCompleted} quest{weeklySummary.questsCompleted===1?"":"s"} completed
-                  </div>
-                  {weeklySummary.strongHabits.length > 0 && (
-                    <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:750,background:"rgba(255,255,255,0.045)",border:"1px solid var(--border)",borderRadius:999,padding:"5px 8px"}}>
-                      Strong: {weeklySummary.strongHabits.slice(0,2).join(", ")}
-                    </div>
-                  )}
-                  {weeklySummary.resetHabits.length > 0 && (
-                    <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:750,background:"rgba(255,255,255,0.045)",border:"1px solid var(--border)",borderRadius:999,padding:"5px 8px"}}>
-                      Reset gently: {weeklySummary.resetHabits[0]}
-                    </div>
-                  )}
-                </div>
-
-                {weeklyRecap && (
-                  <div style={{fontSize:12,color:"var(--text-secondary)",lineHeight:1.55,fontWeight:650,padding:"11px 12px",borderRadius:14,background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.22)"}}>
-                    {weeklyRecap}
-                  </div>
-                )}
-                {weeklyRecapError && (
-                  <div style={{fontSize:10,color:"var(--text-muted)",fontWeight:700,marginTop:8,lineHeight:1.35}}>{weeklyRecapError}</div>
-                )}
-              </div>
-            )}
-
-            {/* DAILY QUESTS */}
-            {dailyQuests.length > 0 && (
-              <div className="card" style={{padding:"16px 18px",marginBottom:14,background:"linear-gradient(135deg,rgba(255,217,61,0.12),rgba(167,139,250,0.08))"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12}}>
-                  <div>
-                    <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>DAILY QUESTS</div>
-                    <div style={{fontSize:17,fontWeight:900}}>Small wins for today</div>
-                  </div>
-                  <div style={{fontSize:11,color:"#FFD93D",fontWeight:900,background:"rgba(255,217,61,0.1)",border:"1px solid rgba(255,217,61,0.22)",borderRadius:10,padding:"5px 8px"}}>+{DAILY_QUEST_BONUS_XP} XP each</div>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:9}}>
-                  {dailyQuests.map(q=>{
-                    const pct = Math.min(100, Math.round((q.progress/q.target)*100))
-                    return (
-                      <div key={q.id} style={{display:"grid",gridTemplateColumns:"34px 1fr auto",gap:10,alignItems:"center",padding:"10px 12px",borderRadius:14,background:q.awarded?"rgba(107,203,119,0.12)":"rgba(255,255,255,0.045)",border:q.awarded?"1px solid rgba(107,203,119,0.24)":"1px solid rgba(255,255,255,0.07)"}}>
-                        <div style={{width:34,height:34,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,background:q.complete?"rgba(107,203,119,0.16)":"rgba(255,255,255,0.07)"}}>{q.awarded?"✓":q.icon}</div>
-                        <div style={{minWidth:0}}>
-                          <div style={{fontSize:13,fontWeight:850,color:"var(--text-primary,#fff)",marginBottom:2}}>{q.title}</div>
-                          <div style={{fontSize:10,color:"var(--text-muted)",fontWeight:650,marginBottom:6,lineHeight:1.35}}>{q.awarded ? "Bonus XP added. Nicely done." : q.detail}</div>
-                          <div style={{height:4,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
-                            <div style={{height:"100%",width:pct+"%",borderRadius:999,background:q.complete?"linear-gradient(90deg,#6BCB77,#4ECDC4)":"linear-gradient(90deg,#FFD93D,#A78BFA)",transition:"width 0.5s ease"}}/>
-                          </div>
-                        </div>
-                        <div style={{fontSize:11,fontWeight:900,color:q.awarded?"#6BCB77":"rgba(255,255,255,0.48)",whiteSpace:"nowrap"}}>{q.progress}/{q.target}</div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* STEPS CARD */}
-            <div className="card" style={{padding:"16px 18px",marginBottom:14,background:"linear-gradient(135deg,rgba(78,205,196,0.12),rgba(69,183,209,0.06))"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-                <div style={{display:"flex",alignItems:"center",gap:12}}>
-                  <div style={{width:44,height:44,borderRadius:14,background:"linear-gradient(135deg,#4ECDC4,#45B7D1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,boxShadow:"0 4px 16px rgba(78,205,196,0.4)"}}>🦶</div>
-                  <div>
-                    <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase"}}>STEPS</div>
-                    <div style={{fontSize:30,fontWeight:900,lineHeight:1,background:"linear-gradient(135deg,#4ECDC4,#45B7D1)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{steps.toLocaleString()}</div>
-                  </div>
-                </div>
-                <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:6}}>/ 10,000</div>
-                  <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>addSteps(500)} className="btn-grad" style={{padding:"5px 10px",fontSize:11,background:"linear-gradient(135deg,#4ECDC4,#45B7D1)"}}>+500</button>
-                    <button onClick={()=>addSteps(1000)} className="btn-grad" style={{padding:"5px 10px",fontSize:11,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>+1k</button>
-                  </div>
-                </div>
-              </div>
-              <div style={{height:8,borderRadius:999,background:"rgba(255,255,255,0.07)",overflow:"hidden"}}>
-                <div style={{height:"100%",width:stepsPct+"%",background:"linear-gradient(90deg,#4ECDC4,#45B7D1)",borderRadius:999,boxShadow:"0 0 10px rgba(78,205,196,0.5)",transition:"width 1s ease"}}/>
-              </div>
-            </div>
-
-            {/* QUICK STATS ROW */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}}>
-              {[
-                {icon:"💧",val:water+"/8",lbl:"Water",color:"#45B7D1",pct:waterPct,fn:()=>addWater(1)},
-                {icon:"😊",val:mood||"—",lbl:"Mood",color:"#F472B6",fn:()=>setShowMood(true)},
-                {icon:"🔥",val:Math.round(steps*0.04),lbl:"kcal",color:"#FF8E53"},
-                {icon:"✅",val:doneToday+"/"+habits.length,lbl:"Done",color:"#6BCB77"},
-              ].map((s,i)=>(
-                <div key={i} className="card" onClick={s.fn} style={{padding:"12px 8px",textAlign:"center",cursor:s.fn?"pointer":"default",background:`linear-gradient(135deg,${s.color}18,${s.color}06)`}}>
-                  <div style={{fontSize:20,marginBottom:4,filter:`drop-shadow(0 0 6px ${s.color})`}}>{s.icon}</div>
-                  <div style={{fontSize:13,fontWeight:900,marginBottom:2}}>{s.val}</div>
-                  <div style={{fontSize:9,color:"var(--text-muted)",fontWeight:700,textTransform:"uppercase",letterSpacing:.3}}>{s.lbl}</div>
-                  {s.pct!=null && <div style={{height:3,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden",marginTop:6}}><div style={{height:"100%",width:s.pct+"%",background:s.color,borderRadius:999}}/></div>}
-                </div>
-              ))}
-            </div>
-
-            {/* WATER CARD */}
-            <div className="card" style={{padding:"16px 18px",marginBottom:14}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                 <div>
-                  <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>WATER TODAY</div>
-                  <div style={{fontSize:22,fontWeight:900}}>{water} <span style={{fontSize:13,color:"var(--text-muted)",fontWeight:400}}>/ 8 cups</span></div>
+                  <div style={{fontSize:42,fontWeight:850,color:"#152118",lineHeight:1,marginBottom:8}}>{todayPct}%</div>
+                  <div style={{fontSize:15,color:"#536257",lineHeight:1.55,fontWeight:500,marginBottom:16}}>{companionMessage}</div>
+                  <div style={{height:9,borderRadius:999,background:"#e7efe5",overflow:"hidden",marginBottom:8}}>
+                    <div style={{height:"100%",width:`${todayPct}%`,borderRadius:999,background:"linear-gradient(90deg,#22c55e,#14b8a6)",transition:"width 0.5s ease"}}/>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#6d786f",fontWeight:700}}>
+                    <span>{doneToday}/{activeHabitsCount} active habits complete</span>
+                    <span>{activeHabitsCount ? "Keep it gentle" : "Ready when you are"}</span>
+                  </div>
                 </div>
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>addWater(-1)} className="btn-glass" style={{padding:"8px 14px",fontSize:16}}>−</button>
-                  <button onClick={()=>addWater(1)} className="btn-grad" style={{background:"linear-gradient(135deg,#45B7D1,#A78BFA)",padding:"8px 16px",fontSize:13}}>+ Cup</button>
-                </div>
-              </div>
-              <div style={{display:"flex",gap:5}}>
-                {Array.from({length:8},(_,i)=>(
-                  <div key={i} onClick={()=>{setWater(i+1);localStorage.setItem("hf_water_"+todayStr,i+1)}}
-                    style={{flex:1,height:28,borderRadius:9,background:i<water?"linear-gradient(135deg,#45B7D1,#A78BFA)":"rgba(255,255,255,0.06)",border:"1px solid var(--border)",cursor:"pointer",transition:"all .25s",boxShadow:i<water?"0 0 8px rgba(69,183,209,0.5)":"none"}}/>
-                ))}
               </div>
             </div>
 
             {/* TODAY'S HABITS */}
-            {habits.length > 0 && (
+            {activeHabitsCount > 0 && (
               <>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                  <div style={{fontSize:15,fontWeight:800}}>Habits</div>
-                  <button onClick={()=>setActiveTab("habits")} style={{fontSize:12,color:"#A78BFA",fontWeight:700,background:"none",border:"none",cursor:"pointer"}}>See all →</button>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                  <div>
+                    <div style={{fontSize:12,color:"#6d786f",fontWeight:750,textTransform:"uppercase",letterSpacing:.4,marginBottom:2}}>Today</div>
+                    <div style={{fontSize:21,fontWeight:850,color:"#152118"}}>Focused habits</div>
+                  </div>
+                  <button onClick={()=>setActiveTab("habits")} style={{fontSize:13,color:"#1f7a4d",fontWeight:750,background:"none",border:"none",cursor:"pointer"}}>See all</button>
                 </div>
-                <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14}}>
-                  {habits.slice(0,3).map(h=>{
+                <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:18}}>
+                  {activeHabits.slice(0,5).map(h=>{
                     const done = h.completions?.[todayStr]
-                    const streak = getStreak(h, days)
+                    const weekDone = days.filter(d=>h.completions?.[d]).length
                     return (
-                      <div key={h.id} className="habit-card" style={{background:`linear-gradient(135deg,${h.color}18,${h.color}06)`,border:`1px solid ${done?h.color+"44":"rgba(255,255,255,0.08)"}`,padding:"14px 16px",boxShadow:done?`0 0 20px ${h.color}22`:"none"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:12}}>
-                          <div style={{width:46,height:46,borderRadius:14,background:`${h.color}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,border:`1px solid ${h.color}33`,boxShadow:`0 0 16px ${h.color}22`}}>{h.emoji}</div>
+                      <div key={h.id} style={{minHeight:74,padding:"13px 14px",borderRadius:20,background:"#ffffff",border:`1px solid ${done?"rgba(31,122,77,0.18)":"rgba(31,53,40,0.08)"}`,boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:13}}>
+                          <div style={{width:48,height:48,borderRadius:16,background:`${h.color}16`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,border:`1px solid ${h.color}20`}}>{h.emoji}</div>
                           <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontSize:14,fontWeight:700,marginBottom:3}}>{h.name}</div>
-                            <div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600}}>🔥 {streak} streak · {days.filter(d=>h.completions?.[d]).length}/7 this week</div>
+                            <div style={{fontSize:15,fontWeight:750,color:"#152118",marginBottom:5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{h.name}</div>
+                            <div style={{fontSize:12,color:"#6d786f",fontWeight:550}}>{weekDone}/7 this week</div>
                           </div>
-                          <button onClick={()=>toggle(h.id,todayStr)} className="btn-grad" style={{
-                            padding:"8px 16px",fontSize:12,flexShrink:0,
-                            background:done?`linear-gradient(135deg,${h.color},${h.color}cc)`:`linear-gradient(135deg,${h.color},${h.color}88)`,
-                            boxShadow:done?`0 0 16px ${h.color}66`:"none",
-                          }}>{done?"✓ Done":"+ Log"}</button>
+                          <button onClick={()=>toggle(h.id,todayStr)} style={{
+                            padding:"9px 15px",fontSize:13,fontWeight:800,flexShrink:0,borderRadius:999,cursor:"pointer",
+                            border:done?"1px solid rgba(31,122,77,0.16)":"1px solid rgba(31,53,40,0.1)",
+                            background:done?"#eef8e9":"#ffffff",
+                            color:done?"#1f7a4d":"#1f3528",
+                            boxShadow:"0 8px 20px rgba(24,35,29,0.05)",
+                          }}>{done?"Done":"Log"}</button>
                         </div>
                       </div>
                     )
@@ -2382,19 +2200,154 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
                 </div>
               </>
             )}
-            {habits.length === 0 && (
-              <div className="card" style={{padding:"24px 20px",textAlign:"center",marginBottom:14}}>
-                <div style={{fontSize:42,marginBottom:10}}>🌱</div>
-                <div style={{fontSize:18,fontWeight:900,marginBottom:6}}>Start with one tiny habit</div>
-                <div style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.55,marginBottom:18}}>Choose a starter template or create something simple enough to repeat tomorrow.</div>
-                <button onClick={()=>{setHabitSaveError("");setShowTemplates(true)}} className="btn-grad" style={{padding:"12px 20px",fontSize:14,background:"linear-gradient(135deg,#FF6B6B,#FF8E53)"}}>Browse Templates</button>
+            {activeHabitsCount === 0 && (
+              <div style={{padding:"26px 22px",borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 36px rgba(24,35,29,0.06)",textAlign:"center",marginBottom:18}}>
+                <div style={{fontSize:18,fontWeight:850,color:"#152118",marginBottom:8}}>Start with one tiny habit</div>
+                <div style={{fontSize:14,color:"#607067",lineHeight:1.55,marginBottom:18}}>Choose a starter template or create something simple enough to repeat tomorrow.</div>
+                <button onClick={()=>{setHabitSaveError("");setShowTemplates(true)}} style={{padding:"12px 18px",borderRadius:999,border:"none",background:"#1f7a4d",color:"#fff",fontWeight:850,cursor:"pointer"}}>Browse Templates</button>
+              </div>
+            )}
+
+            {/* COACH INSIGHT */}
+            <div style={{padding:"18px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 36px rgba(24,35,29,0.05)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:14}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:6}}>Coach insight</div>
+                  <div style={{fontSize:17,fontWeight:800,color:"#152118",marginBottom:6}}>{pacerCopy.label}</div>
+                  <div style={{fontSize:13,color:"#536257",lineHeight:1.55,fontWeight:500}}>{pacerCopy.detail}</div>
+                </div>
+                <button onClick={openAICoach} style={{padding:"9px 12px",fontSize:12,fontWeight:800,borderRadius:999,border:"1px solid rgba(31,122,77,0.14)",background:"#eef8e9",color:"#1f7a4d",whiteSpace:"nowrap",cursor:"pointer"}}>Open coach</button>
+              </div>
+            </div>
+
+            {/* RECOVERY + MOMENTUM */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+              {[
+                {label:"Recovery",value:`${freezes}/${maxFreezes}`,detail:freezes>0 ? "Safety net ready" : `${daysToNextShield} days to shield`,color:"#14b8a6"},
+                {label:"Momentum",value:`${bestStreak}d`,detail:"Best current rhythm",color:"#22c55e"},
+              ].map(item=>(
+                <div key={item.label} style={{padding:"16px 15px",borderRadius:22,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+                  <div style={{fontSize:11,fontWeight:800,color:"#7a867d",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>{item.label}</div>
+                  <div style={{fontSize:28,fontWeight:850,color:item.color,lineHeight:1,marginBottom:7}}>{item.value}</div>
+                  <div style={{fontSize:12,color:"#607067",fontWeight:550,lineHeight:1.35}}>{item.detail}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* WELLNESS SECONDARY */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+              <div style={{padding:"16px 15px",borderRadius:22,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+                <div style={{fontSize:11,fontWeight:800,color:"#7a867d",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>Water</div>
+                <div style={{fontSize:24,fontWeight:850,color:"#152118",marginBottom:10}}>{water}<span style={{fontSize:13,color:"#7a867d",fontWeight:600}}> / 8</span></div>
+                <div style={{height:7,borderRadius:999,background:"#e7efe5",overflow:"hidden",marginBottom:10}}>
+                  <div style={{height:"100%",width:waterPct+"%",background:"#14b8a6",borderRadius:999}}/>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>addWater(-1)} style={{flex:1,padding:"8px 0",borderRadius:999,border:"1px solid rgba(31,53,40,0.1)",background:"#fff",color:"#1f3528",fontWeight:800,cursor:"pointer"}}>−</button>
+                  <button onClick={()=>addWater(1)} style={{flex:1,padding:"8px 0",borderRadius:999,border:"none",background:"#eef8e9",color:"#1f7a4d",fontWeight:800,cursor:"pointer"}}>+</button>
+                </div>
+              </div>
+              <div style={{padding:"16px 15px",borderRadius:22,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+                <div style={{fontSize:11,fontWeight:800,color:"#7a867d",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>Steps</div>
+                <div style={{fontSize:24,fontWeight:850,color:"#152118",marginBottom:10}}>{steps.toLocaleString()}</div>
+                <div style={{height:7,borderRadius:999,background:"#e7efe5",overflow:"hidden",marginBottom:10}}>
+                  <div style={{height:"100%",width:stepsPct+"%",background:"#14b8a6",borderRadius:999}}/>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>addSteps(500)} style={{flex:1,padding:"8px 0",borderRadius:999,border:"1px solid rgba(31,53,40,0.1)",background:"#fff",color:"#1f3528",fontWeight:800,cursor:"pointer"}}>+500</button>
+                  <button onClick={()=>addSteps(1000)} style={{flex:1,padding:"8px 0",borderRadius:999,border:"none",background:"#eef8e9",color:"#1f7a4d",fontWeight:800,cursor:"pointer"}}>+1k</button>
+                </div>
+              </div>
+            </div>
+
+            {/* REWARDS + ACHIEVEMENTS */}
+            <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:4}}>Rewards</div>
+                  <div style={{fontSize:17,fontWeight:800,color:"#152118"}}>{currentLevel.title}</div>
+                </div>
+                <div style={{fontSize:13,color:"#1f7a4d",fontWeight:800}}>{displayXP} XP</div>
+              </div>
+              <div style={{height:7,borderRadius:999,background:"#e7efe5",overflow:"hidden",marginBottom:8}}>
+                <div style={{height:"100%",width:xpPct+"%",background:"linear-gradient(90deg,#22c55e,#14b8a6)",transition:"width 0.8s ease",borderRadius:999}}/>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#6d786f",fontWeight:650}}>
+                <span>{nextLevel ? `${xpPct}% complete` : "Top level"}</span>
+                <span>{nextLevel ? `${levelXP}/${levelXPNeeded}` : `${displayXP} lifetime XP`}</span>
+              </div>
+            </div>
+
+            {/* DAILY QUESTS */}
+            {dailyQuests.length > 0 && (
+              <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12}}>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:4}}>Achievements</div>
+                    <div style={{fontSize:17,fontWeight:800,color:"#152118"}}>Small wins for today</div>
+                  </div>
+                  <div style={{fontSize:12,color:"#1f7a4d",fontWeight:800,background:"#eef8e9",border:"1px solid rgba(31,122,77,0.12)",borderRadius:999,padding:"6px 9px"}}>+{DAILY_QUEST_BONUS_XP} XP</div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:9}}>
+                  {dailyQuests.map(q=>{
+                    const pct = Math.min(100, Math.round((q.progress/q.target)*100))
+                    return (
+                      <div key={q.id} style={{display:"grid",gridTemplateColumns:"1fr auto",gap:10,alignItems:"center",padding:"11px 12px",borderRadius:16,background:q.awarded?"#eef8e9":"#f7faf5",border:q.awarded?"1px solid rgba(31,122,77,0.16)":"1px solid rgba(31,53,40,0.06)"}}>
+                        <div style={{minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:750,color:"#152118",marginBottom:3}}>{q.title}</div>
+                          <div style={{fontSize:11,color:"#6d786f",fontWeight:550,marginBottom:7,lineHeight:1.35}}>{q.awarded ? "Bonus XP added. Nicely done." : q.detail}</div>
+                          <div style={{height:5,borderRadius:999,background:"#e7efe5",overflow:"hidden"}}>
+                            <div style={{height:"100%",width:pct+"%",borderRadius:999,background:q.complete?"#22c55e":"#14b8a6",transition:"width 0.5s ease"}}/>
+                          </div>
+                        </div>
+                        <div style={{fontSize:12,fontWeight:800,color:q.awarded?"#1f7a4d":"#7a867d",whiteSpace:"nowrap"}}>{q.progress}/{q.target}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* WEEKLY REFLECTION */}
+            {habits.length > 0 && (
+              <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:12}}>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:4}}>Reflection</div>
+                    <div style={{fontSize:17,fontWeight:800,color:"#152118"}}>Your last 7 days</div>
+                  </div>
+                  <button onClick={generateWeeklyRecap} disabled={weeklyRecapLoading} style={{padding:"8px 11px",fontSize:12,fontWeight:800,whiteSpace:"nowrap",borderRadius:999,border:"1px solid rgba(31,53,40,0.1)",background:"#fff",color:"#1f3528",cursor:"pointer"}}>
+                    {weeklyRecapLoading ? "Writing..." : "AI recap"}
+                  </button>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:weeklyRecap || weeklyRecapError ? 12 : 0}}>
+                  {[
+                    {label:"Completed",value:weeklySummary.completed},
+                    {label:"Missed",value:weeklySummary.missed},
+                    {label:"Best",value:`${weeklySummary.bestStreak}d`},
+                    {label:"XP",value:weeklySummary.xpGained},
+                  ].map(item=>(
+                    <div key={item.label} style={{padding:"10px 11px",borderRadius:15,background:"#f7faf5",border:"1px solid rgba(31,53,40,0.06)"}}>
+                      <div style={{fontSize:10,fontWeight:750,color:"#7a867d",textTransform:"uppercase",letterSpacing:.3,marginBottom:4}}>{item.label}</div>
+                      <div style={{fontSize:18,fontWeight:800,color:"#152118"}}>{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                {weeklyRecap && (
+                  <div style={{fontSize:13,color:"#536257",lineHeight:1.55,fontWeight:500,padding:"12px",borderRadius:16,background:"#f7faf5",border:"1px solid rgba(31,53,40,0.06)"}}>
+                    {weeklyRecap}
+                  </div>
+                )}
+                {weeklyRecapError && (
+                  <div style={{fontSize:11,color:"#7a867d",fontWeight:650,marginTop:8,lineHeight:1.35}}>{weeklyRecapError}</div>
+                )}
               </div>
             )}
 
             {/* QUICK ACTIONS */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-              <button onClick={()=>{setHabitSaveError("");setShowTemplates(true)}} className="btn-grad" style={{padding:14,fontSize:13,background:"linear-gradient(135deg,#FF6B6B,#FF8E53)",borderRadius:16}}>📋 Templates</button>
-              <button onClick={()=>{setHabitSaveError("");setShowAdd(true)}} className="btn-grad" style={{padding:14,fontSize:13,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",borderRadius:16}}>+ New Habit</button>
+              <button onClick={()=>{setHabitSaveError("");setShowTemplates(true)}} style={{padding:14,fontSize:13,fontWeight:800,background:"#ffffff",color:"#1f3528",border:"1px solid rgba(31,53,40,0.08)",borderRadius:18,boxShadow:"0 10px 26px rgba(24,35,29,0.05)",cursor:"pointer"}}>Templates</button>
+              <button onClick={()=>{setHabitSaveError("");setShowAdd(true)}} style={{padding:14,fontSize:13,fontWeight:800,background:"#1f7a4d",color:"#ffffff",border:"none",borderRadius:18,boxShadow:"0 12px 28px rgba(31,122,77,0.16)",cursor:"pointer"}}>New Habit</button>
             </div>
           </div>
         )}
@@ -2564,13 +2517,13 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       {/* TAB BAR */}
       <div className="tab-bar">
         {[
-          {id:"home",icon:"🏠",lbl:"Home"},
-          {id:"habits",icon:"✅",lbl:"Habits"},
-          {id:"analytics",icon:"📊",lbl:"Stats"},
-          {id:"settings",icon:"⚙️",lbl:"Settings"},
+          {id:"home",icon:"⌂",lbl:"Home"},
+          {id:"habits",icon:"✓",lbl:"Habits"},
+          {id:"analytics",icon:"◌",lbl:"Stats"},
+          {id:"settings",icon:"⚙",lbl:"Settings"},
         ].map(t=>(
           <div key={t.id} className={`tab-item ${activeTab===t.id?"active":""}`} onClick={()=>setActiveTab(t.id)}>
-            <div className="tab-icon" style={{filter:activeTab===t.id?"drop-shadow(0 0 8px #A78BFA)":"none"}}>{t.icon}</div>
+            <div className="tab-icon">{t.icon}</div>
             <div className="tab-label">{t.lbl}</div>
             <div className="tab-dot"/>
           </div>
