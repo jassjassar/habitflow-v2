@@ -222,6 +222,7 @@ const css = `
     .modal-card *{color:#e8f5ec !important}
     .habit-card{background:#162518 !important;border-color:rgba(255,255,255,0.08) !important}
     .habit-card *{color:#e8f5ec !important}
+    .companion-avatar{background:linear-gradient(135deg,#1f7a4d,#2d9c65) !important;box-shadow:0 12px 32px rgba(31,122,77,0.3) !important;border-color:rgba(31,122,77,0.3) !important}
 
     /* AUTH PAGE */
     .auth-page-wrapper{background:linear-gradient(160deg,#0d1f12 0%,#0f1a12 50%,#0a1a1f 100%) !important}
