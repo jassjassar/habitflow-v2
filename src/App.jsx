@@ -1,7 +1,27 @@
 import { useState, useEffect, useRef } from "react"
-import { createPortal } from "react-dom"
 import { createClient } from "@supabase/supabase-js"
 import { identifyUser, resetAnalytics, trackEvent } from "./analytics"
+import LandingPage from './screens/LandingPage'
+import AnalyticsScreen from './screens/AnalyticsScreen'
+import SettingsScreen from './screens/SettingsScreen'
+import HabitsScreen from './screens/HabitsScreen'
+import HomeScreen from './screens/HomeScreen'
+import HeatmapCalendar from './components/HeatmapCalendar'
+import ModalOverlay from "./components/ModalOverlay"
+import ThemeSwitcher from "./components/ThemeSwitcher"
+import LevelUpBurst from "./components/LevelUpBurst"
+import MilestoneToast from "./components/MilestoneToast"
+import FreezeToast from "./components/FreezeToast"
+import Particles from "./components/Particles"
+import CompanionAvatar from "./components/CompanionAvatar"
+import OnboardingQuiz from "./components/OnboardingQuiz"
+import AddHabitSheet from "./components/modals/AddHabitSheet"
+import TemplatesModal from "./components/modals/TemplatesModal"
+import EditHabitModal from "./components/modals/EditHabitModal"
+import AICoachModal from "./components/modals/AICoachModal"
+import NotificationModal from "./components/modals/NotificationModal"
+import PaywallModal from "./components/modals/PaywallModal"
+import MoodPickerModal from "./components/modals/MoodPickerModal"
 
 const normalizeVapidPublicKey = (value) => {
   let key = String(value || "").trim()
@@ -306,25 +326,6 @@ const css = `
   .shimmer{background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,0.06) 50%,rgba(255,255,255,0) 100%);background-size:200% 100%;animation:shimmer 1.8s infinite}
 `
 
-function Particles({ active }) {
-  if (!active) return null
-  const colors = ["#FF6B6B","#FFD93D","#6BCB77","#4ECDC4","#A78BFA","#F472B6","#FF8E53","#45B7D1"]
-  return (
-    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:9999}}>
-      {Array.from({length:45},(_,i)=>(
-        <div key={i} className="particle" style={{
-          left:Math.random()*100+"%",top:"-10px",
-          background:colors[i%colors.length],
-          borderRadius:Math.random()>.5?"50%":"3px",
-          width:5+Math.random()*9+"px",height:5+Math.random()*9+"px",
-          animationDelay:Math.random()*0.7+"s",
-          animationDuration:1.5+Math.random()*1.5+"s",
-        }}/>
-      ))}
-    </div>
-  )
-}
-
 function Ring3D({ pct, size=140, color="#A78BFA", label, sublabel }) {
   const r = (size/2) - 14
   const circ = 2 * Math.PI * r
@@ -357,714 +358,6 @@ function FireStreak({ streak }) {
   )
 }
 
-function LevelUpBurst({ show, level }) {
-  if (!show) return null
-  return (
-    <div style={{position:"fixed",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:9998,pointerEvents:"none",background:"rgba(0,0,0,0.5)",backdropFilter:"blur(8px)"}}>
-      <div style={{textAlign:"center",animation:"levelUp 0.6s cubic-bezier(.34,1.56,.64,1) forwards"}}>
-        <div style={{fontSize:90,filter:"drop-shadow(0 0 30px #FFD93D)"}}>{level?.icon}</div>
-        <div style={{fontSize:28,fontWeight:900,color:"#FFD93D",marginTop:8,textShadow:"0 0 30px #FFD93D"}}>LEVEL UP!</div>
-        <div style={{fontSize:18,color:"var(--text-secondary)",marginTop:6,fontWeight:600}}>{level?.title}</div>
-      </div>
-    </div>
-  )
-}
-
-function MilestoneToast({ milestone }) {
-  if (!milestone) return null
-  return (
-    <div style={{position:"fixed",top:74,left:"50%",transform:"translateX(-50%)",zIndex:9999,width:"calc(100% - 32px)",maxWidth:420,pointerEvents:"none",animation:"slideDown 0.35s ease"}}>
-      <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,rgba(255,217,61,0.18),rgba(167,139,250,0.16))",border:"1px solid var(--border)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
-        <div style={{width:38,height:38,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(255,255,255,0.1)",boxShadow:"0 0 18px rgba(255,217,61,0.25)"}}>{milestone.icon}</div>
-        <div>
-          <div style={{fontSize:13,fontWeight:900,color:"var(--text-primary,#fff)",marginBottom:2}}>{milestone.title}</div>
-          <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:700}}>{milestone.detail}</div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function FreezeToast({ type }) {
-  if (!type) return null
-  const isEarned = type === "shield_earned"
-  return (
-    <div style={{position:"fixed",top:74,left:"50%",transform:"translateX(-50%)",zIndex:9999,width:"calc(100% - 32px)",maxWidth:420,pointerEvents:"none",animation:"slideDown 0.35s ease"}}>
-      <div className="card" style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:12,background:isEarned?"linear-gradient(135deg,rgba(69,183,209,0.2),rgba(167,139,250,0.18))":"linear-gradient(135deg,rgba(255,142,83,0.2),rgba(255,217,61,0.14))",border:"1px solid var(--border)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
-        <div style={{width:42,height:42,borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,background:"rgba(255,255,255,0.1)",boxShadow:isEarned?"0 0 20px rgba(69,183,209,0.3)":"0 0 20px rgba(255,217,61,0.3)"}}>🛡️</div>
-        <div>
-          <div style={{fontSize:14,fontWeight:900,color:"var(--text-primary,#fff)",marginBottom:2}}>{isEarned ? "Streak shield earned" : "Your streak was protected"}</div>
-          <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:700,lineHeight:1.35}}>
-            {isEarned ? "You reached a 7-day rhythm. One missed day can be forgiven." : "A shield covered yesterday so your streak could keep going."}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function CompanionAvatar({ mood }) {
-  const face = {
-    happy: "•‿•",
-    sleepy: "—_—",
-    excited: "★‿★",
-    worried: "•︵•",
-  }[mood] || "•‿•"
-
-  return (
-    <div style={{width:62,height:62,borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:900,color:"var(--text-primary,#fff)",background:"linear-gradient(135deg,rgba(167,139,250,0.95),rgba(78,205,196,0.86))",boxShadow:"0 12px 32px rgba(78,205,196,0.25), inset 0 1px 0 rgba(255,255,255,0.3)",border:"1px solid rgba(255,255,255,0.2)",animation:mood==="excited"?"pulse 1.4s ease-in-out infinite":mood==="sleepy"?"float 4s ease-in-out infinite":"float 3s ease-in-out infinite"}}>
-      {face}
-    </div>
-  )
-}
-
-function OnboardingQuiz({ onComplete, onDone }) {
-  const [step, setStep] = useState(0)
-  const [answers, setAnswers] = useState({})
-  const [animating, setAnimating] = useState(false)
-  const [completing, setCompleting] = useState(false)
-  const [celebrating, setCelebrating] = useState(false)
-  const [createdHabits, setCreatedHabits] = useState([])
-  const [error, setError] = useState("")
- 
-  const STEPS = [
-    {
-      id: "goal",
-      emoji: "🎯",
-      title: "What's your main goal?",
-      subtitle: "We'll build the perfect habit set for you",
-      options: [
-        { id:"health",   emoji:"💪", label:"Get fit & healthy",    desc:"Exercise, nutrition, sleep" },
-        { id:"mind",     emoji:"🧘", label:"Mental clarity",        desc:"Meditate, read, journal" },
-        { id:"work",     emoji:"🚀", label:"Be more productive",    desc:"Deep work, focus, planning" },
-        { id:"personal", emoji:"✨", label:"Personal growth",       desc:"Self-care & better habits" },
-      ],
-    },
-    {
-      id: "time",
-      emoji: "⏰",
-      title: "When are you most active?",
-      subtitle: "We'll use this to set your starter reminder times",
-      options: [
-        { id:"morning",   emoji:"🌅", label:"Early bird",     desc:"I'm active before 9am" },
-        { id:"afternoon", emoji:"☀️", label:"Afternoon peak",  desc:"I hit my stride after noon" },
-        { id:"evening",   emoji:"🌙", label:"Night owl",       desc:"Evenings work best for me" },
-        { id:"flexible",  emoji:"🎲", label:"Flexible",        desc:"No fixed preference" },
-      ],
-    },
-    {
-      id: "count",
-      emoji: "📊",
-      title: "How many habits to start?",
-      subtitle: "Research shows starting small leads to long-term success",
-      options: [
-        { id:"2", emoji:"🌱", label:"Start with 2",  desc:"Easy wins, high success rate" },
-        { id:"3", emoji:"⚡", label:"Go with 3",     desc:"The science-backed sweet spot" },
-        { id:"5", emoji:"🔥", label:"Challenge me",  desc:"I'm ready to commit fully" },
-      ],
-    },
-  ]
- 
-  const currentStep = STEPS[step]
-  const totalSteps = STEPS.length
- 
-  const selectOption = (optId) => {
-    if (completing) return
-    setError("")
-    setAnswers(prev => ({ ...prev, [currentStep.id]: optId }))
-  }
-
-  const goBack = () => {
-    if (step === 0 || animating || completing) return
-    setError("")
-    setAnimating(true)
-    setTimeout(() => { setStep(s => Math.max(0, s - 1)); setAnimating(false) }, 220)
-  }
-
-  const finishSetup = async (selectedHabits) => {
-    if (completing) return
-    setCompleting(true)
-    setError("")
-
-    try {
-      const created = await onComplete(selectedHabits)
-      if (!created?.length) throw new Error("No habits were created.")
-
-      setCreatedHabits(created)
-      setCelebrating(true)
-      setTimeout(() => onDone?.(), 1800)
-    } catch (err) {
-      setError(err?.message || "We couldn't create your starter habits. Please try again.")
-    } finally {
-      setCompleting(false)
-    }
-  }
- 
-  const goNext = async () => {
-    if (!answers[currentStep.id] || animating || completing) return
-    if (step < totalSteps - 1) {
-      setError("")
-      setAnimating(true)
-      setTimeout(() => { setStep(s => s + 1); setAnimating(false) }, 320)
-    } else {
-      await finishSetup(buildHabits(answers))
-    }
-  }
- 
-  const buildHabits = (ans) => {
-    const pool = ONBOARDING_HABITS[ans.goal] || ONBOARDING_HABITS.health
-    const count = parseInt(ans.count || "3")
-    const offsets = { morning:0, afternoon:4, evening:8, flexible:0 }
-    const offset = offsets[ans.time] || 0
-    return pool.slice(0, count).map(h => {
-      const [hh, mm] = h.time.split(":").map(Number)
-      const newH = Math.min(22, hh + offset)
-      return { ...h, time:`${String(newH).padStart(2,"0")}:${String(mm).padStart(2,"0")}` }
-    })
-  }
- 
-  // CELEBRATION SCREEN
-  if (celebrating) {
-    const habitCount = createdHabits.length
-    const goalLabels = { health:"fitness", mind:"mental clarity", work:"productivity", personal:"personal growth" }
-    const goal = goalLabels[answers.goal] || "your goals"
-    return (
-      <div style={{
-        position:"fixed", inset:0, zIndex:500,
-        background:"linear-gradient(135deg,#0d0d1a 0%,#1a0d2e 50%,#0d1a1a 100%)",
-        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-        padding:32, textAlign:"center",
-      }}>
-        <div style={{animation:"celebPop 0.6s cubic-bezier(.34,1.56,.64,1) forwards", fontSize:80, marginBottom:24}}>🎉</div>
-        <div style={{fontSize:28, fontWeight:900, color:"var(--text-primary,#fff)", marginBottom:10, lineHeight:1.2}}>
-          You're all set!
-        </div>
-        <div style={{fontSize:16, color:"var(--text-secondary)", marginBottom:32, lineHeight:1.6, maxWidth:300}}>
-          We've created {habitCount} habits focused on <span style={{color:"#A78BFA", fontWeight:700}}>{goal}</span>. Your journey starts now.
-        </div>
-        <div style={{display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:280}}>
-          {createdHabits.map((h, i) => (
-            <div key={i} style={{
-              background:`${h.color}22`, border:`1px solid ${h.color}44`,
-              borderRadius:16, padding:"12px 16px",
-              display:"flex", alignItems:"center", gap:12,
-              animation:`slideInUp 0.4s ${i*0.1}s ease both`,
-            }}>
-              <div style={{fontSize:24}}>{h.emoji}</div>
-              <div style={{textAlign:"left"}}>
-                <div style={{fontSize:14, fontWeight:700, color:"var(--text-primary,#fff)"}}>{h.name}</div>
-                <div style={{fontSize:11, color:"var(--text-muted)"}}>⏰ {h.time}</div>
-              </div>
-              <div style={{marginLeft:"auto", color:h.color, fontWeight:800, fontSize:12}}>✓</div>
-            </div>
-          ))}
-        </div>
-        <div style={{marginTop:24, fontSize:14, color:"var(--text-muted)"}}>
-          Opening your dashboard...
-        </div>
-        <style>{`
-          @keyframes celebPop {
-            0%{transform:scale(0) rotate(-20deg);opacity:0}
-            60%{transform:scale(1.2) rotate(10deg)}
-            100%{transform:scale(1) rotate(0);opacity:1}
-          }
-          @keyframes slideInUp {
-            from{opacity:0;transform:translateY(20px)}
-            to{opacity:1;transform:translateY(0)}
-          }
-        `}</style>
-      </div>
-    )
-  }
- 
-  return (
-    <div style={{
-      position:"fixed", inset:0, zIndex:500,
-      background:"linear-gradient(135deg,#0d0d1a 0%,#1a0d2e 60%,#0d1a1a 100%)",
-      display:"flex", flexDirection:"column",
-      overflowY:"auto",
-    }}>
-      <style>{`
-        @keyframes fadeSlideIn {
-          from{opacity:0;transform:translateX(24px)}
-          to{opacity:1;transform:translateX(0)}
-        }
-        @keyframes optionPop {
-          0%{transform:scale(0.94);opacity:0}
-          100%{transform:scale(1);opacity:1}
-        }
-        .ob-option {
-          transition: all 0.2s ease;
-        }
-        .ob-option:hover {
-          transform: translateY(-2px) scale(1.01);
-        }
-        .ob-option:active {
-          transform: scale(0.98);
-        }
-      `}</style>
- 
-      {/* HEADER */}
-      <div style={{padding:"20px 24px 0", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-        <button
-          onClick={goBack}
-          disabled={step === 0 || animating || completing}
-          style={{
-            width:38,height:38,borderRadius:12,border:"1px solid var(--border)",
-            background:step === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.08)",
-            color:step === 0 ? "rgba(255,255,255,0.18)" : "#fff",
-            cursor:step === 0 || animating || completing ? "not-allowed" : "pointer",
-            fontSize:18,fontWeight:800,fontFamily:"'Inter',sans-serif",
-          }}
-          aria-label="Back"
-        >
-          ←
-        </button>
-        <div style={{fontSize:16, fontWeight:900, background:"linear-gradient(135deg,#A78BFA,#4ECDC4)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>
-          ⚡ HabitFlow
-        </div>
-        <div style={{fontSize:12, color:"var(--text-muted)", fontWeight:600}}>
-          {step + 1} of {totalSteps}
-        </div>
-      </div>
- 
-      {/* PROGRESS BAR */}
-      <div style={{padding:"12px 24px 0"}}>
-        <div style={{height:4, borderRadius:999, background:"rgba(255,255,255,0.08)", overflow:"hidden"}}>
-          <div style={{
-            height:"100%", borderRadius:999,
-            background:"linear-gradient(90deg,#A78BFA,#4ECDC4)",
-            width:`${((step + 1) / totalSteps) * 100}%`,
-            transition:"width 0.4s ease",
-            boxShadow:"0 0 10px rgba(167,139,250,0.5)",
-          }}/>
-        </div>
-      </div>
- 
-      {/* CONTENT */}
-      <div style={{
-        flex:1, display:"flex", flexDirection:"column",
-        padding:"32px 24px 24px",
-        animation: animating ? "none" : "fadeSlideIn 0.35s ease",
-        opacity: animating ? 0 : 1,
-        transition: animating ? "opacity 0.2s" : "none",
-      }}>
-        {/* Emoji + Title */}
-        <div style={{textAlign:"center", marginBottom:36}}>
-          <div style={{
-            fontSize:64, marginBottom:16,
-            filter:"drop-shadow(0 0 20px rgba(167,139,250,0.4))",
-            animation:"float 3s ease-in-out infinite",
-          }}>
-            {currentStep.emoji}
-          </div>
-          <div style={{fontSize:24, fontWeight:900, color:"var(--text-primary,#fff)", marginBottom:8, lineHeight:1.25}}>
-            {currentStep.title}
-          </div>
-          <div style={{fontSize:14, color:"var(--text-muted)", lineHeight:1.5}}>
-            {currentStep.subtitle}
-          </div>
-        </div>
- 
-        {/* Options */}
-        <div style={{display:"flex", flexDirection:"column", gap:12, marginBottom:32}}>
-          {currentStep.options.map((opt, i) => {
-            const isSelected = answers[currentStep.id] === opt.id
-            return (
-              <div
-                key={opt.id}
-                className="ob-option"
-                onClick={() => selectOption(opt.id)}
-                style={{
-                  background: isSelected
-                    ? "linear-gradient(135deg,rgba(167,139,250,0.25),rgba(78,205,196,0.15))"
-                    : "rgba(255,255,255,0.05)",
-                  border: isSelected
-                    ? "2px solid rgba(167,139,250,0.8)"
-                    : "1px solid rgba(255,255,255,0.1)",
-                  borderRadius:18,
-                  padding:"16px 18px",
-                  cursor:completing?"wait":"pointer",
-                  display:"flex",
-                  alignItems:"center",
-                  gap:14,
-                  boxShadow: isSelected ? "0 0 20px rgba(167,139,250,0.2)" : "none",
-                  animation:`optionPop 0.3s ${i*0.06}s ease both`,
-                }}
-              >
-                <div style={{
-                  width:46, height:46, borderRadius:14, flexShrink:0,
-                  background: isSelected ? "rgba(167,139,250,0.2)" : "rgba(255,255,255,0.07)",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:24,
-                  border: isSelected ? "1px solid rgba(167,139,250,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                  transition:"all 0.2s",
-                }}>
-                  {opt.emoji}
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{
-                    fontSize:15, fontWeight:700,
-                    color: isSelected ? "#fff" : "rgba(255,255,255,0.85)",
-                    marginBottom:3,
-                  }}>
-                    {opt.label}
-                  </div>
-                  <div style={{fontSize:12, color:"var(--text-muted)", fontWeight:500}}>
-                    {opt.desc}
-                  </div>
-                </div>
-                <div style={{
-                  width:22, height:22, borderRadius:"50%", flexShrink:0,
-                  background: isSelected ? "linear-gradient(135deg,#A78BFA,#4ECDC4)" : "rgba(255,255,255,0.08)",
-                  border: isSelected ? "none" : "1.5px solid rgba(255,255,255,0.2)",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:12, color:"var(--text-primary,#fff)",
-                  transition:"all 0.2s",
-                }}>
-                  {isSelected ? "✓" : ""}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {error && (
-          <div style={{
-            marginBottom:14,padding:"12px 14px",borderRadius:14,
-            background:"rgba(255,107,107,0.12)",border:"1px solid rgba(255,107,107,0.28)",
-            color:"#FFB4B4",fontSize:12,lineHeight:1.45,fontWeight:650,
-          }}>
-            {error}
-          </div>
-        )}
- 
-        {/* NEXT BUTTON */}
-        <button
-          onClick={goNext}
-          disabled={!answers[currentStep.id] || animating || completing}
-          style={{
-            width:"100%", padding:"17px",
-            borderRadius:18, border:"none",
-            background: answers[currentStep.id] && !completing
-              ? "linear-gradient(135deg,#A78BFA,#4ECDC4)"
-              : "rgba(255,255,255,0.08)",
-            color: answers[currentStep.id] && !completing ? "#fff" : "rgba(255,255,255,0.3)",
-            fontSize:16, fontWeight:800,
-            cursor: answers[currentStep.id] && !completing ? "pointer" : "not-allowed",
-            transition:"all 0.25s",
-            boxShadow: answers[currentStep.id] && !completing ? "0 8px 28px rgba(167,139,250,0.35)" : "none",
-            transform: answers[currentStep.id] && !completing ? "none" : "scale(0.98)",
-            fontFamily:"'Inter',sans-serif",
-          }}
-        >
-          {completing ? "Creating your habits..." : step === totalSteps - 1 ? "Build My Habits 🚀" : "Continue →"}
-        </button>
- 
-        {/* SKIP */}
-        {step === 0 && (
-          <div
-            onClick={() => finishSetup(ONBOARDING_HABITS.health.slice(0,3))}
-            style={{
-              textAlign:"center", marginTop:16, fontSize:12,
-              color:completing?"rgba(255,255,255,0.16)":"rgba(255,255,255,0.32)",
-              cursor:completing?"wait":"pointer", fontWeight:700,
-            }}
-          >
-            Use starter setup instead →
-          </div>
-        )}
-      </div>
- 
-      {/* BG ORBS */}
-      <div style={{position:"fixed", top:"15%", left:"10%", width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle,rgba(167,139,250,0.08),transparent 70%)", pointerEvents:"none", animation:"bgPulse 8s ease-in-out infinite"}}/>
-      <div style={{position:"fixed", bottom:"20%", right:"5%", width:250, height:250, borderRadius:"50%", background:"radial-gradient(circle,rgba(78,205,196,0.06),transparent 70%)", pointerEvents:"none", animation:"bgPulse 11s ease-in-out infinite reverse"}}/>
-    </div>
-  )
-} 
-
- function HeatmapCalendar({ habits }) {
-  const [tooltip, setTooltip] = useState(null)
-  const [selectedHabit, setSelectedHabit] = useState("all")
- 
-  // Build 90 days of data
-  const buildDays = () => {
-    const days = []
-    const today = new Date()
-    for (let i = 89; i >= 0; i--) {
-      const d = new Date(today)
-      d.setDate(d.getDate() - i)
-      const dateStr = d.toISOString().slice(0, 10)
-      const dayHabits = selectedHabit === "all" ? habits : habits.filter(h => h.id === selectedHabit)
-      const total = dayHabits.length
-      const done = dayHabits.filter(h => h.completions?.[dateStr]).length
-      const pct = total > 0 ? done / total : 0
-      days.push({ dateStr, done, total, pct, date: d })
-    }
-    return days
-  }
- 
-  const days = buildDays()
- 
-  // Group into weeks
-  const weeks = []
-  let week = []
-  // Pad start
-  const firstDay = days[0].date.getDay()
-  for (let i = 0; i < firstDay; i++) week.push(null)
-  days.forEach((d, i) => {
-    week.push(d)
-    if (week.length === 7) { weeks.push(week); week = [] }
-  })
-  if (week.length > 0) {
-    while (week.length < 7) week.push(null)
-    weeks.push(week)
-  }
- 
-  // Color based on completion %
-  const getColor = (pct, isToday) => {
-    if (isToday) return "rgba(167,139,250,0.9)"
-    if (pct === 0) return "rgba(255,255,255,0.06)"
-    if (pct <= 0.25) return "rgba(16,185,129,0.25)"
-    if (pct <= 0.5)  return "rgba(16,185,129,0.45)"
-    if (pct <= 0.75) return "rgba(16,185,129,0.65)"
-    return "rgba(16,185,129,0.9)"
-  }
- 
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-  const DAYS = ["S","M","T","W","T","F","S"]
- 
-  // Get month labels
-  const monthLabels = []
-  weeks.forEach((week, wi) => {
-    const firstReal = week.find(d => d !== null)
-    if (firstReal && firstReal.date.getDate() <= 7) {
-      monthLabels.push({ wi, label: MONTHS[firstReal.date.getMonth()] })
-    }
-  })
- 
-  // Stats
-  const totalDone = days.filter(d => d.pct === 1).length
-  const currentStreak = (() => {
-    let s = 0
-    for (let i = days.length - 1; i >= 0; i--) {
-      if (days[i].pct === 1) s++
-      else break
-    }
-    return s
-  })()
-  const longestStreak = (() => {
-    let max = 0, cur = 0
-    days.forEach(d => { if (d.pct === 1) { cur++; max = Math.max(max, cur) } else cur = 0 })
-    return max
-  })()
- 
-  return (
-    <div style={{
-      background:"rgba(255,255,255,0.04)",
-      border:"1px solid var(--border)",
-      borderRadius:20,
-      padding:"18px 16px",
-      marginBottom:14,
-    }}>
-      {/* Header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-        <div style={{fontSize:14,fontWeight:800,color:"var(--text-primary,#fff)"}}>Activity</div>
-        <div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600}}>Last 90 days</div>
-      </div>
- 
-      {/* Habit filter */}
-      {habits.length > 1 && (
-        <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
-          <button
-            onClick={() => setSelectedHabit("all")}
-            style={{
-              padding:"4px 10px",fontSize:11,fontWeight:700,borderRadius:8,border:"none",cursor:"pointer",
-              background:selectedHabit==="all"?"linear-gradient(135deg,#A78BFA,#4ECDC4)":"rgba(255,255,255,0.07)",
-              color:selectedHabit==="all"?"#fff":"rgba(255,255,255,0.5)",
-              fontFamily:"'Inter',sans-serif",transition:"all .2s",
-            }}
-          >All</button>
-          {habits.map(h => (
-            <button
-              key={h.id}
-              onClick={() => setSelectedHabit(h.id)}
-              style={{
-                padding:"4px 10px",fontSize:11,fontWeight:700,borderRadius:8,border:"none",cursor:"pointer",
-                background:selectedHabit===h.id?h.color:"rgba(255,255,255,0.07)",
-                color:selectedHabit===h.id?"#fff":"rgba(255,255,255,0.5)",
-                fontFamily:"'Inter',sans-serif",transition:"all .2s",
-              }}
-            >{h.emoji} {h.name}</button>
-          ))}
-        </div>
-      )}
- 
-      {/* Month labels */}
-      <div style={{display:"flex",marginBottom:4,marginLeft:18}}>
-        {weeks.map((_, wi) => {
-          const label = monthLabels.find(m => m.wi === wi)
-          return (
-            <div key={wi} style={{width:14,fontSize:9,color:"var(--text-muted)",fontWeight:700,flexShrink:0,marginRight:2}}>
-              {label ? label.label : ""}
-            </div>
-          )
-        })}
-      </div>
- 
-      {/* Grid */}
-      <div style={{display:"flex",gap:2}}>
-        {/* Day labels */}
-        <div style={{display:"flex",flexDirection:"column",gap:2,marginRight:4}}>
-          {DAYS.map((d,i) => (
-            <div key={i} style={{height:12,fontSize:9,color:"var(--text-muted)",fontWeight:700,lineHeight:"12px"}}>
-              {i % 2 === 1 ? d : ""}
-            </div>
-          ))}
-        </div>
- 
-        {/* Weeks */}
-        {weeks.map((week, wi) => (
-          <div key={wi} style={{display:"flex",flexDirection:"column",gap:2}}>
-            {week.map((day, di) => {
-              if (!day) return <div key={di} style={{width:12,height:12}}/>
-              const isToday = day.dateStr === todayStr
-              const color = getColor(day.pct, isToday)
-              return (
-                <div
-                  key={di}
-                  onMouseEnter={() => setTooltip(day)}
-                  onMouseLeave={() => setTooltip(null)}
-                  style={{
-                    width:12, height:12, borderRadius:3,
-                    background:color,
-                    cursor:"pointer",
-                    transition:"transform .15s",
-                    border:isToday?"1px solid rgba(167,139,250,0.8)":"none",
-                    transform:tooltip?.dateStr===day.dateStr?"scale(1.4)":"scale(1)",
-                  }}
-                />
-              )
-            })}
-          </div>
-        ))}
-      </div>
- 
-      {/* Legend */}
-      <div style={{display:"flex",alignItems:"center",gap:6,marginTop:10,justifyContent:"flex-end"}}>
-        <div style={{fontSize:9,color:"var(--text-muted)",fontWeight:600}}>Less</div>
-        {[0.06, 0.25, 0.45, 0.65, 0.9].map((o,i) => (
-          <div key={i} style={{width:10,height:10,borderRadius:2,background:`rgba(16,185,129,${o})`}}/>
-        ))}
-        <div style={{fontSize:9,color:"var(--text-muted)",fontWeight:600}}>More</div>
-      </div>
- 
-      {/* Tooltip */}
-      {tooltip && (
-        <div style={{
-          marginTop:10,padding:"8px 12px",
-          background:"rgba(255,255,255,0.08)",
-          borderRadius:10,border:"1px solid var(--border)",
-          fontSize:12,color:"var(--text-secondary)",fontWeight:600,
-          textAlign:"center",
-        }}>
-          {tooltip.dateStr === todayStr ? "Today" : tooltip.date.toLocaleDateString("en",{month:"short",day:"numeric",year:"numeric"})}
-          {" · "}
-          {tooltip.total === 0 ? "No habits yet" :
-           tooltip.done === 0 ? "No habits completed" :
-           tooltip.done === tooltip.total ? `All ${tooltip.total} habits ✓` :
-           `${tooltip.done}/${tooltip.total} habits`}
-        </div>
-      )}
- 
-      {/* Quick stats */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginTop:14}}>
-        {[
-          {lbl:"Perfect Days",val:totalDone,color:"#10b981"},
-          {lbl:"Current Streak",val:currentStreak+"🔥",color:"#FF8E53"},
-          {lbl:"Longest Streak",val:longestStreak+"⚡",color:"#A78BFA"},
-        ].map(s=>(
-          <div key={s.lbl} style={{
-            background:"rgba(255,255,255,0.04)",borderRadius:12,
-            padding:"10px 8px",textAlign:"center",
-            border:"1px solid var(--border)",
-          }}>
-            <div style={{fontSize:18,fontWeight:900,color:s.color,filter:`drop-shadow(0 0 6px ${s.color})`}}>{s.val}</div>
-            <div style={{fontSize:9,color:"var(--text-muted)",fontWeight:700,marginTop:3,textTransform:"uppercase",letterSpacing:.5}}>{s.lbl}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-} 
-
-function ModalOverlay({ children, onClose, zIndex = 200 }) {
-  if (typeof document === "undefined") return null
-
-  return createPortal(
-    <div
-      className="overlay"
-      onClick={e => {
-        if (e.target === e.currentTarget) onClose?.()
-      }}
-      style={{zIndex}}
-    >
-      {children}
-    </div>,
-    document.body
-  )
-}
-
-function ThemeSwitcher({ current, unlockedThemes, onSelect, onClose }) {
-  return (
-    <ModalOverlay onClose={onClose}>
-      <div className="card modal-card" style={{maxWidth:400,width:"100%",padding:24,margin:"auto"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-          <div style={{fontSize:18,fontWeight:900}}>🎨 Choose Theme</div>
-          <button onClick={onClose} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          {Object.entries(THEMES).map(([id, t]) => {
-            const reward = unlockedThemes[id] || {}
-            const locked = !reward.unlocked
-            return (
-            <div key={id} onClick={()=>!locked&&onSelect(id)} style={{
-              borderRadius:16, overflow:"hidden",
-              border: current===id ? `2px solid ${t.accent}` : "2px solid transparent",
-              cursor:locked?"not-allowed":"pointer", transition:"all .2s",
-              transform: current===id ? "scale(1.03)" : "scale(1)",
-              boxShadow: current===id ? `0 0 20px ${t.accent}44` : "none",
-              opacity: locked ? 0.58 : 1,
-              position:"relative",
-            }}>
-              {locked && (
-                <div style={{position:"absolute",inset:0,zIndex:2,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.28)",fontSize:22}}>🔒</div>
-              )}
-              <div style={{background:t.bg, padding:14, height:70, display:"flex", flexDirection:"column", gap:6}}>
-                <div style={{display:"flex",gap:5}}>
-                  <div style={{width:8,height:8,borderRadius:"50%",background:t.accent}}/>
-                  <div style={{width:8,height:8,borderRadius:"50%",background:t.accent,opacity:.6}}/>
-                </div>
-                <div style={{height:5,borderRadius:3,background:t.accent,width:"70%"}}/>
-                <div style={{height:5,borderRadius:3,background:t.accent,width:"50%",opacity:.6}}/>
-              </div>
-              <div style={{
-                background: t.text==="#ffffff"||t.text==="#f0f9ff"||t.text==="#f1f5f9" ? "#1a1a2e" : "#f9fafb",
-                color: t.text==="#ffffff"||t.text==="#f0f9ff"||t.text==="#f1f5f9" ? "#fff" : "#374151",
-                padding:"8px 10px", fontSize:11, fontWeight:800, textAlign:"center"
-              }}>
-                <div>{current===id ? "✓ " : locked ? "🔒 " : ""}{t.name}</div>
-                <div style={{fontSize:9,fontWeight:700,opacity:.62,marginTop:2,lineHeight:1.25}}>{locked ? reward.reason : "Unlocked"}</div>
-              </div>
-            </div>
-          )})}
-        </div>
-        <button onClick={onClose} className="btn-glass" style={{width:"100%",marginTop:16,padding:12,fontSize:14}}>Done</button>
-      </div>
-    </ModalOverlay>
-  )
-}
 export default function App() {
   const [page, setPage] = useState("landing")
   const [user, setUser] = useState(null)
@@ -1871,22 +1164,30 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
   // LOADING
   if (loading) return (
-    <div style={{minHeight:"100vh",background:"#0d0d1a",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#fbfdf9 0%,#f4f8f2 100%)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:20,fontFamily:"'Inter',sans-serif"}}>
       <style>{css}</style>
-      <div style={{fontSize:52,animation:"spin 1s linear infinite"}}>⚡</div>
-      <div style={{fontSize:20,fontWeight:900,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>HabitFlow</div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12}}>
+        <div style={{width:44,height:44,borderRadius:"50%",background:"linear-gradient(135deg,#d9f99d,#86efac 52%,#67e8f9)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 24px rgba(34,197,94,0.2)"}}>
+          <div style={{width:18,height:18,borderRadius:"50%",background:"#1f7a4d"}}/>
+        </div>
+        <div style={{fontSize:22,fontWeight:900,color:"#152118",letterSpacing:0}}>HabitFlow</div>
+      </div>
+      <div style={{width:32,height:3,borderRadius:999,background:"#e7efe5",overflow:"hidden"}}>
+        <div style={{height:"100%",background:"#1f7a4d",borderRadius:999,animation:"loadBar 1.4s ease-in-out infinite"}}/>
+      </div>
+      <style>{`@keyframes loadBar{0%{width:0%;margin-left:0}60%{width:100%;margin-left:0}100%{width:0%;margin-left:100%}}`}</style>
     </div>
   )
 
   if (!hasSupabaseConfig) return (
-    <div style={{minHeight:"100vh",background:"#0d0d1a",display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Inter',sans-serif"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#f0fdf4 0%,#fbfdf9 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Inter',sans-serif"}}>
       <style>{css}</style>
-      <div className="card" style={{maxWidth:420,width:"100%",padding:28,textAlign:"center"}}>
+      <div style={{maxWidth:420,width:"100%",padding:28,textAlign:"center",background:"#ffffff",borderRadius:24,border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 20px 48px rgba(24,35,29,0.08)"}}>
         <div style={{fontSize:46,marginBottom:14}}>⚡</div>
-        <div style={{fontSize:22,fontWeight:900,marginBottom:8,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
+        <div style={{fontSize:22,fontWeight:900,marginBottom:8,color:"#152118"}}>
           HabitFlow setup needed
         </div>
-        <div style={{fontSize:14,lineHeight:1.6,color:"var(--text-secondary)"}}>
+        <div style={{fontSize:14,lineHeight:1.6,color:"#536257"}}>
           Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to your environment, then restart the app.
         </div>
       </div>
@@ -1894,99 +1195,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
   )
 
   // LANDING PAGE
-  if (page==="landing") return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#fbfdf9 0%,#f4f8f2 58%,#ffffff 100%)",fontFamily:"'Inter',sans-serif",color:"#18231d",overflow:"hidden"}}>
-      <style>{css}</style>
-      <nav style={{position:"sticky",top:0,zIndex:20,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px clamp(20px,5vw,64px)",background:"rgba(251,253,249,0.82)",backdropFilter:"blur(18px)",WebkitBackdropFilter:"blur(18px)",borderBottom:"1px solid rgba(24,35,29,0.08)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,fontSize:19,fontWeight:900,color:"#1f3528",letterSpacing:0}}>
-          <span style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#d9f99d,#86efac 52%,#67e8f9)",display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 24px rgba(34,197,94,0.16)"}}>
-            <span style={{width:14,height:14,borderRadius:"50%",background:"#1f7a4d",display:"block"}}/>
-          </span>
-          HabitFlow
-        </div>
-        <button onClick={()=>setPage("auth")} style={{padding:"10px 18px",fontSize:14,fontWeight:800,borderRadius:999,border:"1px solid rgba(31,53,40,0.14)",background:"#ffffff",color:"#1f3528",boxShadow:"0 8px 24px rgba(24,35,29,0.06)",cursor:"pointer"}}>Sign In</button>
-      </nav>
-
-      <main style={{position:"relative",zIndex:1,padding:"44px clamp(20px,5vw,64px) 36px"}}>
-        <section className="fade-up" style={{maxWidth:1120,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:44,alignItems:"center"}}>
-          <div style={{maxWidth:560}}>
-            <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 12px",borderRadius:999,background:"#eef8e9",border:"1px solid rgba(47,102,72,0.12)",color:"#2f6648",fontSize:13,fontWeight:800,marginBottom:24}}>
-              AI-powered habit growth
-            </div>
-            <h1 style={{fontSize:"clamp(42px,7vw,76px)",fontWeight:900,lineHeight:1.02,marginBottom:22,letterSpacing:0,color:"#152118"}}>
-              Build habits that feel sustainable.
-        </h1>
-            <p style={{fontSize:"clamp(17px,2vw,20px)",color:"#536257",maxWidth:520,margin:"0 0 30px",lineHeight:1.65}}>
-              An AI-powered growth companion that helps you stay consistent without pressure.
-            </p>
-            <div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap",marginBottom:14}}>
-              <button onClick={()=>setPage("auth")} style={{padding:"16px 28px",fontSize:16,fontWeight:900,borderRadius:999,border:"none",background:"#1f7a4d",color:"#fff",boxShadow:"0 18px 36px rgba(31,122,77,0.22)",cursor:"pointer"}}>Start Free</button>
-              <button onClick={signInGoogle} style={{padding:"15px 22px",fontSize:15,fontWeight:850,borderRadius:999,border:"1px solid rgba(24,35,29,0.12)",background:"#ffffff",color:"#1f3528",boxShadow:"0 12px 28px rgba(24,35,29,0.07)",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:10}}>
-                <span style={{fontWeight:900,color:"#4285F4",fontSize:16}}>G</span>
-                Continue with Google
-              </button>
-            </div>
-            <div style={{fontSize:13,color:"#6d786f",fontWeight:700,marginBottom:22}}>Free to start · No credit card needed</div>
-            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-              {["5 focused habits","Gentle recovery","Adaptive coaching"].map(pill=>(
-                <span key={pill} style={{padding:"9px 12px",borderRadius:999,background:"rgba(255,255,255,0.72)",border:"1px solid rgba(31,53,40,0.09)",color:"#375240",fontSize:13,fontWeight:800,boxShadow:"0 8px 24px rgba(24,35,29,0.04)"}}>{pill}</span>
-              ))}
-            </div>
-          </div>
-
-          <div style={{display:"flex",justifyContent:"center"}}>
-            <div style={{position:"relative",width:"min(78vw,390px)",aspectRatio:"1/1",borderRadius:"50%",background:"linear-gradient(145deg,#ffffff,#eef7eb)",boxShadow:"0 28px 80px rgba(47,102,72,0.14), inset 0 1px 0 rgba(255,255,255,0.9)",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid rgba(47,102,72,0.08)"}}>
-              <svg viewBox="0 0 260 260" style={{position:"absolute",inset:"8%",transform:"rotate(-90deg)"}} aria-hidden="true">
-                <circle cx="130" cy="130" r="106" fill="none" stroke="#e7efe5" strokeWidth="18"/>
-                <circle cx="130" cy="130" r="106" fill="none" stroke="url(#growthGradient)" strokeWidth="18" strokeLinecap="round" strokeDasharray="468 666"/>
-                <defs>
-                  <linearGradient id="growthGradient" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#84cc16"/>
-                    <stop offset="52%" stopColor="#22c55e"/>
-                    <stop offset="100%" stopColor="#14b8a6"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div style={{position:"relative",width:"58%",aspectRatio:"1/1",borderRadius:"50%",background:"#ffffff",boxShadow:"inset 0 0 0 1px rgba(31,53,40,0.08),0 18px 40px rgba(24,35,29,0.08)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
-                <div style={{fontSize:48,fontWeight:900,color:"#1f7a4d",lineHeight:1}}>68%</div>
-                <div style={{fontSize:13,fontWeight:850,color:"#607067",marginTop:8}}>steady growth</div>
-              </div>
-              <div style={{position:"absolute",right:"3%",top:"18%",padding:"12px 14px",borderRadius:18,background:"#ffffff",boxShadow:"0 14px 34px rgba(24,35,29,0.1)",border:"1px solid rgba(31,53,40,0.08)"}}>
-                <div style={{fontSize:11,fontWeight:900,color:"#7a867d",marginBottom:5}}>TODAY</div>
-                <div style={{fontSize:18,fontWeight:900,color:"#1f3528"}}>1 habit</div>
-              </div>
-              <div style={{position:"absolute",left:"0%",bottom:"15%",padding:"13px 15px",borderRadius:18,background:"#ffffff",boxShadow:"0 14px 34px rgba(24,35,29,0.1)",border:"1px solid rgba(31,53,40,0.08)"}}>
-                <div style={{fontSize:11,fontWeight:900,color:"#7a867d",marginBottom:5}}>PACE</div>
-                <div style={{fontSize:18,fontWeight:900,color:"#1f3528"}}>gentle</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section style={{maxWidth:1120,margin:"54px auto 0",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(230px,1fr))",gap:16}}>
-          {[
-            {t:"Focused Habits",d:"Keep your routine simple and achievable."},
-            {t:"Gentle Coaching",d:"Get supportive guidance when momentum drops."},
-            {t:"Growth Companion",d:"Watch progress feel alive without pressure."},
-          ].map(feature=>(
-            <div key={feature.t} style={{padding:24,borderRadius:22,background:"rgba(255,255,255,0.78)",border:"1px solid rgba(31,53,40,0.09)",boxShadow:"0 18px 44px rgba(24,35,29,0.06)"}}>
-              <div style={{width:38,height:38,borderRadius:"50%",background:"linear-gradient(135deg,#dcfce7,#ccfbf1)",marginBottom:18,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <span style={{width:14,height:14,borderRadius:"50%",background:"#22c55e",display:"block"}}/>
-              </div>
-              <div style={{fontSize:18,fontWeight:900,color:"#1f3528",marginBottom:8}}>{feature.t}</div>
-              <div style={{fontSize:14,lineHeight:1.6,color:"#5d6b62",fontWeight:650}}>{feature.d}</div>
-            </div>
-          ))}
-        </section>
-
-        <section style={{maxWidth:1120,margin:"18px auto 0",padding:"30px 0 46px",textAlign:"center"}}>
-          <button onClick={()=>setPage("auth")} style={{padding:"16px 28px",fontSize:16,fontWeight:900,borderRadius:999,border:"none",background:"#152118",color:"#fff",boxShadow:"0 18px 40px rgba(21,33,24,0.18)",cursor:"pointer"}}>
-            Start with one habit today.
-          </button>
-        </section>
-      </main>
-    </div>
-  )
+  if (page==="landing") return <LandingPage onSignIn={()=>setPage("auth")} onGoogleSignIn={signInGoogle}/>
 
   // AUTH PAGE
   if (page==="auth") return (
@@ -2025,6 +1234,13 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
     </div>
   )
 
+  const saveEditedHabit = async (id, name, emoji, color) => {
+    if (!name) return
+    await supabase.from("habits").update({ name, emoji, color }).eq("id", id)
+    setHabits(h => h.map(x => x.id === id ? { ...x, name, emoji, color } : x))
+    setEditHabit(null)
+  }
+
   // MAIN APP
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#fbfdf9 0%,#f4f8f2 62%,#ffffff 100%)",color:"#152118",paddingBottom:96,maxWidth:480,margin:"0 auto",position:"relative"}}>
@@ -2034,8 +1250,8 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       <MilestoneToast milestone={milestone}/>
       {themeReward && (
         <div style={{position:"fixed",top:74,left:"50%",transform:"translateX(-50%)",zIndex:9999,width:"calc(100% - 32px)",maxWidth:420,pointerEvents:"none",animation:"slideDown 0.35s ease"}}>
-          <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,rgba(167,139,250,0.2),rgba(244,114,182,0.14))",border:"1px solid var(--border)",boxShadow:"0 12px 36px rgba(0,0,0,0.35)"}}>
-            <div style={{width:38,height:38,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(255,255,255,0.1)",boxShadow:"0 0 18px rgba(167,139,250,0.28)"}}>🎨</div>
+          <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,#eef8e9,#f0fdf4)",border:"1px solid var(--border)",boxShadow:"0 12px 36px rgba(24,35,29,0.10)"}}>
+            <div style={{width:38,height:38,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(255,255,255,0.1)",boxShadow:"0 4px 12px rgba(31,122,77,0.15)"}}>🎨</div>
             <div>
               <div style={{fontSize:13,fontWeight:900,color:"var(--text-primary,#fff)",marginBottom:2}}>New theme unlocked</div>
               <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:700}}>{themeReward} is ready in Settings.</div>
@@ -2124,7 +1340,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
             <span style={{fontSize:12,fontWeight:800,color:"#1f7a4d"}}>Lv {currentLevel.level}</span>
           </div>
           <button onClick={openAICoach} style={{padding:"8px 13px",fontSize:12,fontWeight:800,borderRadius:999,border:"1px solid rgba(31,122,77,0.14)",background:"#eef8e9",color:"#1f7a4d",cursor:"pointer"}}>Coach</button>
-          <button onClick={signOut} style={{padding:"8px 11px",fontSize:13,fontWeight:800,borderRadius:999,border:"1px solid rgba(31,53,40,0.1)",background:"#ffffff",color:"#1f3528",cursor:"pointer"}}>↪</button>
+          <button onClick={signOut} style={{padding:"8px 14px",fontSize:13,fontWeight:700,borderRadius:999,border:"1px solid rgba(31,53,40,0.1)",background:"#ffffff",color:"#536257",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>Out</button>
         </div>
       </div>
 
@@ -2132,385 +1348,92 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
         {/* HOME TAB */}
         {activeTab==="home" && (
-          <div className="fade-up">
-
-            {/* GROWTH HERO */}
-            <div style={{padding:"24px 22px",marginBottom:18,borderRadius:30,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 20px 54px rgba(24,35,29,0.08)"}}>
-              <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
-                <CompanionAvatar mood={companionMood}/>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:5}}>Growth Companion</div>
-                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                    <div style={{fontSize:24,fontWeight:850,color:"#152118",lineHeight:1.1}}>Today feels {companionStatus.toLowerCase()}.</div>
-                    <div style={{fontSize:11,fontWeight:800,color:"#1f7a4d",background:"#eef8e9",border:"1px solid rgba(31,122,77,0.12)",borderRadius:999,padding:"4px 8px"}}>{pacerCopy.label}</div>
-                  </div>
-                </div>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:20,alignItems:"center"}}>
-                <div style={{width:132,height:132,borderRadius:"50%",background:"#f6faf4",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid rgba(31,53,40,0.08)","--text-primary":"#152118","--text-muted":"#6d786f","--ring-track":"#e7efe5","--ring-glow":"rgba(31,122,77,0.14)"}}>
-                  <Ring3D pct={todayPct} size={116} color="#1f7a4d" label="TODAY" sublabel={`${doneToday}/${activeHabitsCount} done`}/>
-                </div>
-                <div>
-                  <div style={{fontSize:42,fontWeight:850,color:"#152118",lineHeight:1,marginBottom:8}}>{todayPct}%</div>
-                  <div style={{fontSize:15,color:"#536257",lineHeight:1.55,fontWeight:500,marginBottom:16}}>{companionMessage}</div>
-                  <div style={{height:9,borderRadius:999,background:"#e7efe5",overflow:"hidden",marginBottom:8}}>
-                    <div style={{height:"100%",width:`${todayPct}%`,borderRadius:999,background:"linear-gradient(90deg,#22c55e,#14b8a6)",transition:"width 0.5s ease"}}/>
-                  </div>
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#6d786f",fontWeight:700}}>
-                    <span>{doneToday}/{activeHabitsCount} active habits complete</span>
-                    <span>{activeHabitsCount ? "Keep it gentle" : "Ready when you are"}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* TODAY'S HABITS */}
-            {activeHabitsCount > 0 && (
-              <>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                  <div>
-                    <div style={{fontSize:12,color:"#6d786f",fontWeight:750,textTransform:"uppercase",letterSpacing:.4,marginBottom:2}}>Today</div>
-                    <div style={{fontSize:21,fontWeight:850,color:"#152118"}}>Focused habits</div>
-                  </div>
-                  <button onClick={()=>setActiveTab("habits")} style={{fontSize:13,color:"#1f7a4d",fontWeight:750,background:"none",border:"none",cursor:"pointer"}}>See all</button>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:18}}>
-                  {activeHabits.slice(0,5).map(h=>{
-                    const done = h.completions?.[todayStr]
-                    const weekDone = days.filter(d=>h.completions?.[d]).length
-                    return (
-                      <div key={h.id} style={{minHeight:74,padding:"13px 14px",borderRadius:20,background:"#ffffff",border:`1px solid ${done?"rgba(31,122,77,0.18)":"rgba(31,53,40,0.08)"}`,boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:13}}>
-                          <div style={{width:48,height:48,borderRadius:16,background:`${h.color}16`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,border:`1px solid ${h.color}20`}}>{h.emoji}</div>
-                          <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontSize:15,fontWeight:750,color:"#152118",marginBottom:5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{h.name}</div>
-                            <div style={{fontSize:12,color:"#6d786f",fontWeight:550}}>{weekDone}/7 this week</div>
-                          </div>
-                          <button onClick={()=>toggle(h.id,todayStr)} style={{
-                            padding:"9px 15px",fontSize:13,fontWeight:800,flexShrink:0,borderRadius:999,cursor:"pointer",
-                            border:done?"1px solid rgba(31,122,77,0.16)":"1px solid rgba(31,53,40,0.1)",
-                            background:done?"#eef8e9":"#ffffff",
-                            color:done?"#1f7a4d":"#1f3528",
-                            boxShadow:"0 8px 20px rgba(24,35,29,0.05)",
-                          }}>{done?"Done":"Log"}</button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-            {activeHabitsCount === 0 && (
-              <div style={{padding:"26px 22px",borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 36px rgba(24,35,29,0.06)",textAlign:"center",marginBottom:18}}>
-                <div style={{fontSize:18,fontWeight:850,color:"#152118",marginBottom:8}}>Start with one tiny habit</div>
-                <div style={{fontSize:14,color:"#607067",lineHeight:1.55,marginBottom:18}}>Choose a starter template or create something simple enough to repeat tomorrow.</div>
-                <button onClick={()=>{setHabitSaveError("");setShowTemplates(true)}} style={{padding:"12px 18px",borderRadius:999,border:"none",background:"#1f7a4d",color:"#fff",fontWeight:850,cursor:"pointer"}}>Browse Templates</button>
-              </div>
-            )}
-
-            {/* COACH INSIGHT */}
-            <div style={{padding:"18px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 36px rgba(24,35,29,0.05)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:14}}>
-                <div>
-                  <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:6}}>Coach insight</div>
-                  <div style={{fontSize:17,fontWeight:800,color:"#152118",marginBottom:6}}>{pacerCopy.label}</div>
-                  <div style={{fontSize:13,color:"#536257",lineHeight:1.55,fontWeight:500}}>{pacerCopy.detail}</div>
-                </div>
-                <button onClick={openAICoach} style={{padding:"9px 12px",fontSize:12,fontWeight:800,borderRadius:999,border:"1px solid rgba(31,122,77,0.14)",background:"#eef8e9",color:"#1f7a4d",whiteSpace:"nowrap",cursor:"pointer"}}>Open coach</button>
-              </div>
-            </div>
-
-            {/* RECOVERY + MOMENTUM */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-              {[
-                {label:"Recovery",value:`${freezes}/${maxFreezes}`,detail:freezes>0 ? "Safety net ready" : `${daysToNextShield} days to shield`,color:"#14b8a6"},
-                {label:"Momentum",value:`${bestStreak}d`,detail:"Best current rhythm",color:"#22c55e"},
-              ].map(item=>(
-                <div key={item.label} style={{padding:"16px 15px",borderRadius:22,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
-                  <div style={{fontSize:11,fontWeight:800,color:"#7a867d",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>{item.label}</div>
-                  <div style={{fontSize:28,fontWeight:850,color:item.color,lineHeight:1,marginBottom:7}}>{item.value}</div>
-                  <div style={{fontSize:12,color:"#607067",fontWeight:550,lineHeight:1.35}}>{item.detail}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* WELLNESS SECONDARY */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-              <div style={{padding:"16px 15px",borderRadius:22,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
-                <div style={{fontSize:11,fontWeight:800,color:"#7a867d",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>Water</div>
-                <div style={{fontSize:24,fontWeight:850,color:"#152118",marginBottom:10}}>{water}<span style={{fontSize:13,color:"#7a867d",fontWeight:600}}> / 8</span></div>
-                <div style={{height:7,borderRadius:999,background:"#e7efe5",overflow:"hidden",marginBottom:10}}>
-                  <div style={{height:"100%",width:waterPct+"%",background:"#14b8a6",borderRadius:999}}/>
-                </div>
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>addWater(-1)} style={{flex:1,padding:"8px 0",borderRadius:999,border:"1px solid rgba(31,53,40,0.1)",background:"#fff",color:"#1f3528",fontWeight:800,cursor:"pointer"}}>−</button>
-                  <button onClick={()=>addWater(1)} style={{flex:1,padding:"8px 0",borderRadius:999,border:"none",background:"#eef8e9",color:"#1f7a4d",fontWeight:800,cursor:"pointer"}}>+</button>
-                </div>
-              </div>
-              <div style={{padding:"16px 15px",borderRadius:22,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
-                <div style={{fontSize:11,fontWeight:800,color:"#7a867d",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>Steps</div>
-                <div style={{fontSize:24,fontWeight:850,color:"#152118",marginBottom:10}}>{steps.toLocaleString()}</div>
-                <div style={{height:7,borderRadius:999,background:"#e7efe5",overflow:"hidden",marginBottom:10}}>
-                  <div style={{height:"100%",width:stepsPct+"%",background:"#14b8a6",borderRadius:999}}/>
-                </div>
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>addSteps(500)} style={{flex:1,padding:"8px 0",borderRadius:999,border:"1px solid rgba(31,53,40,0.1)",background:"#fff",color:"#1f3528",fontWeight:800,cursor:"pointer"}}>+500</button>
-                  <button onClick={()=>addSteps(1000)} style={{flex:1,padding:"8px 0",borderRadius:999,border:"none",background:"#eef8e9",color:"#1f7a4d",fontWeight:800,cursor:"pointer"}}>+1k</button>
-                </div>
-              </div>
-            </div>
-
-            {/* REWARDS + ACHIEVEMENTS */}
-            <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:4}}>Rewards</div>
-                  <div style={{fontSize:17,fontWeight:800,color:"#152118"}}>{currentLevel.title}</div>
-                </div>
-                <div style={{fontSize:13,color:"#1f7a4d",fontWeight:800}}>{displayXP} XP</div>
-              </div>
-              <div style={{height:7,borderRadius:999,background:"#e7efe5",overflow:"hidden",marginBottom:8}}>
-                <div style={{height:"100%",width:xpPct+"%",background:"linear-gradient(90deg,#22c55e,#14b8a6)",transition:"width 0.8s ease",borderRadius:999}}/>
-              </div>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#6d786f",fontWeight:650}}>
-                <span>{nextLevel ? `${xpPct}% complete` : "Top level"}</span>
-                <span>{nextLevel ? `${levelXP}/${levelXPNeeded}` : `${displayXP} lifetime XP`}</span>
-              </div>
-            </div>
-
-            {/* DAILY QUESTS */}
-            {dailyQuests.length > 0 && (
-              <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12}}>
-                  <div>
-                    <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:4}}>Achievements</div>
-                    <div style={{fontSize:17,fontWeight:800,color:"#152118"}}>Small wins for today</div>
-                  </div>
-                  <div style={{fontSize:12,color:"#1f7a4d",fontWeight:800,background:"#eef8e9",border:"1px solid rgba(31,122,77,0.12)",borderRadius:999,padding:"6px 9px"}}>+{DAILY_QUEST_BONUS_XP} XP</div>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:9}}>
-                  {dailyQuests.map(q=>{
-                    const pct = Math.min(100, Math.round((q.progress/q.target)*100))
-                    return (
-                      <div key={q.id} style={{display:"grid",gridTemplateColumns:"1fr auto",gap:10,alignItems:"center",padding:"11px 12px",borderRadius:16,background:q.awarded?"#eef8e9":"#f7faf5",border:q.awarded?"1px solid rgba(31,122,77,0.16)":"1px solid rgba(31,53,40,0.06)"}}>
-                        <div style={{minWidth:0}}>
-                          <div style={{fontSize:13,fontWeight:750,color:"#152118",marginBottom:3}}>{q.title}</div>
-                          <div style={{fontSize:11,color:"#6d786f",fontWeight:550,marginBottom:7,lineHeight:1.35}}>{q.awarded ? "Bonus XP added. Nicely done." : q.detail}</div>
-                          <div style={{height:5,borderRadius:999,background:"#e7efe5",overflow:"hidden"}}>
-                            <div style={{height:"100%",width:pct+"%",borderRadius:999,background:q.complete?"#22c55e":"#14b8a6",transition:"width 0.5s ease"}}/>
-                          </div>
-                        </div>
-                        <div style={{fontSize:12,fontWeight:800,color:q.awarded?"#1f7a4d":"#7a867d",whiteSpace:"nowrap"}}>{q.progress}/{q.target}</div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* WEEKLY REFLECTION */}
-            {habits.length > 0 && (
-              <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:12}}>
-                  <div>
-                    <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:4}}>Reflection</div>
-                    <div style={{fontSize:17,fontWeight:800,color:"#152118"}}>Your last 7 days</div>
-                  </div>
-                  <button onClick={generateWeeklyRecap} disabled={weeklyRecapLoading} style={{padding:"8px 11px",fontSize:12,fontWeight:800,whiteSpace:"nowrap",borderRadius:999,border:"1px solid rgba(31,53,40,0.1)",background:"#fff",color:"#1f3528",cursor:"pointer"}}>
-                    {weeklyRecapLoading ? "Writing..." : "AI recap"}
-                  </button>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:weeklyRecap || weeklyRecapError ? 12 : 0}}>
-                  {[
-                    {label:"Completed",value:weeklySummary.completed},
-                    {label:"Missed",value:weeklySummary.missed},
-                    {label:"Best",value:`${weeklySummary.bestStreak}d`},
-                    {label:"XP",value:weeklySummary.xpGained},
-                  ].map(item=>(
-                    <div key={item.label} style={{padding:"10px 11px",borderRadius:15,background:"#f7faf5",border:"1px solid rgba(31,53,40,0.06)"}}>
-                      <div style={{fontSize:10,fontWeight:750,color:"#7a867d",textTransform:"uppercase",letterSpacing:.3,marginBottom:4}}>{item.label}</div>
-                      <div style={{fontSize:18,fontWeight:800,color:"#152118"}}>{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-                {weeklyRecap && (
-                  <div style={{fontSize:13,color:"#536257",lineHeight:1.55,fontWeight:500,padding:"12px",borderRadius:16,background:"#f7faf5",border:"1px solid rgba(31,53,40,0.06)"}}>
-                    {weeklyRecap}
-                  </div>
-                )}
-                {weeklyRecapError && (
-                  <div style={{fontSize:11,color:"#7a867d",fontWeight:650,marginTop:8,lineHeight:1.35}}>{weeklyRecapError}</div>
-                )}
-              </div>
-            )}
-
-            {/* QUICK ACTIONS */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-              <button onClick={()=>{setHabitSaveError("");setShowTemplates(true)}} style={{padding:14,fontSize:13,fontWeight:800,background:"#ffffff",color:"#1f3528",border:"1px solid rgba(31,53,40,0.08)",borderRadius:18,boxShadow:"0 10px 26px rgba(24,35,29,0.05)",cursor:"pointer"}}>Templates</button>
-              <button onClick={()=>{setHabitSaveError("");setShowAdd(true)}} style={{padding:14,fontSize:13,fontWeight:800,background:"#1f7a4d",color:"#ffffff",border:"none",borderRadius:18,boxShadow:"0 12px 28px rgba(31,122,77,0.16)",cursor:"pointer"}}>New Habit</button>
-            </div>
-          </div>
-        )}
-
+     <HomeScreen
+       activeHabits={activeHabits}
+       doneToday={doneToday}
+       todayPct={todayPct}
+       todayStr={todayStr}
+       companionMood={companionMood}
+       companionMessage={companionMessage}
+       companionStatus={companionStatus}
+       pacerCopy={pacerCopy}
+       displayXP={displayXP}
+       currentLevel={currentLevel}
+       nextLevel={nextLevel}
+       xpPct={xpPct}
+       levelXP={levelXP}
+       levelXPNeeded={levelXPNeeded}
+       bestStreak={bestStreak}
+       freezes={freezes}
+       maxFreezes={maxFreezes}
+       daysToNextShield={daysToNextShield}
+       water={water}
+       steps={steps}
+       waterPct={waterPct}
+       stepsPct={stepsPct}
+       dailyQuests={dailyQuests}
+       DAILY_QUEST_BONUS_XP={DAILY_QUEST_BONUS_XP}
+       weeklyRecap={weeklyRecap}
+       weeklyRecapLoading={weeklyRecapLoading}
+       weeklyRecapError={weeklyRecapError}
+       weeklySummary={weeklySummary}
+       habitSaveError={habitSaveError}
+       onToggle={toggle}
+       onOpenAI={openAICoach}
+       onSetTab={setActiveTab}
+       onAdd={()=>{ setHabitSaveError(""); setShowAdd(true) }}
+       onTemplates={()=>{ setHabitSaveError(""); setShowTemplates(true) }}
+       onAddWater={addWater}
+       onAddSteps={addSteps}
+       onWeeklyRecap={generateWeeklyRecap}
+     />
+   )}
         {/* HABITS TAB */}
         {activeTab==="habits" && (
-          <div className="fade-up">
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <div style={{fontSize:22,fontWeight:900}}>My Habits</div>
-              <button onClick={()=>{setHabitSaveError("");setShowAdd(true)}} className="btn-grad" style={{padding:"9px 18px",fontSize:13,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>+ Add</button>
-            </div>
-            {habits.length===0 ? (
-              <div className="card" style={{padding:48,textAlign:"center"}}>
-                <div style={{fontSize:64,marginBottom:16,animation:"float 3s ease-in-out infinite"}}>🌱</div>
-                <div style={{fontSize:20,fontWeight:800,marginBottom:8}}>No habits yet!</div>
-                <div style={{color:"var(--text-muted)",fontSize:14,marginBottom:24}}>Start with a template or create your own</div>
-                <button onClick={()=>{setHabitSaveError("");setShowTemplates(true)}} className="btn-grad" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FF6B6B,#FF8E53)"}}>Browse Templates 🎯</button>
-              </div>
-            ) : (
-              <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                {habits.map((h,i)=>{
-                  const done = h.completions?.[todayStr]
-                  const streak = getStreak(h, days)
-                  const weekDone = days.filter(d=>h.completions?.[d]).length
-                  return (
-                    <div key={h.id} className="habit-card" style={{padding:"16px 18px",background:`linear-gradient(135deg,${h.color}18,${h.color}06)`,border:`1px solid ${done?h.color+"55":"rgba(255,255,255,0.08)"}`,boxShadow:done?`0 0 24px ${h.color}22,0 4px 20px rgba(0,0,0,0.3)`:"0 4px 20px rgba(0,0,0,0.25)"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:14}}>
-                        <div style={{width:52,height:52,borderRadius:16,background:`${h.color}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0,boxShadow:`0 0 20px ${h.color}33`,border:`1px solid ${h.color}33`}}>{h.emoji}</div>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:15,fontWeight:700,marginBottom:5}}>{h.name}</div>
-                          <div style={{display:"flex",gap:10,fontSize:11,color:"var(--text-muted)",flexWrap:"wrap",marginBottom:8}}>
-                            <span style={{color:h.color,fontWeight:700}}>🔥 {streak} streak</span>
-                            {h.reminder_time && <span>⏰ {h.reminder_time}</span>}
-                            <span>{weekDone}/7 this week</span>
-                          </div>
-                          <div style={{display:"flex",gap:4}}>
-                            {days.map((d,di)=>(
-                              <div key={di} style={{flex:1,height:6,borderRadius:3,background:h.completions?.[d]?h.color:"rgba(255,255,255,0.08)",boxShadow:h.completions?.[d]?`0 0 6px ${h.color}`:"none",transition:"all .3s"}}/>
-                            ))}
-                          </div>
-                        </div>
-                        <div style={{display:"flex",flexDirection:"column",gap:7,flexShrink:0}}>
-                          <button onClick={()=>setEditHabit(h)} className="btn-glass" style={{padding:"6px 10px",fontSize:13}}>✏️</button>
-                          <button onClick={()=>toggle(h.id,todayStr)} className="btn-grad" style={{padding:"8px 14px",fontSize:12,fontWeight:800,background:done?h.color:`linear-gradient(135deg,${h.color},${h.color}88)`,boxShadow:done?`0 0 16px ${h.color}66`:"none"}}>{done?"✓ Done":"Log"}</button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
+          <HabitsScreen
+       habits={habits}
+       todayStr={todayStr}
+       days={days}
+       habitSaveError={habitSaveError}
+       onToggle={toggle}
+       onEdit={setEditHabit}
+       onAdd={()=>{ setHabitSaveError(""); setShowAdd(true) }}
+       onTemplates={()=>{ setHabitSaveError(""); setShowTemplates(true) }}
+     />
         )}
 
         {/* ANALYTICS TAB */}
 {activeTab==="analytics" && (
-  <div className="fade-up">
-    <div style={{fontSize:20,fontWeight:900,marginBottom:14}}>Analytics</div>
- 
-    {/* HEATMAP — visible to ALL users */}
-    <HeatmapCalendar habits={habits}/>
- 
-    {!isPro ? (
-      <div className="card float-a" style={{padding:40,textAlign:"center"}}>
-        <div style={{fontSize:52,marginBottom:14}}>🔒</div>
-        <div style={{fontSize:20,fontWeight:800,marginBottom:8}}>Pro Feature</div>
-        <div style={{color:"var(--text-muted)",fontSize:14,marginBottom:22}}>Unlock detailed analytics and more</div>
-        <button onClick={()=>openPaywall("stats")} className="btn-grad" style={{padding:"13px 28px",fontSize:15,background:"linear-gradient(135deg,#FFD93D,#FF8E53)"}}>Upgrade to Pro ⭐</button>
-      </div>
-    ) : (
-      <>
-        {/* XP Ring */}
-        <div className="card float-b" style={{padding:24,textAlign:"center",marginBottom:14,background:"linear-gradient(135deg,#A78BFA22,#4ECDC422)"}}>
-          <Ring3D pct={xpPct} size={160} color="#A78BFA" label="LEVEL PROGRESS" sublabel={currentLevel.title}/>
-          <div style={{marginTop:12,fontSize:13,color:"var(--text-muted)"}}>
-            {nextLevel ? `${nextLevel.minXP-displayXP} XP to ${nextLevel.title}` : "MAX LEVEL! 👑"}
-          </div>
-          <div style={{marginTop:6,fontSize:11,color:"var(--text-muted)",fontWeight:700}}>
-            {nextLevel ? `${levelXP}/${levelXPNeeded} XP in Level ${currentLevel.level}` : `${displayXP} lifetime XP saved`}
-          </div>
-        </div>
- 
-        {/* Stats grid */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-          {[
-            {lbl:"Lifetime Completions",val:lifetimeCompletions,color:"#4ECDC4"},
-            {lbl:"Best Streak",val:bestStreak+"🔥",color:"#FF8E53"},
-            {lbl:"Total XP",val:displayXP+"⚡",color:"#A78BFA"},
-            {lbl:"Habits Tracked",val:habits.length,color:"#F472B6"},
-          ].map(s=>(
-            <div key={s.lbl} className="card" style={{padding:18,background:`linear-gradient(135deg,${s.color}22,${s.color}08)`}}>
-              <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:6,fontWeight:700,letterSpacing:.5}}>{s.lbl}</div>
-              <div style={{fontSize:28,fontWeight:900,filter:`drop-shadow(0 0 8px ${s.color})`}}>{s.val}</div>
-            </div>
-          ))}
-        </div>
- 
-        {/* Habit completion bars */}
-        <div className="card" style={{padding:20,marginBottom:14}}>
-          <div style={{fontSize:15,fontWeight:800,marginBottom:16}}>This Week</div>
-          {habits.map(h=>{
-            const cnt = days.filter(d=>h.completions?.[d]).length
-            return (
-              <div key={h.id} style={{marginBottom:14}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:13}}>
-                  <span>{h.emoji} {h.name}</span>
-                  <span style={{color:h.color,fontWeight:700}}>{cnt}/7</span>
-                </div>
-                <div style={{height:8,borderRadius:999,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
-                  <div style={{height:"100%",width:(cnt/7*100)+"%",background:h.color,borderRadius:999,boxShadow:`0 0 8px ${h.color}88`,transition:"width 1s"}}/>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </>
-    )}
-  </div>
-)}
- 
+     <AnalyticsScreen
+       habits={habits}
+       isPro={isPro}
+       displayXP={displayXP}
+       currentLevel={currentLevel}
+       nextLevel={nextLevel}
+       xpPct={xpPct}
+       levelXP={levelXP}
+       levelXPNeeded={levelXPNeeded}
+       lifetimeCompletions={lifetimeCompletions}
+       bestStreak={bestStreak}
+       days={days}
+       onOpenPaywall={openPaywall}
+     />
+   )}
 
         {/* SETTINGS TAB */}
         {activeTab==="settings" && (
-          <div className="fade-up">
-            <div style={{fontSize:22,fontWeight:900,marginBottom:16}}>Settings</div>
-
-            {/* Profile Card */}
-            <div className="card" style={{padding:"18px 20px",marginBottom:14,background:"linear-gradient(135deg,rgba(167,139,250,0.12),rgba(78,205,196,0.06))"}}>
-              <div style={{display:"flex",alignItems:"center",gap:14}}>
-                <div style={{width:56,height:56,borderRadius:18,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,boxShadow:"0 4px 20px rgba(167,139,250,0.4)"}}>
-                  {userName.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div style={{fontSize:17,fontWeight:800,marginBottom:2}}>{userName}</div>
-                  <div style={{fontSize:12,color:"var(--text-muted)"}}>{currentLevel.icon} {currentLevel.title} · {displayXP} XP</div>
-                </div>
-                <div style={{marginLeft:"auto",textAlign:"right"}}>
-                  {isPro && <div style={{background:"linear-gradient(135deg,#FFD93D,#FF8E53)",borderRadius:8,padding:"3px 10px",fontSize:11,fontWeight:800}}>PRO ⭐</div>}
-                </div>
-              </div>
-            </div>
-
-            <div className="card" style={{padding:4,marginBottom:14,overflow:"hidden"}}>
-              {[
-  {icon:"⭐",lbl:isPro?"Pro Active ✓":"Upgrade to Pro",fn:()=>openPaywall("settings"),color:"#FFD93D"},
-  {icon:"🎨",lbl:"Change Theme",fn:openThemeSwitcher,color:"#A78BFA"},
-  {icon:"🔔",lbl:"Reminder Notifications",fn:openNotificationExplainer,color:"#4ECDC4"},
-  {icon:"🤖",lbl:"AI Coach",fn:openAICoach,color:"#A78BFA"},
-  {icon:"📋",lbl:"Templates",fn:()=>{setHabitSaveError("");setShowTemplates(true)},color:"#4ECDC4"},
-  {icon:"↪",lbl:"Sign Out",fn:signOut,color:"#FF6B6B"},
-              ].map((item,i,arr)=>(
-                <button key={i} type="button" onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); item.fn() }} className="btn-glass" style={{width:"100%",padding:"16px 18px",borderRadius:0,border:"none",borderBottom:i<arr.length-1?"1px solid var(--border)":"none",display:"flex",alignItems:"center",gap:14,fontSize:14,background:"transparent",textAlign:"left"}}>
-                  <span style={{fontSize:22,filter:`drop-shadow(0 0 6px ${item.color})`}}>{item.icon}</span>
-                  <span style={{fontWeight:600}}>{item.lbl}</span>
-                  <span style={{marginLeft:"auto",color:"var(--text-muted)"}}>›</span>
-                </button>
-              ))}
-            </div>
-
-            <div style={{textAlign:"center",fontSize:11,color:"var(--text-muted)",padding:"10px 0"}}>
-              HabitFlow v3.0 · Made with 💜<br/>contact@thehabitflow.app
-            </div>
-          </div>
+          <SettingsScreen
+       userName={userName}
+       currentLevel={currentLevel}
+       displayXP={displayXP}
+       isPro={isPro}
+       onOpenPaywall={openPaywall}
+       onOpenTheme={openThemeSwitcher}
+       onOpenNotifications={openNotificationExplainer}
+       onOpenAI={openAICoach}
+       onOpenTemplates={()=>{ setHabitSaveError(""); setShowTemplates(true) }}
+       onSignOut={signOut}
+     />
         )}
       </div>
 
@@ -2532,228 +1455,83 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
       {/* ADD HABIT SHEET */}
       {showAdd && (
-        <div className="sheet" onClick={()=>setShowAdd(false)}>
-          <div className="sheet-inner" onClick={e=>e.stopPropagation()}>
-            <div className="sheet-handle"/>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <div style={{fontSize:20,fontWeight:900}}>New Habit ✨</div>
-              <button onClick={()=>setShowAdd(false)} className="btn-glass" style={{padding:"5px 11px",fontSize:14}}>✕</button>
-            </div>
-            <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Habit name..." className="inp"/>
-            <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Pick Emoji</div>
-            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}}>
-              {["🏃","💧","📚","🧘","🥗","💤","✍️","🎯","🎸","🌿","🧠","🏋️","🚴","🥤","🎨","💊","🌅","🚿"].map(e=>(
-                <button key={e} onClick={()=>setNewEmoji(e)} style={{width:40,height:40,borderRadius:11,border:`2px solid ${newEmoji===e?"#A78BFA":"rgba(255,255,255,0.1)"}`,background:newEmoji===e?"rgba(167,139,250,0.2)":"transparent",cursor:"pointer",fontSize:19,transition:"all .2s",boxShadow:newEmoji===e?"0 0 12px rgba(167,139,250,0.4)":"none"}}>{e}</button>
-              ))}
-            </div>
-            <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,marginBottom:8,textTransform:"uppercase"}}>Pick Color</div>
-            <div style={{display:"flex",gap:9,flexWrap:"wrap",marginBottom:16}}>
-              {PALETTE.map(c=>(
-                <button key={c} onClick={()=>setNewColor(c)} style={{width:32,height:32,borderRadius:"50%",background:c,border:newColor===c?"3px solid #fff":"2px solid transparent",cursor:"pointer",boxShadow:newColor===c?`0 0 14px ${c}`:"none",transition:"all .2s"}}/>
-              ))}
-            </div>
-            <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,marginBottom:6,textTransform:"uppercase"}}>⏰ Reminder Time</div>
-            <input type="time" value={newTime} onChange={e=>setNewTime(e.target.value)} className="inp" style={{width:"auto",marginBottom:20}}/>
-            <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,marginTop:-12,marginBottom:18}}>
-              We'll ask before turning on notifications, then use this time for daily reminders.
-            </div>
-            {habitSaveError && (
-              <div style={{fontSize:12,lineHeight:1.5,color:"#FFB4B4",background:"rgba(255,107,107,0.12)",border:"1px solid rgba(255,107,107,0.28)",borderRadius:12,padding:"10px 12px",marginBottom:12,fontWeight:700}}>
-                {habitSaveError}
-              </div>
-            )}
-            <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setShowAdd(false)} className="btn-glass" style={{flex:1,padding:14,fontSize:14}}>Cancel</button>
-              <button onClick={addHabit} className="btn-grad" style={{flex:2,padding:14,fontSize:15,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>Add Habit 🚀</button>
-            </div>
-          </div>
-        </div>
+        <AddHabitSheet
+          newName={newName}
+          newEmoji={newEmoji}
+          newColor={newColor}
+          newTime={newTime}
+          habitSaveError={habitSaveError}
+          setNewName={setNewName}
+          setNewEmoji={setNewEmoji}
+          setNewColor={setNewColor}
+          setNewTime={setNewTime}
+          onAdd={addHabit}
+          onTemplates={()=>{ setHabitSaveError(""); setShowTemplates(true) }}
+          onClose={()=>setShowAdd(false)}
+        />
       )}
 
       {/* TEMPLATES */}
       {showTemplates && (
-        <div className="overlay" onClick={()=>setShowTemplates(false)}>
-          <div onClick={e=>e.stopPropagation()} className="card modal-card" style={{maxWidth:480,width:"100%",padding:24}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-              <div style={{fontSize:20,fontWeight:900}}>📋 Templates</div>
-              <button onClick={()=>setShowTemplates(false)} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
-            </div>
-            <div className="template-grid">
-              {HABIT_TEMPLATES.map(t=>(
-                <div key={t.name} onClick={()=>addFromTemplate(t)} className="habit-card" style={{background:`linear-gradient(135deg,${t.color}18,${t.color}06)`,border:`1px solid ${t.color}33`,cursor:"pointer",padding:16}}>
-                  <div style={{fontSize:28,marginBottom:6}}>{t.emoji}</div>
-                  <div style={{fontSize:13,fontWeight:700,marginBottom:3}}>{t.name}</div>
-                  <div style={{fontSize:11,color:"var(--text-muted)"}}>⏰ {t.time}</div>
-                  <div style={{fontSize:10,color:t.color,marginTop:4,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>{t.category}</div>
-                </div>
-              ))}
-            </div>
-            {habitSaveError && (
-              <div style={{fontSize:12,lineHeight:1.5,color:"#FFB4B4",background:"rgba(255,107,107,0.12)",border:"1px solid rgba(255,107,107,0.28)",borderRadius:12,padding:"10px 12px",marginTop:12,fontWeight:700}}>
-                {habitSaveError}
-              </div>
-            )}
-          </div>
-        </div>
+        <TemplatesModal
+          habitSaveError={habitSaveError}
+          onAddFromTemplate={addFromTemplate}
+          onClose={()=>setShowTemplates(false)}
+        />
       )}
 
       {/* EDIT HABIT */}
       {editHabit && (
-        <div className="overlay" onClick={()=>setEditHabit(null)}>
-          <div onClick={e=>e.stopPropagation()} className="card modal-card" style={{maxWidth:420,width:"100%",padding:24}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <div style={{fontSize:20,fontWeight:900}}>Edit Habit</div>
-              <button onClick={()=>setEditHabit(null)} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
-            </div>
-            <input defaultValue={editHabit.name} id="edit-name" className="inp" placeholder="Habit name"/>
-            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
-              {["🏃","💧","📚","🧘","🥗","💤","✍️","🎯","🎸","🌿","🧠","🏋️"].map(e=>(
-                <button key={e} onClick={()=>setEditHabit(h=>({...h,emoji:e}))} style={{width:38,height:38,borderRadius:11,border:`2px solid ${editHabit.emoji===e?"#A78BFA":"rgba(255,255,255,0.1)"}`,background:editHabit.emoji===e?"rgba(167,139,250,0.2)":"transparent",cursor:"pointer",fontSize:18,transition:"all .2s"}}>{e}</button>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:20}}>
-              {PALETTE.map(c=>(
-                <button key={c} onClick={()=>setEditHabit(h=>({...h,color:c}))} style={{width:30,height:30,borderRadius:"50%",background:c,border:editHabit.color===c?"3px solid #fff":"2px solid transparent",cursor:"pointer",boxShadow:editHabit.color===c?`0 0 12px ${c}`:"none",transition:"all .2s"}}/>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>deleteHabit(editHabit.id)} className="btn-glass" style={{flex:1,padding:13,color:"#FF6B6B",border:"1px solid rgba(255,107,107,0.3)"}}>🗑️ Delete</button>
-              <button onClick={async()=>{ const n=document.getElementById("edit-name")?.value; if(n){ await supabase.from("habits").update({name:n,emoji:editHabit.emoji,color:editHabit.color}).eq("id",editHabit.id); setHabits(h=>h.map(x=>x.id===editHabit.id?{...x,name:n,emoji:editHabit.emoji,color:editHabit.color}:x)); setEditHabit(null) }}} className="btn-grad" style={{flex:2,padding:13,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>Save Changes</button>
-            </div>
-          </div>
-        </div>
+        <EditHabitModal
+          editHabit={editHabit}
+          onSave={saveEditedHabit}
+          onDelete={deleteHabit}
+          onClose={()=>setEditHabit(null)}
+        />
       )}
 
       {/* AI COACH */}
       {showAI && (
-        <div className="overlay" onClick={()=>setShowAI(false)}>
-          <div onClick={e=>e.stopPropagation()} className="card" style={{maxWidth:480,width:"100%",maxHeight:"88vh",display:"flex",flexDirection:"column",padding:0,overflow:"hidden",margin:"auto"}}>
-            <div style={{padding:"18px 20px",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div style={{fontSize:18,fontWeight:900,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>🤖 AI Habit Coach</div>
-              <button onClick={()=>setShowAI(false)} className="btn-glass" style={{padding:"5px 11px"}}>✕</button>
-            </div>
-            <div style={{flex:1,padding:16,overflowY:"auto",minHeight:200}}>
-              {aiMsgs.length===0 && (
-                <div style={{padding:16}}>
-                  <div style={{textAlign:"center",marginBottom:22}}>
-                    <div style={{fontSize:48,marginBottom:10,animation:"float 3s ease-in-out infinite"}}>🤖</div>
-                    <div style={{fontWeight:800,color:"var(--text-primary,#fff)",marginBottom:4,fontSize:16}}>Your Personal AI Coach</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>I know your stats · Ask me anything</div>
-                  </div>
-                  <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",letterSpacing:1,marginBottom:10,textAlign:"center",textTransform:"uppercase"}}>Suggested Questions</div>
-                  {["How can I improve my streak?","What habit should I focus on?","I'm struggling to stay consistent","Give me a morning routine tip","How do I build better sleep habits?"].map(q=>(
-                    <button key={q} onClick={()=>setAiInput(q)} style={{width:"100%",padding:"10px 14px",marginBottom:8,background:"rgba(255,255,255,0.04)",border:"1px solid var(--border)",borderRadius:12,color:"var(--text-secondary)",fontSize:13,cursor:"pointer",textAlign:"left",fontFamily:"'Inter',sans-serif",transition:"all .2s"}}
-                    onMouseEnter={e=>e.target.style.background="rgba(255,255,255,0.09)"}
-                    onMouseLeave={e=>e.target.style.background="rgba(255,255,255,0.04)"}>💬 {q}</button>
-                  ))}
-                </div>
-              )}
-              {aiMsgs.map((m,i)=>(
-                <div key={i} style={{marginBottom:12,display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
-                  <div style={{maxWidth:"82%",padding:"11px 16px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",background:m.role==="user"?"linear-gradient(135deg,#A78BFA,#4ECDC4)":"rgba(255,255,255,0.07)",fontSize:13,lineHeight:1.6,border:m.role==="user"?"none":"1px solid rgba(255,255,255,0.08)"}}>{m.content}</div>
-                </div>
-              ))}
-              {aiLoading && <div style={{color:"var(--text-muted)",fontSize:13,padding:8}}>🤖 Thinking...</div>}
-            </div>
-            <div style={{padding:14,borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",gap:8}}>
-              <input value={aiInput} onChange={e=>setAiInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendAI()} placeholder="Ask your coach..." className="inp" style={{flex:1,minWidth:0,marginBottom:0}}/>
-              <button onClick={sendAI} disabled={aiLoading} className="btn-grad" style={{padding:"10px 18px",background:"linear-gradient(135deg,#A78BFA,#4ECDC4)"}}>Send</button>
-            </div>
-          </div>
-        </div>
+        <AICoachModal
+          aiMsgs={aiMsgs}
+          aiInput={aiInput}
+          aiLoading={aiLoading}
+          onSendAI={sendAI}
+          onChangeInput={setAiInput}
+          onClose={()=>setShowAI(false)}
+        />
       )}
 
       {/* MOOD PICKER */}
       {showMood && (
-        <div className="overlay" onClick={()=>setShowMood(false)}>
-          <div onClick={e=>e.stopPropagation()} className="card modal-card" style={{maxWidth:360,width:"100%",padding:28,textAlign:"center"}}>
-            <div style={{fontSize:20,fontWeight:900,marginBottom:6}}>How are you feeling? 😊</div>
-            <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24}}>Daily mood check-in</div>
-            <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:16}}>
-              {["😴","😐","🙂","😊","🔥"].map(m=>(
-                <button key={m} onClick={()=>saveMood(m)} style={{width:54,height:54,borderRadius:16,border:`2px solid ${mood===m?"#A78BFA":"rgba(255,255,255,0.1)"}`,background:mood===m?"rgba(167,139,250,0.2)":"transparent",fontSize:28,cursor:"pointer",transition:"all .2s",boxShadow:mood===m?"0 0 18px rgba(167,139,250,0.4)":"none",transform:mood===m?"scale(1.12)":"scale(1)"}}>{m}</button>
-              ))}
-            </div>
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",fontWeight:700,padding:"0 4px"}}>
-              <span>Tired</span><span>Neutral</span><span>Good</span><span>Great</span><span>On fire!</span>
-            </div>
-          </div>
-        </div>
+        <MoodPickerModal
+          mood={mood}
+          onSaveMood={saveMood}
+          onClose={()=>setShowMood(false)}
+        />
       )}
 
       {/* NOTIFICATION OPT-IN */}
       {showNotifications && (
-        <ModalOverlay onClose={dismissNotificationPrompt}>
-          <div className="card modal-card" style={{maxWidth:390,width:"100%",padding:28,textAlign:"center"}}>
-            <div style={{fontSize:54,marginBottom:14,animation:"float 3s ease-in-out infinite"}}>🔔</div>
-            <div style={{fontSize:23,fontWeight:900,marginBottom:8,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
-              Stay on track gently
-            </div>
-            <div style={{fontSize:14,color:"var(--text-secondary)",lineHeight:1.65,marginBottom:18}}>
-              HabitFlow can send reminders at the times you choose for each habit. We will only show the browser permission prompt after you tap enable.
-            </div>
-            <div style={{textAlign:"left",background:"rgba(255,255,255,0.04)",borderRadius:16,padding:16,marginBottom:18,border:"1px solid var(--border)"}}>
-              {[
-                "Daily nudges use your habit reminder times",
-                "You can change each habit's time anytime",
-                "No reminder is sent until notifications are enabled",
-              ].map(f=>(
-                <div key={f} style={{display:"flex",gap:10,marginBottom:10,fontSize:13,color:"var(--text-secondary)",lineHeight:1.4}}>
-                  <span style={{color:"#6BCB77"}}>✓</span>{f}
-                </div>
-              ))}
-            </div>
-            {notificationMessage && (
-              <div style={{fontSize:12,lineHeight:1.5,color:"#B9F7CB",background:"rgba(107,203,119,0.12)",border:"1px solid rgba(107,203,119,0.25)",borderRadius:12,padding:"10px 12px",marginBottom:12,fontWeight:700}}>
-                {notificationMessage}
-              </div>
-            )}
-            {notificationError && (
-              <div style={{fontSize:12,lineHeight:1.5,color:"#FFB4B4",background:"rgba(255,107,107,0.12)",border:"1px solid rgba(255,107,107,0.28)",borderRadius:12,padding:"10px 12px",marginBottom:12,fontWeight:700}}>
-                {notificationError}
-              </div>
-            )}
-            <button onClick={async()=>{ const ok = await setupPushNotifications(); if(ok) setTimeout(()=>setShowNotifications(false), 900) }} disabled={notificationLoading} className="btn-grad" style={{width:"100%",padding:15,fontSize:15,background:"linear-gradient(135deg,#A78BFA,#4ECDC4)",marginBottom:10,opacity:notificationLoading?0.65:1}}>
-              {notificationLoading ? "Turning on reminders..." : "Enable Reminders"}
-            </button>
-            <button onClick={dismissNotificationPrompt} className="btn-glass" style={{width:"100%",padding:12,fontSize:13}}>Maybe later</button>
-          </div>
-        </ModalOverlay>
+        <NotificationModal
+          notificationLoading={notificationLoading}
+          notificationMessage={notificationMessage}
+          notificationError={notificationError}
+          onEnable={setupPushNotifications}
+          onDismiss={dismissNotificationPrompt}
+        />
       )}
 
       {/* PRO PAYWALL */}
       {showPaywall && (
-        <div className="overlay" onClick={()=>setShowPaywall(false)}>
-          <div onClick={e=>e.stopPropagation()} className="card modal-card" style={{maxWidth:400,width:"100%",padding:32,textAlign:"center"}}>
-            <div style={{fontSize:60,marginBottom:14,animation:"float 3s ease-in-out infinite"}}>⭐</div>
-            <div style={{fontSize:26,fontWeight:900,marginBottom:6,background:"linear-gradient(135deg,#FFD93D,#FF8E53)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Upgrade to Pro</div>
-            <div style={{fontSize:42,fontWeight:900,marginBottom:22}}>
-              <span style={{background:"linear-gradient(135deg,#FFD93D,#FF8E53)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>$1.99</span>
-              <span style={{fontSize:14,color:"var(--text-muted)",fontWeight:400}}>/month</span>
-            </div>
-            {checkoutNotice && (
-              <div style={{fontSize:12,lineHeight:1.5,color:"#FFD93D",background:"rgba(255,217,61,0.1)",border:"1px solid rgba(255,217,61,0.22)",borderRadius:12,padding:"10px 12px",marginBottom:14,fontWeight:700}}>
-                {checkoutNotice}
-              </div>
-            )}
-            {checkoutError && (
-              <div style={{fontSize:12,lineHeight:1.5,color:"#FFB4B4",background:"rgba(255,107,107,0.12)",border:"1px solid rgba(255,107,107,0.28)",borderRadius:12,padding:"10px 12px",marginBottom:14,fontWeight:700}}>
-                {checkoutError}
-              </div>
-            )}
-            <div style={{textAlign:"left",background:"rgba(255,255,255,0.04)",borderRadius:16,padding:16,marginBottom:24,border:"1px solid var(--border)"}}>
-              {["♾️ Unlimited habits","📊 Full analytics & XP","🤖 AI Coach unlimited","🏆 Leaderboard access","☁️ Priority cloud sync"].map(f=>(
-                <div key={f} style={{display:"flex",gap:10,marginBottom:10,fontSize:14}}>
-                  <span style={{color:"#6BCB77"}}>✓</span>{f}
-                </div>
-              ))}
-            </div>
-            <button onClick={startCheckout} disabled={checkoutLoading || isPro} className="btn-grad" style={{width:"100%",padding:16,fontSize:16,background:"linear-gradient(135deg,#FFD93D,#FF8E53)",marginBottom:10,opacity:checkoutLoading || isPro?0.65:1}}>
-              {checkoutLoading ? "Opening checkout..." : isPro ? "Pro Active ✓" : "Start Pro Now 🚀"}
-            </button>
-            <button onClick={()=>setShowPaywall(false)} className="btn-glass" style={{width:"100%",padding:12,fontSize:13}}>Maybe later</button>
-          </div>
-        </div>
+        <PaywallModal
+          isPro={isPro}
+          checkoutLoading={checkoutLoading}
+          checkoutError={checkoutError}
+          checkoutNotice={checkoutNotice}
+          onClose={()=>setShowPaywall(false)}
+          onStartCheckout={startCheckout}
+        />
       )}
     </div>
   )
