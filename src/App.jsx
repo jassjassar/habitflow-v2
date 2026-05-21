@@ -161,19 +161,76 @@ const css = `
   html,body{height:100%;overscroll-behavior:none}
   body{font-family:'Inter',sans-serif;background:#fbfdf9;color:#152118;overflow-x:hidden}
   @media(prefers-color-scheme:dark){
-    :root{--card-surface:#1a2e1e}
     body{background:#0f1a12;color:#e8f5ec}
-    .top-nav{background:rgba(15,26,18,0.88);border-bottom-color:rgba(255,255,255,0.06)}
-    .tab-bar{background:rgba(15,26,18,0.92);border-top-color:rgba(255,255,255,0.06)}
-    .tab-item{color:#6b9e78}
-    .tab-item.active{background:rgba(31,122,77,0.2);color:#4ade80}
-    .card{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.08)}
-    .habit-card{background:rgba(255,255,255,0.04)}
-    .inp{background:#1a2e1e;border-color:rgba(255,255,255,0.1);color:#e8f5ec}
-    .btn-glass{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.1);color:#e8f5ec}
-    .sheet-inner{background:#0f1a12;border-color:rgba(255,255,255,0.08)}
-    .sheet-handle{background:rgba(255,255,255,0.15)}
-    .overlay{background:rgba(0,0,0,0.7)}
+
+    /* NAV */
+    .top-nav{background:rgba(15,26,18,0.92) !important;border-bottom-color:rgba(255,255,255,0.06) !important}
+    .top-nav *{color:#e8f5ec !important}
+
+    /* TAB BAR */
+    .tab-bar{background:rgba(15,26,18,0.95) !important;border-top-color:rgba(255,255,255,0.06) !important}
+    .tab-item{color:#6b9e78 !important}
+    .tab-item.active{background:rgba(31,122,77,0.25) !important;color:#4ade80 !important}
+    .tab-item.active svg{stroke:#4ade80 !important}
+    .tab-item svg{stroke:#6b9e78 !important}
+    .tab-label{color:inherit !important}
+
+    /* ALL CARDS AND SURFACES */
+    .app-content > .fade-up > div,
+    .app-content > .fade-up > div > div,
+    .fade-up > div[style] {
+      background:#1a2e1e !important;
+      border-color:rgba(255,255,255,0.07) !important;
+      color:#e8f5ec !important
+    }
+
+    /* FORCE ALL TEXT TO LIGHT IN APP */
+    .app-content *{color:#e8f5ec}
+    .app-content *[style*="color:#152118"]{color:#e8f5ec !important}
+    .app-content *[style*="color:#536257"]{color:#9dc9a8 !important}
+    .app-content *[style*="color:#6d786f"]{color:#6b9e78 !important}
+    .app-content *[style*="color:#7a867d"]{color:#6b9e78 !important}
+    .app-content *[style*="color:#1f3528"]{color:#e8f5ec !important}
+    .app-content *[style*="color:#607067"]{color:#9dc9a8 !important}
+    .app-content *[style*="color:#9aad9f"]{color:#4a7a5a !important}
+
+    /* CARDS WHITE BACKGROUNDS */
+    .app-content *[style*="background:#ffffff"]{background:#1a2e1e !important;border-color:rgba(255,255,255,0.07) !important}
+    .app-content *[style*="background:\"#ffffff\""]{background:#1a2e1e !important}
+    .app-content *[style*="background:#f4f8f2"]{background:#162518 !important}
+    .app-content *[style*="background:#f7faf5"]{background:#162518 !important}
+    .app-content *[style*="background:#eef8e9"]{background:rgba(31,122,77,0.2) !important}
+    .app-content *[style*="background:#fbfdf9"]{background:#0f1a12 !important}
+
+    /* BUTTONS */
+    .btn-glass{background:rgba(255,255,255,0.08) !important;border-color:rgba(255,255,255,0.12) !important;color:#e8f5ec !important}
+    .btn-grad{background:#1f7a4d !important;color:#ffffff !important;box-shadow:0 8px 24px rgba(31,122,77,0.3) !important}
+    .btn-grad:hover{background:#2d9c65 !important}
+
+    /* INPUTS */
+    .inp{background:#1a2e1e !important;border-color:rgba(255,255,255,0.12) !important;color:#e8f5ec !important}
+    .inp::placeholder{color:#4a7a5a !important}
+    input{background:#1a2e1e !important;color:#e8f5ec !important;border-color:rgba(255,255,255,0.12) !important}
+    input::placeholder{color:#4a7a5a !important}
+
+    /* SHEETS AND MODALS */
+    .sheet-inner{background:#0f1a12 !important;border-color:rgba(255,255,255,0.08) !important}
+    .sheet-handle{background:rgba(255,255,255,0.15) !important}
+    .overlay{background:rgba(0,0,0,0.75) !important}
+    .card{background:#1a2e1e !important;border-color:rgba(255,255,255,0.08) !important}
+    .modal-card{background:#1a2e1e !important}
+    .modal-card *{color:#e8f5ec !important}
+    .habit-card{background:#162518 !important;border-color:rgba(255,255,255,0.08) !important}
+    .habit-card *{color:#e8f5ec !important}
+
+    /* AUTH PAGE */
+    .auth-page-wrapper{background:linear-gradient(160deg,#0d1f12 0%,#0f1a12 50%,#0a1a1f 100%) !important}
+
+    /* PROGRESS BARS */
+    *[style*="background:#e7efe5"]{background:rgba(255,255,255,0.08) !important}
+
+    /* FORCE CARD SURFACE VAR */
+    :root{--card-surface:#1a2e1e}
   }
   ::-webkit-scrollbar{width:3px}
   ::-webkit-scrollbar-thumb{background:var(--border,rgba(255,255,255,0.1));border-radius:10px}
@@ -226,10 +283,10 @@ const css = `
   .btn-glass:active{transform:scale(0.97)}
 
   .btn-grad{
-    border:none;border-radius:14px;color:var(--text-primary,#fff);
+    border:none;border-radius:14px;color:#ffffff;
     font-family:'Inter',sans-serif;font-weight:800;
-    cursor:pointer;
-    box-shadow:0 4px 16px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.2);
+    cursor:pointer;background:#1f7a4d;
+    box-shadow:0 8px 24px rgba(31,122,77,0.28);
     transition:all 0.25s;
   }
   .btn-grad:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 8px 28px rgba(0,0,0,0.4)}

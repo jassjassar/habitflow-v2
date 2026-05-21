@@ -12,7 +12,7 @@ export default function AuthPage({
   onBack,
 }) {
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#f0fdf4 0%,#fbfdf9 50%,#f0f9ff 100%)","--bg":"#fbfdf9","--card":"rgba(255,255,255,0.98)","--card-bg":"rgba(255,255,255,0.98)","--text":"#152118","--text-primary":"#152118","--text-secondary":"#536257","--text-muted":"#6d786f","--border":"rgba(31,53,40,0.10)","--button-bg":"rgba(31,53,40,0.06)","--input-bg":"#fbfdf9",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px",fontFamily:"'Inter',sans-serif"}}>
+    <div className="auth-page-wrapper" style={{minHeight:"100vh",background:"linear-gradient(160deg,#f0fdf4 0%,#fbfdf9 50%,#f0f9ff 100%)","--bg":"#fbfdf9","--card":"rgba(255,255,255,0.98)","--card-bg":"rgba(255,255,255,0.98)","--text":"#152118","--text-primary":"#152118","--text-secondary":"#536257","--text-muted":"#6d786f","--border":"rgba(31,53,40,0.10)","--button-bg":"rgba(31,53,40,0.06)","--input-bg":"#fbfdf9",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px",fontFamily:"'Inter',sans-serif"}}>
 
       {/* LOGO */}
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:36}}>
