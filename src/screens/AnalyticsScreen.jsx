@@ -88,10 +88,10 @@ export default function AnalyticsScreen({
                 <div key={h.id} style={{marginBottom:14}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:13}}>
                     <span style={{color:"#152118",fontWeight:600}}>{h.emoji} {h.name}</span>
-                    <span style={{color:h.color,fontWeight:700}}>{cnt}/7</span>
+                    <span style={{color:"#1f7a4d",fontWeight:700}}>{cnt}/7</span>
                   </div>
                   <div style={{height:7,borderRadius:999,background:"#e7efe5",overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${(cnt/7)*100}%`,background:h.color,borderRadius:999,transition:"width 1s ease"}}/>
+                    <div style={{height:"100%",width:`${(cnt/7)*100}%`,background:"#1f7a4d",borderRadius:999,transition:"width 1s ease"}}/>
                   </div>
                 </div>
               )

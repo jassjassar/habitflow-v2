@@ -43,7 +43,7 @@ export default function HomeScreen({
     <div className="fade-up">
 
       {/* GROWTH HERO */}
-      <div style={{padding:"24px 22px",marginBottom:18,borderRadius:30,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 20px 54px rgba(24,35,29,0.08)"}}>
+      <div style={{padding:"24px 22px",marginBottom:18,borderRadius:30,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 20px 54px rgba(24,35,29,0.08)"}}>
         <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
           <div style={{width:62,height:62,borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:900,color:"var(--text-primary,#fff)",background:"linear-gradient(135deg,rgba(167,139,250,0.95),rgba(78,205,196,0.86))",boxShadow:"0 12px 32px rgba(78,205,196,0.25), inset 0 1px 0 rgba(255,255,255,0.3)",border:"1px solid rgba(255,255,255,0.2)",animation:companionMood==="excited"?"pulse 1.4s ease-in-out infinite":companionMood==="sleepy"?"float 4s ease-in-out infinite":"float 3s ease-in-out infinite"}}>
             {face}
@@ -103,7 +103,7 @@ export default function HomeScreen({
             {activeHabits.slice(0,5).map(h=>{
               const done = h.completions?.[todayStr]
               return (
-                <div key={h.id} style={{minHeight:74,padding:"13px 14px",borderRadius:20,background:"#ffffff",border:`1px solid ${done?"rgba(31,122,77,0.18)":"rgba(31,53,40,0.08)"}`,boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+                <div key={h.id} style={{minHeight:74,padding:"13px 14px",borderRadius:20,background:"var(--card-surface,#ffffff)",border:`1px solid ${done?"rgba(31,122,77,0.18)":"rgba(31,53,40,0.08)"}`,boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
                   <div style={{display:"flex",alignItems:"center",gap:13}}>
                     <div style={{width:48,height:48,borderRadius:16,background:`${h.color}16`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,border:`1px solid ${h.color}20`}}>{h.emoji}</div>
                     <div style={{flex:1,minWidth:0}}>
@@ -119,7 +119,7 @@ export default function HomeScreen({
       )}
 
       {activeHabits.length === 0 && (
-        <div style={{padding:"26px 22px",borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 36px rgba(24,35,29,0.06)",textAlign:"center",marginBottom:18}}>
+        <div style={{padding:"26px 22px",borderRadius:24,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 36px rgba(24,35,29,0.06)",textAlign:"center",marginBottom:18}}>
           <div style={{fontSize:18,fontWeight:850,color:"#152118",marginBottom:8}}>Start with one tiny habit</div>
           <div style={{fontSize:14,color:"#607067",lineHeight:1.55,marginBottom:18}}>Choose a starter template or create something simple enough to repeat tomorrow.</div>
           <button onClick={onTemplates} style={{padding:"12px 18px",borderRadius:999,border:"none",background:"#1f7a4d",color:"#fff",fontWeight:850,cursor:"pointer"}}>Browse Templates</button>
@@ -127,7 +127,7 @@ export default function HomeScreen({
       )}
 
       {/* COACH INSIGHT */}
-      <div style={{padding:"18px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 36px rgba(24,35,29,0.05)"}}>
+      <div style={{padding:"18px 18px",marginBottom:14,borderRadius:24,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 36px rgba(24,35,29,0.05)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:14}}>
           <div>
             <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:6}}>Coach insight</div>
@@ -144,7 +144,7 @@ export default function HomeScreen({
           {label:"Recovery",value:`${freezes}/${maxFreezes}`,detail:freezes>0?"Safety net ready":`${daysToNextShield} days to shield`,color:"#14b8a6"},
           {label:"Momentum",value:`${bestStreak}d`,detail:"Best current rhythm",color:"#22c55e"},
         ].map(item=>(
-          <div key={item.label} style={{padding:"16px 15px",borderRadius:22,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+          <div key={item.label} style={{padding:"16px 15px",borderRadius:22,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
             <div style={{fontSize:11,fontWeight:800,color:"#7a867d",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>{item.label}</div>
             <div style={{fontSize:28,fontWeight:850,color:item.color,lineHeight:1,marginBottom:7}}>{item.value}</div>
             <div style={{fontSize:12,color:"#607067",fontWeight:550,lineHeight:1.35}}>{item.detail}</div>
@@ -154,7 +154,7 @@ export default function HomeScreen({
 
       {/* WATER + STEPS */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-        <div style={{padding:"16px 15px",borderRadius:22,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+        <div style={{padding:"16px 15px",borderRadius:22,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
           <div style={{fontSize:11,fontWeight:800,color:"#7a867d",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>Water</div>
           <div style={{fontSize:24,fontWeight:850,color:"#152118",marginBottom:10}}>{water}<span style={{fontSize:13,color:"#7a867d",fontWeight:600}}> / 8</span></div>
           <div style={{height:7,borderRadius:999,background:"#e7efe5",overflow:"hidden",marginBottom:10}}>
@@ -165,7 +165,7 @@ export default function HomeScreen({
             <button onClick={()=>onAddWater(1)} style={{flex:1,padding:"8px 0",borderRadius:999,border:"none",background:"#eef8e9",color:"#1f7a4d",fontWeight:800,cursor:"pointer"}}>+</button>
           </div>
         </div>
-        <div style={{padding:"16px 15px",borderRadius:22,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+        <div style={{padding:"16px 15px",borderRadius:22,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
           <div style={{fontSize:11,fontWeight:800,color:"#7a867d",textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>Steps</div>
           <div style={{fontSize:24,fontWeight:850,color:"#152118",marginBottom:10}}>{steps.toLocaleString()}</div>
           <div style={{height:7,borderRadius:999,background:"#e7efe5",overflow:"hidden",marginBottom:10}}>
@@ -179,7 +179,7 @@ export default function HomeScreen({
       </div>
 
       {/* REWARDS */}
-      <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+      <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12}}>
           <div>
             <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:4}}>Rewards</div>
@@ -198,7 +198,7 @@ export default function HomeScreen({
 
       {/* DAILY QUESTS */}
       {dailyQuests.length > 0 && (
-        <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+        <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12}}>
             <div>
               <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:4}}>Achievements</div>
@@ -228,7 +228,7 @@ export default function HomeScreen({
 
       {/* WEEKLY REFLECTION */}
       {activeHabits.length > 0 && (
-        <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
+        <div style={{padding:"16px 18px",marginBottom:14,borderRadius:24,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 12px 30px rgba(24,35,29,0.05)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:12}}>
             <div>
               <div style={{fontSize:12,fontWeight:800,color:"#607067",letterSpacing:.4,textTransform:"uppercase",marginBottom:4}}>Reflection</div>

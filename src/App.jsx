@@ -159,7 +159,22 @@ const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overscroll-behavior:none}
-  body{font-family:'Inter',sans-serif;background:var(--bg,#0d0d1a);color:var(--text-primary,#fff);overflow-x:hidden}
+  body{font-family:'Inter',sans-serif;background:#fbfdf9;color:#152118;overflow-x:hidden}
+  @media(prefers-color-scheme:dark){
+    :root{--card-surface:#1a2e1e}
+    body{background:#0f1a12;color:#e8f5ec}
+    .top-nav{background:rgba(15,26,18,0.88);border-bottom-color:rgba(255,255,255,0.06)}
+    .tab-bar{background:rgba(15,26,18,0.92);border-top-color:rgba(255,255,255,0.06)}
+    .tab-item{color:#6b9e78}
+    .tab-item.active{background:rgba(31,122,77,0.2);color:#4ade80}
+    .card{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.08)}
+    .habit-card{background:rgba(255,255,255,0.04)}
+    .inp{background:#1a2e1e;border-color:rgba(255,255,255,0.1);color:#e8f5ec}
+    .btn-glass{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.1);color:#e8f5ec}
+    .sheet-inner{background:#0f1a12;border-color:rgba(255,255,255,0.08)}
+    .sheet-handle{background:rgba(255,255,255,0.15)}
+    .overlay{background:rgba(0,0,0,0.7)}
+  }
   ::-webkit-scrollbar{width:3px}
   ::-webkit-scrollbar-thumb{background:var(--border,rgba(255,255,255,0.1));border-radius:10px}
 
@@ -366,12 +381,8 @@ export default function App() {
   const [loading, setLoading] = useState(true) 
   const [totalXP, setTotalXP] = useState(0)
   const [lifetimeCompletedCount, setLifetimeCompletedCount] = useState(0)
-  const [currentTheme, setCurrentTheme] = useState(() => {
-  const saved = localStorage.getItem("hf_theme") || "aurora"
-  applyTheme(saved)
-  return saved
-})
-const [showTheme, setShowTheme] = useState(false)
+  const [currentTheme, setCurrentTheme] = useState("system")
+const [showTheme, setShowTheme] = useState(false) // kept for compatibility, theme switcher removed
   const [freezes, setFreezes] = useState(() => parseInt(localStorage.getItem("hf_freezes")||"0"))
   const [freezeToast, setFreezeToast] = useState(false)
   const [freezeDates, setFreezeDates] = useState(() => { try { return JSON.parse(localStorage.getItem("hf_freeze_dates")||"[]") } catch { return [] } }) 
@@ -541,7 +552,7 @@ if (profile) {
   setIsPro(profile.is_pro)
   setTotalXP(Number(profile.total_xp || 0))
   setLifetimeCompletedCount(Number(profile.lifetime_completed_count ?? cd?.length ?? 0))
-  if (profile.theme) { setCurrentTheme(profile.theme); applyTheme(profile.theme) }
+  // Theme is now handled by system prefers-color-scheme — no manual theme needed
 } else {
   setTotalXP(calcXP(loadedHabits, days))
   setLifetimeCompletedCount(cd?.length || 0)
@@ -1448,7 +1459,6 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
        displayXP={displayXP}
        isPro={isPro}
        onOpenPaywall={openPaywall}
-       onOpenTheme={openThemeSwitcher}
        onOpenNotifications={openNotificationExplainer}
        onOpenAI={openAICoach}
        onOpenTemplates={()=>{ setHabitSaveError(""); setShowTemplates(true) }}

@@ -4,7 +4,6 @@ export default function SettingsScreen({
   displayXP,
   isPro,
   onOpenPaywall,
-  onOpenTheme,
   onOpenNotifications,
   onOpenAI,
   onOpenTemplates,
@@ -12,7 +11,6 @@ export default function SettingsScreen({
 }) {
   const menuItems = [
     { icon:"⭐", label:isPro ? "Pro Active" : "Upgrade to Pro", fn:onOpenPaywall, color:"#f59e0b", isSignOut:false },
-    { icon:"🎨", label:"Change Theme",            fn:onOpenTheme,         color:"#1f7a4d", isSignOut:false },
     { icon:"🔔", label:"Reminder Notifications",  fn:onOpenNotifications, color:"#1f7a4d", isSignOut:false },
     { icon:"🤖", label:"AI Coach",                fn:onOpenAI,            color:"#1f7a4d", isSignOut:false },
     { icon:"📋", label:"Templates",               fn:onOpenTemplates,     color:"#1f7a4d", isSignOut:false },
@@ -29,7 +27,7 @@ export default function SettingsScreen({
       </div>
 
       {/* PROFILE CARD */}
-      <div style={{padding:"20px",marginBottom:14,borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 34px rgba(24,35,29,0.06)"}}>
+      <div style={{padding:"20px",marginBottom:14,borderRadius:24,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 34px rgba(24,35,29,0.06)"}}>
         <div style={{display:"flex",alignItems:"center",gap:14}}>
           <div style={{width:54,height:54,borderRadius:18,background:"linear-gradient(135deg,#1f7a4d,#2d9c65)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#ffffff",boxShadow:"0 4px 16px rgba(31,122,77,0.2)",flexShrink:0}}>
             {userName.charAt(0).toUpperCase()}
@@ -47,7 +45,7 @@ export default function SettingsScreen({
       </div>
 
       {/* MENU */}
-      <div style={{borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 34px rgba(24,35,29,0.06)",overflow:"hidden",marginBottom:14}}>
+      <div style={{borderRadius:24,background:"var(--card-surface,#ffffff)",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 34px rgba(24,35,29,0.06)",overflow:"hidden",marginBottom:14}}>
         {menuItems.map((item, i) => (
           <button
             key={i}

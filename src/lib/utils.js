@@ -77,20 +77,7 @@ export const normalizeVapidPublicKey = (value) => {
   return key.replace(/^['"]|['"]$/g, "").trim()
 }
 
-export const applyTheme = (themeId) => {
-  const t = THEMES[themeId] || THEMES.aurora
-  const r = document.documentElement
-  r.style.setProperty("--bg", t.bg)
-  r.style.setProperty("--accent", t.accent)
-  r.style.setProperty("--card", t.card)
-  r.style.setProperty("--text", t.text)
-  r.style.setProperty("--sub", t.sub)
-  r.style.setProperty("--text-primary", t.text)
-  r.style.setProperty("--text-secondary", t.textSecondary || t.sub)
-  r.style.setProperty("--text-muted", t.muted || t.sub)
-  r.style.setProperty("--card-bg", t.card)
-  r.style.setProperty("--border", t.border || "rgba(255,255,255,0.1)")
-  r.style.setProperty("--button-bg", t.button || "rgba(255,255,255,0.08)")
-  r.style.setProperty("--input-bg", t.input || "rgba(255,255,255,0.07)")
-  localStorage.setItem("hf_theme", themeId)
+export const applyTheme = (_themeId) => {
+  // Theme is now handled automatically by prefers-color-scheme media query
+  // Manual theme application disabled
 }
