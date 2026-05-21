@@ -106,7 +106,7 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
       if (!created?.length) throw new Error("No habits were created.")
       setCreatedHabits(created)
       setCelebrating(true)
-      setTimeout(() => onDone?.(), 1800)
+      // no auto-redirect — user controls entry
     } catch (err) {
       setError(err?.message || "We couldn't create your starter habits. Please try again.")
     } finally {
@@ -148,7 +148,27 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
             </div>
           ))}
         </div>
-        <div style={{marginTop:24,fontSize:14,color:"#6d786f"}}>Opening your dashboard...</div>
+        <button
+          onClick={() => onDone?.()}
+          style={{
+            marginTop:32,
+            width:"100%",
+            maxWidth:280,
+            padding:"17px 28px",
+            fontSize:16,
+            fontWeight:800,
+            borderRadius:16,
+            border:"none",
+            background:"#1f7a4d",
+            color:"#ffffff",
+            boxShadow:"0 8px 28px rgba(31,122,77,0.28)",
+            cursor:"pointer",
+            fontFamily:"'Inter',sans-serif",
+            letterSpacing:"-0.01em",
+          }}
+        >
+          Enter my space →
+        </button>
         <style>{`
           @keyframes celebPop {
             0%{transform:scale(0) rotate(-20deg);opacity:0}

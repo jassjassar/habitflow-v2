@@ -30,10 +30,8 @@ export default function HabitsScreen({
         </div>
         <button
           onClick={onAdd}
-          style={{padding:"10px 18px",fontSize:14,fontWeight:800,borderRadius:999,border:"none",background:"#1f7a4d",color:"#ffffff",boxShadow:"0 8px 20px rgba(31,122,77,0.18)",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}
-        >
-          + Add
-        </button>
+          style={{padding:"12px 20px",fontSize:14,fontWeight:800,borderRadius:999,border:"none",background:"#1f7a4d",color:"#ffffff",boxShadow:"0 8px 20px rgba(31,122,77,0.18)",cursor:"pointer",fontFamily:"'Inter',sans-serif",minHeight:44}}
+        >+ Add</button>
       </div>
 
       {/* EMPTY STATE */}
@@ -44,25 +42,23 @@ export default function HabitsScreen({
           <div style={{color:"#607067",fontSize:14,lineHeight:1.6,marginBottom:24}}>Start with a template or create your own. Small steps build lasting change.</div>
           <button
             onClick={onTemplates}
-            style={{padding:"13px 28px",fontSize:14,fontWeight:800,borderRadius:999,border:"none",background:"#1f7a4d",color:"#ffffff",boxShadow:"0 8px 20px rgba(31,122,77,0.18)",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}
-          >
-            Browse Templates
-          </button>
+            style={{padding:"14px 32px",fontSize:14,fontWeight:800,borderRadius:999,border:"none",background:"#1f7a4d",color:"#ffffff",boxShadow:"0 8px 20px rgba(31,122,77,0.18)",cursor:"pointer",fontFamily:"'Inter',sans-serif",minHeight:44}}
+          >Browse Templates</button>
         </div>
       ) : (
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           {habits.map((h) => {
-            const done = h.completions?.[todayStr]
-            const streak = getStreak(h, days)
+            const done     = h.completions?.[todayStr]
+            const streak   = getStreak(h, days)
             const weekDone = days.filter(d => h.completions?.[d]).length
 
             return (
               <div
                 key={h.id}
                 style={{
-                  padding:"16px 16px",
+                  padding:"16px",
                   borderRadius:22,
-                  background:"#ffffff",
+                  background: done ? "#f4f8f2" : "#ffffff",
                   border:`1px solid ${done ? "rgba(31,122,77,0.16)" : "rgba(31,53,40,0.08)"}`,
                   boxShadow:"0 14px 34px rgba(24,35,29,0.06)",
                   transition:"all 0.2s ease",
@@ -71,12 +67,19 @@ export default function HabitsScreen({
                 <div style={{display:"flex",alignItems:"center",gap:14}}>
 
                   {/* ICON */}
-                  <div style={{width:50,height:50,borderRadius:16,background:`${h.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,border:`1px solid ${h.color}20`}}>
+                  <div style={{
+                    width:50,height:50,borderRadius:16,
+                    background:`${h.color}15`,
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    fontSize:24,flexShrink:0,
+                    border:`1px solid ${h.color}20`,
+                    opacity: done ? 0.75 : 1,
+                  }}>
                     {h.emoji}
                   </div>
 
                   {/* INFO */}
-                  <div style={{flex:1,minWidth:0}}>
+                  <div style={{flex:1,minWidth:0,opacity: done ? 0.7 : 1}}>
                     <div style={{fontSize:15,fontWeight:700,color:"#152118",marginBottom:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                       {h.name}
                     </div>
@@ -87,29 +90,47 @@ export default function HabitsScreen({
                     </div>
                     {/* 7-DAY BAR */}
                     <div style={{display:"flex",gap:3}}>
-                      {days.map((d, di) => (
-                        <div
-                          key={di}
-                          style={{flex:1,height:5,borderRadius:999,background:h.completions?.[d] ? h.color : "#e7efe5",transition:"all .3s"}}
-                        />
+                      {days.map((d,di) => (
+                        <div key={di} style={{
+                          flex:1,height:5,borderRadius:999,
+                          background: h.completions?.[d] ? h.color : "#e7efe5",
+                          transition:"all .3s",
+                        }}/>
                       ))}
                     </div>
                   </div>
 
-                  {/* ACTIONS */}
+                  {/* ACTIONS — minimum 44x44px touch targets */}
                   <div style={{display:"flex",flexDirection:"column",gap:8,flexShrink:0}}>
                     <button
                       onClick={() => onEdit(h)}
-                      style={{padding:"7px 12px",fontSize:13,fontWeight:600,borderRadius:10,border:"1px solid rgba(31,53,40,0.1)",background:"#ffffff",color:"#1f3528",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}
-                    >
-                      Edit
-                    </button>
+                      style={{
+                        minWidth:44,minHeight:44,
+                        padding:"10px 14px",
+                        fontSize:13,fontWeight:600,
+                        borderRadius:12,
+                        border:"1px solid rgba(31,53,40,0.1)",
+                        background:"#ffffff",color:"#1f3528",
+                        cursor:"pointer",fontFamily:"'Inter',sans-serif",
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                      }}
+                    >Edit</button>
                     <button
                       onClick={() => onToggle(h.id, todayStr)}
-                      style={{padding:"8px 14px",fontSize:13,fontWeight:800,borderRadius:999,background:done ? "#1f7a4d" : "#ffffff",color:done ? "#ffffff" : "#1f3528",border:done ? "none" : "1px solid rgba(31,53,40,0.1)",boxShadow:done ? "0 4px 12px rgba(31,122,77,0.2)" : "none",cursor:"pointer",fontFamily:"'Inter',sans-serif",transition:"all 0.2s"}}
-                    >
-                      {done ? "✓ Done" : "Log"}
-                    </button>
+                      style={{
+                        minWidth:44,minHeight:44,
+                        padding:"10px 14px",
+                        fontSize:13,fontWeight:800,
+                        borderRadius:999,
+                        border: done ? "none" : "1px solid rgba(31,53,40,0.1)",
+                        background: done ? "#1f7a4d" : "#ffffff",
+                        color: done ? "#ffffff" : "#1f3528",
+                        boxShadow: done ? "0 4px 12px rgba(31,122,77,0.2)" : "none",
+                        cursor:"pointer",fontFamily:"'Inter',sans-serif",
+                        transition:"all 0.2s",
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                      }}
+                    >{done ? "✓ Done" : "Log"}</button>
                   </div>
 
                 </div>
@@ -121,7 +142,7 @@ export default function HabitsScreen({
 
       {/* ERROR */}
       {habitSaveError && (
-        <div style={{fontSize:12,lineHeight:1.5,color:"#dc2626",background:"#fef2f2",border:"1px solid rgba(220,38,38,0.2)",borderRadius:12,padding:"10px 12px",marginTop:12,fontWeight:600}}>
+        <div style={{fontSize:13,color:"#dc2626",background:"#fef2f2",border:"1px solid rgba(220,38,38,0.2)",borderRadius:12,padding:"12px 14px",marginTop:12,fontWeight:600}}>
           {habitSaveError}
         </div>
       )}
