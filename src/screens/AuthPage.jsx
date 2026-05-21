@@ -12,7 +12,7 @@ export default function AuthPage({
   onBack,
 }) {
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#f0fdf4 0%,#fbfdf9 50%,#f0f9ff 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px",fontFamily:"'Inter',sans-serif"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#f0fdf4 0%,#fbfdf9 50%,#f0f9ff 100%)","--bg":"#fbfdf9","--card":"rgba(255,255,255,0.98)","--card-bg":"rgba(255,255,255,0.98)","--text":"#152118","--text-primary":"#152118","--text-secondary":"#536257","--text-muted":"#6d786f","--border":"rgba(31,53,40,0.10)","--button-bg":"rgba(31,53,40,0.06)","--input-bg":"#fbfdf9",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px",fontFamily:"'Inter',sans-serif"}}>
 
       {/* LOGO */}
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:36}}>
@@ -83,7 +83,7 @@ export default function AuthPage({
         <button
           onClick={onSignInEmail}
           disabled={authLoading}
-          style={{width:"100%",padding:"15px 20px",fontSize:15,fontWeight:800,borderRadius:14,border:"none",background:"#1f7a4d",color:"#fff",boxShadow:"0 8px 24px rgba(31,122,77,0.22)",cursor:authLoading?"not-allowed":"pointer",opacity:authLoading?0.7:1,marginBottom:20,fontFamily:"'Inter',sans-serif",letterSpacing:"-0.01em"}}
+          style={{width:"100%",padding:"15px 20px",fontSize:15,fontWeight:800,borderRadius:14,border:"none",background:"#1f7a4d",color:"#ffffff",boxShadow:"0 8px 24px rgba(31,122,77,0.22)",cursor:authLoading?"not-allowed":"pointer",opacity:authLoading?0.7:1,marginBottom:20,fontFamily:"'Inter',sans-serif",letterSpacing:"-0.01em"}}
         >
           {authLoading ? "Loading..." : authMode==="login" ? "Sign In →" : "Create Account →"}
         </button>
