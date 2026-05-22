@@ -16,8 +16,8 @@ export default function AuthPage({
 
       {/* LOGO */}
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:36}}>
-        <div style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#d9f99d,#86efac 52%,#4ade80)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(34,197,94,0.25)"}}>
-          <div style={{width:14,height:14,borderRadius:"50%",background:"#2e3a59"}}/>
+        <div style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#4f5d75,#2e3a59)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(46,58,89,0.25)"}}>
+          <div style={{width:14,height:14,borderRadius:"50%",background:"#ffffff"}}/>
         </div>
         <span className="auth-logo-text" style={{fontSize:20, fontWeight:900, color:"#1a202c"}}>HabitFlow</span>
       </div>

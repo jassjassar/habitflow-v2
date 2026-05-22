@@ -151,7 +151,7 @@ export default function HeatmapCalendar({ habits }) {
       {/* QUICK STATS */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginTop:14}}>
         {[
-          {lbl:"Perfect Days", val:totalDone,              color:"#4f5d75", bg:"#eef8e9"},
+          {lbl:"Perfect Days", val:totalDone,              color:"#4f5d75", bg:"#edf2f7"},
           {lbl:"Current Streak",val:`${currentStreak}🔥`,  color:"#ea580c", bg:"#fff7ed"},
           {lbl:"Longest Streak",val:`${longestStreak}⚡`,  color:"#7c3aed", bg:"#f5f3ff"},
         ].map(s=>(

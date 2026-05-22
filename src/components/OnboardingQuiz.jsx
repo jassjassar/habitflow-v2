@@ -205,7 +205,7 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
           aria-label="Back"
         >←</button>
         <div style={{display:"flex",alignItems:"center",gap:8,fontSize:17,fontWeight:900,color:"#1f3528"}}>
-          <span style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#d9f99d,#86efac 52%,#67e8f9)",display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(34,197,94,0.16)"}}>
+          <span style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#4f5d75,#2e3a59 52%,#4f5d75)",display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(46,58,89,0.16)"}}>
             <span style={{width:11,height:11,borderRadius:"50%",background:"#4f5d75",display:"block"}}/>
           </span>
           HabitFlow
@@ -258,7 +258,7 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
                   animation:`optionPop 0.3s ${i*0.06}s ease both`,
                 }}
               >
-                <div style={{width:44,height:44,borderRadius:14,flexShrink:0,background:isSelected?"#dcfce7":"#f8f9fb",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,border:isSelected?"1px solid rgba(79,93,117,0.2)":"1px solid rgba(31,53,40,0.06)",transition:"all 0.2s"}}>
+                <div style={{width:44,height:44,borderRadius:14,flexShrink:0,background:isSelected?"#e2e8f0":"#f8f9fb",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,border:isSelected?"1px solid rgba(79,93,117,0.2)":"1px solid rgba(31,53,40,0.06)",transition:"all 0.2s"}}>
                   {opt.emoji}
                 </div>
                 <div style={{flex:1}}>
@@ -302,7 +302,7 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
 
       {/* SUBTLE BG ORBS */}
       <div style={{position:"fixed",top:"10%",right:"5%",width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,rgba(79,93,117,0.04),transparent 70%)",pointerEvents:"none"}}/>
-      <div style={{position:"fixed",bottom:"15%",left:"0%",width:180,height:180,borderRadius:"50%",background:"radial-gradient(circle,rgba(34,197,94,0.04),transparent 70%)",pointerEvents:"none"}}/>
+      <div style={{position:"fixed",bottom:"15%",left:"0%",width:180,height:180,borderRadius:"50%",background:"radial-gradient(circle,rgba(46,58,89,0.04),transparent 70%)",pointerEvents:"none"}}/>
     </div>
   )
 }

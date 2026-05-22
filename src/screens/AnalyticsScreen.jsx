@@ -67,7 +67,7 @@ export default function AnalyticsScreen({
           {/* STAT GRID */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
             {[
-              {lbl:"Completions", val:lifetimeCompletions, color:"#4f5d75", bg:"#eef8e9"},
+              {lbl:"Completions", val:lifetimeCompletions, color:"#4f5d75", bg:"#edf2f7"},
               {lbl:"Best Streak",  val:`${bestStreak} days`,  color:"#ea580c", bg:"#fff7ed"},
               {lbl:"Total XP",     val:displayXP,             color:"#7c3aed", bg:"#f5f3ff"},
               {lbl:"Habits",       val:habits.length,         color:"#0369a1", bg:"#f0f9ff"},

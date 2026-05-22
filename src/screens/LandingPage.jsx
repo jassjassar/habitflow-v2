@@ -1,12 +1,12 @@
 export default function LandingPage({ onSignIn, onGoogleSignIn }) {
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#f0fdf4 0%,#fbfdf9 40%,#f0f9ff 100%)",fontFamily:"'Inter',sans-serif",color:"#1a202c",overflowX:"hidden"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#f4f6f8 0%,#fbfdf9 40%,#f0f9ff 100%)",fontFamily:"'Inter',sans-serif",color:"#1a202c",overflowX:"hidden"}}>
 
       {/* NAV */}
       <nav style={{position:"sticky",top:0,zIndex:20,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px clamp(20px,5vw,48px)",background:"rgba(251,253,249,0.88)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderBottom:"1px solid rgba(31,53,40,0.07)"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,fontSize:18,fontWeight:900,color:"#1a202c"}}>
-          <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#d9f99d,#86efac 52%,#4ade80)",display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(34,197,94,0.25)"}}>
-            <div style={{width:12,height:12,borderRadius:"50%",background:"#2e3a59"}}/>
+          <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#4f5d75,#2e3a59)",display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(46,58,89,0.25)"}}>
+            <div style={{width:12,height:12,borderRadius:"50%",background:"#ffffff"}}/>
           </div>
           HabitFlow
         </div>

@@ -158,7 +158,7 @@ const getGreeting = () => { const h=getHour(); return h<12?"Good morning":h<17?"
 const css = `
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overscroll-behavior:none}
-  body{font-family:'Inter',sans-serif;background:#f8f9fb;color:#1a202c;overflow-x:hidden}
+  body{font-family:'Inter',sans-serif;background:#f4f6f8;color:#1a202c;overflow-x:hidden}
 
   .top-nav{
     position:sticky;top:0;z-index:40;
@@ -189,7 +189,7 @@ const css = `
     padding:8px 0;border-radius:18px;
     transition:all 0.2s;color:#718096;
   }
-  .tab-item.active{background:#edf2f7;color:#2e3a59}
+  .tab-item.active{background:#edf2f7;border-radius:18px;color:#2e3a59}
   .tab-item.active svg{stroke:#2e3a59 !important}
   .tab-item svg{stroke:#718096}
   .tab-icon{font-size:18px;line-height:1}
@@ -230,7 +230,7 @@ const css = `
   .inp{
     width:100%;padding:13px 16px;font-size:14px;
     border-radius:14px;border:1px solid rgba(46,58,89,0.12);
-    background:#f8f9fb;color:#1a202c;
+    background:#f4f6f8;color:#1a202c;
     font-family:'Inter',sans-serif;outline:none;
     transition:border-color 0.2s;
   }
@@ -280,7 +280,7 @@ const css = `
     .app-content *[style*="color:#4a5568"]{color:#a0aec0 !important}
     .app-content *[style*="color:#718096"]{color:#8899bb !important}
     .app-content *[style*="background:#ffffff"]{background:#1a1f2e !important;border-color:rgba(255,255,255,0.07) !important}
-    .app-content *[style*="background:#f8f9fb"]{background:#0f1118 !important}
+    .app-content *[style*="background:#f4f6f8"]{background:#0f1118 !important}
     .app-content *[style*="background:#edf2f7"]{background:rgba(46,58,89,0.25) !important}
     .app-content *[style*="background:#f0f2f5"]{background:#161b29 !important}
     .app-content circle{stroke-opacity:0.9}
@@ -1148,16 +1148,16 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
   // LOADING
   if (loading) return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#fbfdf9 0%,#f4f8f2 100%)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:20,fontFamily:"'Inter',sans-serif"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#fbfdf9 0%,#f4f6f8 100%)",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:20,fontFamily:"'Inter',sans-serif"}}>
       <style>{css}</style>
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12}}>
-        <div style={{width:44,height:44,borderRadius:"50%",background:"linear-gradient(135deg,#d9f99d,#86efac 52%,#67e8f9)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 24px rgba(34,197,94,0.2)"}}>
-          <div style={{width:18,height:18,borderRadius:"50%",background:"#1f7a4d"}}/>
+        <div style={{width:44,height:44,borderRadius:"50%",background:"linear-gradient(135deg,#4f5d75,#2e3a59)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 24px rgba(46,58,89,0.2)"}}>
+          <div style={{width:18,height:18,borderRadius:"50%",background:"#ffffff"}}/>
         </div>
-        <div style={{fontSize:22,fontWeight:900,color:"#152118",letterSpacing:0}}>HabitFlow</div>
+        <div style={{fontSize:22,fontWeight:900,color:"#1a202c",letterSpacing:0}}>HabitFlow</div>
       </div>
-      <div style={{width:32,height:3,borderRadius:999,background:"#e7efe5",overflow:"hidden"}}>
-        <div style={{height:"100%",background:"#1f7a4d",borderRadius:999,animation:"loadBar 1.4s ease-in-out infinite"}}/>
+      <div style={{width:32,height:3,borderRadius:999,background:"#edf2f7",overflow:"hidden"}}>
+        <div style={{height:"100%",background:"#2e3a59",borderRadius:999,animation:"loadBar 1.4s ease-in-out infinite"}}/>
       </div>
       <style>{`@keyframes loadBar{0%{width:0%;margin-left:0}60%{width:100%;margin-left:0}100%{width:0%;margin-left:100%}}`}</style>
     </div>
@@ -1168,7 +1168,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       <style>{css}</style>
       <div style={{maxWidth:420,width:"100%",padding:28,textAlign:"center",background:"#ffffff",borderRadius:24,border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 20px 48px rgba(24,35,29,0.08)"}}>
         <div style={{fontSize:46,marginBottom:14}}>⚡</div>
-        <div style={{fontSize:22,fontWeight:900,marginBottom:8,color:"#152118"}}>
+        <div style={{fontSize:22,fontWeight:900,marginBottom:8,color:"#1a202c"}}>
           HabitFlow setup needed
         </div>
         <div style={{fontSize:14,lineHeight:1.6,color:"#536257"}}>
@@ -1227,15 +1227,15 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
   // MAIN APP
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#fbfdf9 0%,#f4f8f2 62%,#ffffff 100%)",color:"#152118",paddingBottom:96,maxWidth:480,margin:"0 auto",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#fbfdf9 0%,#f4f6f8 62%,#ffffff 100%)",color:"#1a202c",paddingBottom:96,maxWidth:480,margin:"0 auto",position:"relative"}}>
       <style>{css}</style>
       <Particles active={particles}/>
       <LevelUpBurst show={levelUpShow} level={levelUpData}/> 
       <MilestoneToast milestone={milestone}/>
       {themeReward && (
         <div style={{position:"fixed",top:74,left:"50%",transform:"translateX(-50%)",zIndex:9999,width:"calc(100% - 32px)",maxWidth:420,pointerEvents:"none",animation:"slideDown 0.35s ease"}}>
-          <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,#eef8e9,#f0fdf4)",border:"1px solid var(--border)",boxShadow:"0 12px 36px rgba(24,35,29,0.10)"}}>
-            <div style={{width:38,height:38,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(255,255,255,0.1)",boxShadow:"0 4px 12px rgba(31,122,77,0.15)"}}>🎨</div>
+          <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:12,background:"linear-gradient(135deg,#edf2f7,#f0fdf4)",border:"1px solid var(--border)",boxShadow:"0 12px 36px rgba(24,35,29,0.10)"}}>
+            <div style={{width:38,height:38,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(255,255,255,0.1)",boxShadow:"0 4px 12px rgba(46,58,89,0.15)"}}>🎨</div>
             <div>
               <div style={{fontSize:13,fontWeight:900,color:"var(--text-primary,#fff)",marginBottom:2}}>New theme unlocked</div>
               <div style={{fontSize:11,color:"var(--text-secondary)",fontWeight:700}}>{themeReward} is ready in Settings.</div>
@@ -1309,7 +1309,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
 
       {/* BG */}
       <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,height:"100%",pointerEvents:"none",zIndex:0,overflow:"hidden"}}>
-        <div style={{position:"absolute",top:"-12%",left:"-16%",width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle,rgba(34,197,94,0.08),transparent 70%)",animation:"bgMove 12s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",top:"-12%",left:"-16%",width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle,rgba(46,58,89,0.08),transparent 70%)",animation:"bgMove 12s ease-in-out infinite"}}/>
         <div style={{position:"absolute",bottom:"18%",right:"-18%",width:280,height:280,borderRadius:"50%",background:"radial-gradient(circle,rgba(20,184,166,0.08),transparent 70%)",animation:"bgMove 16s ease-in-out infinite reverse"}}/>
       </div>
 
@@ -1317,13 +1317,13 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
       <div className="top-nav">
         <div style={{minWidth:0}}>
           <div style={{fontSize:10,fontWeight:750,color:"#7a867d",letterSpacing:1.2,textTransform:"uppercase",marginBottom:2}}>HABITFLOW</div>
-          <div style={{fontSize:20,fontWeight:850,color:"#152118",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:210}}>Hello, {userName}</div>
+          <div style={{fontSize:20,fontWeight:850,color:"#1a202c",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:210}}>Hello, {userName}</div>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <div style={{padding:"7px 11px",display:"flex",alignItems:"center",gap:6,borderRadius:999,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 8px 20px rgba(24,35,29,0.05)"}}>
-            <span style={{fontSize:12,fontWeight:800,color:"#1f7a4d"}}>Lv {currentLevel.level}</span>
+            <span style={{fontSize:12,fontWeight:800,color:"#2e3a59"}}>Lv {currentLevel.level}</span>
           </div>
-          <button onClick={openAICoach} style={{padding:"8px 13px",fontSize:12,fontWeight:800,borderRadius:999,border:"1px solid rgba(31,122,77,0.14)",background:"#eef8e9",color:"#1f7a4d",cursor:"pointer"}}>Coach</button>
+          <button onClick={openAICoach} style={{padding:"8px 13px",fontSize:12,fontWeight:800,borderRadius:999,border:"1px solid rgba(46,58,89,0.14)",background:"#edf2f7",color:"#2e3a59",cursor:"pointer"}}>Coach</button>
           <button onClick={signOut} style={{padding:"8px 14px",fontSize:13,fontWeight:700,borderRadius:999,border:"1px solid rgba(31,53,40,0.1)",background:"#ffffff",color:"#536257",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}>Out</button>
         </div>
       </div>
@@ -1426,7 +1426,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
           {
             id:"home", lbl:"Home",
             svg:(active) => (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#1f7a4d":"#6d786f"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#2e3a59":"#6d786f"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
                 <path d="M9 21V12h6v9"/>
               </svg>
@@ -1435,7 +1435,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
           {
             id:"habits", lbl:"Habits",
             svg:(active) => (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#1f7a4d":"#6d786f"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#2e3a59":"#6d786f"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 11l3 3L22 4"/>
                 <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
               </svg>
@@ -1444,7 +1444,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
           {
             id:"analytics", lbl:"Stats",
             svg:(active) => (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#1f7a4d":"#6d786f"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#2e3a59":"#6d786f"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 20V10"/>
                 <path d="M12 20V4"/>
                 <path d="M6 20v-6"/>
@@ -1454,7 +1454,7 @@ const unlockedThemes = Object.fromEntries(Object.entries(THEMES).map(([id, theme
           {
             id:"settings", lbl:"Settings",
             svg:(active) => (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#1f7a4d":"#6d786f"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active?"#2e3a59":"#6d786f"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
               </svg>
