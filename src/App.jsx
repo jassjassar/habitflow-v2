@@ -278,15 +278,18 @@ const css = `
     .app-content *{color:#e8eaf0}
     .app-content *[style*="color:#1a202c"]{color:#e8eaf0 !important}
     .app-content *[style*="color:#4a5568"]{color:#a0aec0 !important}
-    .app-content *[style*="color:#718096"]{color:#6b7fa3 !important}
+    .app-content *[style*="color:#718096"]{color:#8899bb !important}
     .app-content *[style*="background:#ffffff"]{background:#1a1f2e !important;border-color:rgba(255,255,255,0.07) !important}
     .app-content *[style*="background:#f8f9fb"]{background:#0f1118 !important}
-    .app-content *[style*="background:#edf2f7"]{background:rgba(46,58,89,0.2) !important}
+    .app-content *[style*="background:#edf2f7"]{background:rgba(46,58,89,0.25) !important}
     .app-content *[style*="background:#f0f2f5"]{background:#161b29 !important}
+    .app-content circle{stroke-opacity:0.9}
+    .app-content svg text{fill:#e8eaf0 !important}
     input{background:#1a1f2e !important;color:#e8eaf0 !important;border-color:rgba(255,255,255,0.1) !important}
     input::placeholder{color:#4a5568 !important}
     .companion-avatar{background:linear-gradient(135deg,#2e3a59,#4f5d75) !important;box-shadow:0 12px 32px rgba(46,58,89,0.4) !important}
     .auth-page-wrapper{background:linear-gradient(160deg,#0d1020 0%,#0f1118 50%,#0d1020 100%) !important}
+    .auth-logo-text{color:#e8eaf0 !important}
     :root{--card-surface:#1a1f2e}
   }
 `

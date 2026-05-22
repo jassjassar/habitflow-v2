@@ -71,7 +71,7 @@ export default function SettingsScreen({
             onMouseLeave={e => e.currentTarget.style.background="transparent"}
           >
             <span style={{fontSize:20,color:item.color,flexShrink:0}}>{item.icon}</span>
-            <span style={{fontWeight:600,color:item.isSignOut ? "#dc2626" : "#1f3528",flex:1}}>{item.label}</span>
+            <span style={{fontWeight:600,color:item.isSignOut ? "#dc2626" : "#1a202c",flex:1}}>{item.label}</span>
             {!item.isSignOut && <span style={{color:"#7db8d4",fontSize:16}}>›</span>}
           </button>
         ))}
