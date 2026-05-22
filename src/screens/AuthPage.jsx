@@ -19,7 +19,7 @@ export default function AuthPage({
         <div style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#4f5d75,#2e3a59)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(46,58,89,0.25)"}}>
           <div style={{width:14,height:14,borderRadius:"50%",background:"#ffffff"}}/>
         </div>
-        <span className="auth-logo-text" style={{fontSize:20, fontWeight:900, color:"#1a202c"}}>HabitFlow</span>
+        <span className="auth-logo-text" style={{fontSize:20,fontWeight:900,color:"#1a202c",fontFamily:"'Inter',sans-serif"}}>HabitFlow</span>
       </div>
 
       {/* CARD */}

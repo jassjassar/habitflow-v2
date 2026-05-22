@@ -62,7 +62,7 @@ export default function HomeScreen({
               <svg width="116" height="116" viewBox="0 0 116 116" style={{position:"absolute",top:0,left:0,transform:"rotate(-90deg)",filter:"drop-shadow(0 0 12px rgba(46,58,89,0.14))"}}>
                 <circle cx="58" cy="58" r="44" fill="none" stroke="#edf2f7" strokeWidth="11"/>
                 <circle cx="58" cy="58" r="44" fill="none" stroke="#2e3a5922" strokeWidth="11" strokeDasharray={`${2*Math.PI*44} 0`}/>
-                <circle cx="58" cy="58" r="44" fill="none" stroke="#2e3a59" strokeWidth="11"
+                <circle cx="58" cy="58" r="44" fill="none" stroke="#2e3a59" strokeOpacity="0.9" strokeWidth="11"
                   strokeLinecap="round"
                   strokeDasharray={`${(todayPct/100)*2*Math.PI*44} ${2*Math.PI*44}`}
                   className="progress-ring"
@@ -107,7 +107,7 @@ export default function HomeScreen({
                   <div style={{display:"flex",alignItems:"center",gap:13}}>
                     <div style={{width:48,height:48,borderRadius:16,background:`${h.color}16`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,border:`1px solid ${h.color}20`}}>{h.emoji}</div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:15,fontWeight:750,color:"#1a202c",marginBottom:5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{h.name}</div>
+                      <div className="habit-name" style={{fontSize:15,fontWeight:750,color:"#1a202c",marginBottom:5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{h.name}</div>
                     </div>
                     <button onClick={()=>onToggle(h.id,todayStr)} style={{padding:"9px 15px",fontSize:13,fontWeight:800,flexShrink:0,borderRadius:999,cursor:"pointer",border:done?"1px solid rgba(46,58,89,0.16)":"1px solid rgba(8,28,80,0.1)",background:done?"#edf2f7":"#ffffff",color:done?"#2e3a59":"#1f3528",boxShadow:"0 8px 20px rgba(8,28,50,0.05)"}}>{done?"Done":"Log"}</button>
                   </div>

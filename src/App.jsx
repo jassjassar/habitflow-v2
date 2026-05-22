@@ -276,6 +276,9 @@ const css = `
     .btn-glass{background:rgba(255,255,255,0.06) !important;border-color:rgba(255,255,255,0.1) !important;color:#e8eaf0 !important}
     .btn-grad{background:#4f5d75 !important;box-shadow:0 8px 24px rgba(79,93,117,0.3) !important}
     .app-content *{color:#e8eaf0}
+    .habit-name{color:#e8eaf0 !important}
+    .app-content h1,.app-content h2,.app-content h3{color:#e8eaf0 !important}
+    .app-content p{color:#a0aec0 !important}
     .app-content *[style*="color:#1a202c"]{color:#e8eaf0 !important}
     .app-content *[style*="color:#4a5568"]{color:#a0aec0 !important}
     .app-content *[style*="color:#718096"]{color:#8899bb !important}
