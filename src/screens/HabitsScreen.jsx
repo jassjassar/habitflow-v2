@@ -30,19 +30,19 @@ export default function HabitsScreen({
         </div>
         <button
           onClick={onAdd}
-          style={{padding:"12px 20px",fontSize:14,fontWeight:800,borderRadius:999,border:"none",background:"#1f7a4d",color:"#ffffff",boxShadow:"0 8px 20px rgba(31,122,77,0.18)",cursor:"pointer",fontFamily:"'Inter',sans-serif",minHeight:44}}
+          style={{padding:"12px 20px",fontSize:14,fontWeight:800,borderRadius:999,border:"none",background:"#0891b2",color:"#ffffff",boxShadow:"0 8px 20px rgba(8,145,178,0.18)",cursor:"pointer",fontFamily:"'Inter',sans-serif",minHeight:44}}
         >+ Add</button>
       </div>
 
       {/* EMPTY STATE */}
       {habits.length === 0 ? (
-        <div style={{padding:"40px 28px",borderRadius:24,background:"#ffffff",border:"1px solid rgba(31,53,40,0.08)",boxShadow:"0 14px 34px rgba(24,35,29,0.06)",textAlign:"center"}}>
+        <div style={{padding:"40px 28px",borderRadius:24,background:"#ffffff",border:"1px solid rgba(8,28,80,0.08)",boxShadow:"0 14px 34px rgba(8,28,50,0.06)",textAlign:"center"}}>
           <div style={{fontSize:56,marginBottom:14,animation:"float 3s ease-in-out infinite"}}>🌱</div>
           <div style={{fontSize:20,fontWeight:800,color:"#152118",marginBottom:8}}>No habits yet</div>
           <div style={{color:"#607067",fontSize:14,lineHeight:1.6,marginBottom:24}}>Start with a template or create your own. Small steps build lasting change.</div>
           <button
             onClick={onTemplates}
-            style={{padding:"14px 32px",fontSize:14,fontWeight:800,borderRadius:999,border:"none",background:"#1f7a4d",color:"#ffffff",boxShadow:"0 8px 20px rgba(31,122,77,0.18)",cursor:"pointer",fontFamily:"'Inter',sans-serif",minHeight:44}}
+            style={{padding:"14px 32px",fontSize:14,fontWeight:800,borderRadius:999,border:"none",background:"#0891b2",color:"#ffffff",boxShadow:"0 8px 20px rgba(8,145,178,0.18)",cursor:"pointer",fontFamily:"'Inter',sans-serif",minHeight:44}}
           >Browse Templates</button>
         </div>
       ) : (
@@ -58,9 +58,9 @@ export default function HabitsScreen({
                 style={{
                   padding:"16px",
                   borderRadius:22,
-                  background: done ? "#f4f8f2" : "#ffffff",
-                  border:`1px solid ${done ? "rgba(31,122,77,0.16)" : "rgba(31,53,40,0.08)"}`,
-                  boxShadow:"0 14px 34px rgba(24,35,29,0.06)",
+                  background: done ? "#f0f9ff" : "#ffffff",
+                  border:`1px solid ${done ? "rgba(8,145,178,0.16)" : "rgba(8,28,80,0.08)"}`,
+                  boxShadow:"0 14px 34px rgba(8,28,50,0.06)",
                   transition:"all 0.2s ease",
                 }}
               >
@@ -93,7 +93,7 @@ export default function HabitsScreen({
                       {days.map((d,di) => (
                         <div key={di} style={{
                           flex:1,height:5,borderRadius:999,
-                          background: h.completions?.[d] ? h.color : "#e7efe5",
+                          background: h.completions?.[d] ? h.color : "#e0f2fe",
                           transition:"all .3s",
                         }}/>
                       ))}
@@ -109,7 +109,7 @@ export default function HabitsScreen({
                         padding:"10px 14px",
                         fontSize:13,fontWeight:600,
                         borderRadius:12,
-                        border:"1px solid rgba(31,53,40,0.1)",
+                        border:"1px solid rgba(8,28,80,0.1)",
                         background:"#ffffff",color:"#1f3528",
                         cursor:"pointer",fontFamily:"'Inter',sans-serif",
                         display:"flex",alignItems:"center",justifyContent:"center",
@@ -122,10 +122,10 @@ export default function HabitsScreen({
                         padding:"10px 14px",
                         fontSize:13,fontWeight:800,
                         borderRadius:999,
-                        border: done ? "none" : "1px solid rgba(31,53,40,0.1)",
-                        background: done ? "#1f7a4d" : "#ffffff",
+                        border: done ? "none" : "1px solid rgba(8,28,80,0.1)",
+                        background: done ? "#0891b2" : "#ffffff",
                         color: done ? "#ffffff" : "#1f3528",
-                        boxShadow: done ? "0 4px 12px rgba(31,122,77,0.2)" : "none",
+                        boxShadow: done ? "0 4px 12px rgba(8,145,178,0.2)" : "none",
                         cursor:"pointer",fontFamily:"'Inter',sans-serif",
                         transition:"all 0.2s",
                         display:"flex",alignItems:"center",justifyContent:"center",

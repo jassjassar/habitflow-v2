@@ -130,11 +130,11 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
     const goalLabels = { health:"fitness", mind:"mental clarity", work:"productivity", personal:"personal growth" }
     const goal = goalLabels[answers.goal] || "your goals"
     return (
-      <div style={{position:"fixed",inset:0,zIndex:500,background:"linear-gradient(180deg,#fbfdf9 0%,#f4f8f2 60%,#ffffff 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center",fontFamily:"'Inter',sans-serif"}}>
+      <div style={{position:"fixed",inset:0,zIndex:500,background:"linear-gradient(180deg,#fbfdf9 0%,#f0f9ff 60%,#ffffff 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,textAlign:"center",fontFamily:"'Inter',sans-serif"}}>
         <div style={{animation:"celebPop 0.6s cubic-bezier(.34,1.56,.64,1) forwards",fontSize:80,marginBottom:24}}>🎉</div>
         <div style={{fontSize:28,fontWeight:900,color:"#152118",marginBottom:10,lineHeight:1.2}}>You're all set!</div>
         <div style={{fontSize:16,color:"#536257",marginBottom:32,lineHeight:1.6,maxWidth:300}}>
-          We've created {habitCount} habits focused on <span style={{color:"#1f7a4d",fontWeight:700}}>{goal}</span>. Your journey starts now.
+          We've created {habitCount} habits focused on <span style={{color:"#0891b2",fontWeight:700}}>{goal}</span>. Your journey starts now.
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:12,width:"100%",maxWidth:280}}>
           {createdHabits.map((h,i) => (
@@ -144,7 +144,7 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
                 <div style={{fontSize:14,fontWeight:700,color:"#152118"}}>{h.name}</div>
                 <div style={{fontSize:11,color:"#6d786f"}}>⏰ {h.time}</div>
               </div>
-              <div style={{marginLeft:"auto",color:"#1f7a4d",fontWeight:800,fontSize:12}}>✓</div>
+              <div style={{marginLeft:"auto",color:"#0891b2",fontWeight:800,fontSize:12}}>✓</div>
             </div>
           ))}
         </div>
@@ -159,9 +159,9 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
             fontWeight:800,
             borderRadius:16,
             border:"none",
-            background:"#1f7a4d",
+            background:"#0891b2",
             color:"#ffffff",
-            boxShadow:"0 8px 28px rgba(31,122,77,0.28)",
+            boxShadow:"0 8px 28px rgba(8,145,178,0.28)",
             cursor:"pointer",
             fontFamily:"'Inter',sans-serif",
             letterSpacing:"-0.01em",
@@ -187,7 +187,7 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
   const hasSelection = Boolean(answers[currentStep.id])
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:500,background:"linear-gradient(180deg,#fbfdf9 0%,#f4f8f2 60%,#ffffff 100%)",display:"flex",flexDirection:"column",overflowY:"auto",fontFamily:"'Inter',sans-serif"}}>
+    <div style={{position:"fixed",inset:0,zIndex:500,background:"linear-gradient(180deg,#fbfdf9 0%,#f0f9ff 60%,#ffffff 100%)",display:"flex",flexDirection:"column",overflowY:"auto",fontFamily:"'Inter',sans-serif"}}>
       <style>{`
         @keyframes fadeSlideIn { from{opacity:0;transform:translateX(24px)} to{opacity:1;transform:translateX(0)} }
         @keyframes optionPop { 0%{transform:scale(0.94);opacity:0} 100%{transform:scale(1);opacity:1} }
@@ -201,12 +201,12 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
         <button
           onClick={goBack}
           disabled={step===0||animating||completing}
-          style={{width:38,height:38,borderRadius:12,border:"1px solid rgba(31,53,40,0.1)",background:step===0?"#f4f8f2":"#ffffff",color:step===0?"#9aad9f":"#1f3528",cursor:step===0||animating||completing?"not-allowed":"pointer",fontSize:18,fontWeight:800,fontFamily:"'Inter',sans-serif"}}
+          style={{width:38,height:38,borderRadius:12,border:"1px solid rgba(31,53,40,0.1)",background:step===0?"#f0f9ff":"#ffffff",color:step===0?"#9aad9f":"#1f3528",cursor:step===0||animating||completing?"not-allowed":"pointer",fontSize:18,fontWeight:800,fontFamily:"'Inter',sans-serif"}}
           aria-label="Back"
         >←</button>
         <div style={{display:"flex",alignItems:"center",gap:8,fontSize:17,fontWeight:900,color:"#1f3528"}}>
           <span style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#d9f99d,#86efac 52%,#67e8f9)",display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(34,197,94,0.16)"}}>
-            <span style={{width:11,height:11,borderRadius:"50%",background:"#1f7a4d",display:"block"}}/>
+            <span style={{width:11,height:11,borderRadius:"50%",background:"#0891b2",display:"block"}}/>
           </span>
           HabitFlow
         </div>
@@ -215,8 +215,8 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
 
       {/* PROGRESS BAR */}
       <div style={{padding:"12px 24px 0"}}>
-        <div style={{height:4,borderRadius:999,background:"#e7efe5",overflow:"hidden"}}>
-          <div style={{height:"100%",borderRadius:999,background:"linear-gradient(90deg,#1f7a4d,#22c55e)",width:`${((step+1)/totalSteps)*100}%`,transition:"width 0.4s ease"}}/>
+        <div style={{height:4,borderRadius:999,background:"#e0f2fe",overflow:"hidden"}}>
+          <div style={{height:"100%",borderRadius:999,background:"linear-gradient(90deg,#0891b2,#0ea5e9)",width:`${((step+1)/totalSteps)*100}%`,transition:"width 0.4s ease"}}/>
         </div>
       </div>
 
@@ -225,7 +225,7 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
 
         {/* STEP HEADER */}
         <div style={{textAlign:"center",marginBottom:32}}>
-          <div style={{fontSize:60,marginBottom:14,filter:"drop-shadow(0 4px 12px rgba(31,122,77,0.2))",animation:"float 3s ease-in-out infinite"}}>
+          <div style={{fontSize:60,marginBottom:14,filter:"drop-shadow(0 4px 12px rgba(8,145,178,0.2))",animation:"float 3s ease-in-out infinite"}}>
             {currentStep.emoji}
           </div>
           <div style={{fontSize:24,fontWeight:900,color:"#152118",marginBottom:8,lineHeight:1.25}}>
@@ -246,26 +246,26 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
                 className="ob-option"
                 onClick={() => selectOption(opt.id)}
                 style={{
-                  background: isSelected ? "#eef8e9" : "#ffffff",
-                  border: isSelected ? "1.5px solid rgba(31,122,77,0.4)" : "1px solid rgba(31,53,40,0.08)",
+                  background: isSelected ? "#e0f2fe" : "#ffffff",
+                  border: isSelected ? "1.5px solid rgba(8,145,178,0.4)" : "1px solid rgba(31,53,40,0.08)",
                   borderRadius:18,
                   padding:"14px 16px",
                   cursor:completing?"wait":"pointer",
                   display:"flex",
                   alignItems:"center",
                   gap:12,
-                  boxShadow: isSelected ? "0 4px 16px rgba(31,122,77,0.1)" : "0 2px 8px rgba(24,35,29,0.04)",
+                  boxShadow: isSelected ? "0 4px 16px rgba(8,145,178,0.1)" : "0 2px 8px rgba(24,35,29,0.04)",
                   animation:`optionPop 0.3s ${i*0.06}s ease both`,
                 }}
               >
-                <div style={{width:44,height:44,borderRadius:14,flexShrink:0,background:isSelected?"#dcfce7":"#f4f8f2",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,border:isSelected?"1px solid rgba(31,122,77,0.2)":"1px solid rgba(31,53,40,0.06)",transition:"all 0.2s"}}>
+                <div style={{width:44,height:44,borderRadius:14,flexShrink:0,background:isSelected?"#dcfce7":"#f0f9ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,border:isSelected?"1px solid rgba(8,145,178,0.2)":"1px solid rgba(31,53,40,0.06)",transition:"all 0.2s"}}>
                   {opt.emoji}
                 </div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:15,fontWeight:700,color:"#152118",marginBottom:2}}>{opt.label}</div>
                   <div style={{fontSize:12,color:"#6d786f",fontWeight:500}}>{opt.desc}</div>
                 </div>
-                <div style={{width:22,height:22,borderRadius:"50%",flexShrink:0,background:isSelected?"#1f7a4d":"#e7efe5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#ffffff",transition:"all 0.2s"}}>
+                <div style={{width:22,height:22,borderRadius:"50%",flexShrink:0,background:isSelected?"#0891b2":"#e0f2fe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#ffffff",transition:"all 0.2s"}}>
                   {isSelected ? "✓" : ""}
                 </div>
               </div>
@@ -284,7 +284,7 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
         <button
           onClick={goNext}
           disabled={!hasSelection||animating||completing}
-          style={{width:"100%",padding:"16px",borderRadius:999,border:"none",background:hasSelection&&!completing?"#1f7a4d":"#e7efe5",color:hasSelection&&!completing?"#ffffff":"#9aad9f",fontSize:16,fontWeight:800,cursor:hasSelection&&!completing?"pointer":"not-allowed",transition:"all 0.25s",boxShadow:hasSelection&&!completing?"0 12px 28px rgba(31,122,77,0.22)":"none",fontFamily:"'Inter',sans-serif"}}
+          style={{width:"100%",padding:"16px",borderRadius:999,border:"none",background:hasSelection&&!completing?"#0891b2":"#e0f2fe",color:hasSelection&&!completing?"#ffffff":"#9aad9f",fontSize:16,fontWeight:800,cursor:hasSelection&&!completing?"pointer":"not-allowed",transition:"all 0.25s",boxShadow:hasSelection&&!completing?"0 12px 28px rgba(8,145,178,0.22)":"none",fontFamily:"'Inter',sans-serif"}}
         >
           {completing?"Creating your habits...":step===totalSteps-1?"Build My Habits 🚀":"Continue →"}
         </button>
@@ -301,7 +301,7 @@ export default function OnboardingQuiz({ onComplete, onDone }) {
       </div>
 
       {/* SUBTLE BG ORBS */}
-      <div style={{position:"fixed",top:"10%",right:"5%",width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,rgba(31,122,77,0.04),transparent 70%)",pointerEvents:"none"}}/>
+      <div style={{position:"fixed",top:"10%",right:"5%",width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,rgba(8,145,178,0.04),transparent 70%)",pointerEvents:"none"}}/>
       <div style={{position:"fixed",bottom:"15%",left:"0%",width:180,height:180,borderRadius:"50%",background:"radial-gradient(circle,rgba(34,197,94,0.04),transparent 70%)",pointerEvents:"none"}}/>
     </div>
   )

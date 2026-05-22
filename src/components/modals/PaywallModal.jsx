@@ -45,13 +45,13 @@ export default function PaywallModal({
             { icon:"🛡️", title:"Streak shield protection",desc:"Never lose your streak again" },
             { icon:"☁️", title:"Priority cloud sync",     desc:"Your data always backed up" },
           ].map(f=>(
-            <div key={f.title} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 14px",borderRadius:16,background:"#f4f8f2",border:"1px solid rgba(31,53,40,0.06)"}}>
-              <div style={{width:40,height:40,borderRadius:12,background:"#eef8e9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{f.icon}</div>
+            <div key={f.title} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 14px",borderRadius:16,background:"#f0f9ff",border:"1px solid rgba(31,53,40,0.06)"}}>
+              <div style={{width:40,height:40,borderRadius:12,background:"#e0f2fe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{f.icon}</div>
               <div>
                 <div style={{fontSize:14,fontWeight:700,color:"#152118",marginBottom:2}}>{f.title}</div>
                 <div style={{fontSize:12,color:"#6d786f"}}>{f.desc}</div>
               </div>
-              <div style={{marginLeft:"auto",color:"#1f7a4d",fontSize:16,flexShrink:0}}>✓</div>
+              <div style={{marginLeft:"auto",color:"#0891b2",fontSize:16,flexShrink:0}}>✓</div>
             </div>
           ))}
         </div>
@@ -72,7 +72,7 @@ export default function PaywallModal({
         <button
           onClick={onStartCheckout}
           disabled={checkoutLoading||isPro}
-          style={{width:"100%",padding:"17px",fontSize:16,fontWeight:800,borderRadius:16,border:"none",background:isPro?"#e7efe5":"#1f7a4d",color:isPro?"#6d786f":"#ffffff",boxShadow:isPro?"none":"0 8px 28px rgba(31,122,77,0.28)",cursor:checkoutLoading||isPro?"not-allowed":"pointer",opacity:checkoutLoading?0.7:1,marginBottom:12,fontFamily:"'Inter',sans-serif",letterSpacing:"-0.01em"}}
+          style={{width:"100%",padding:"17px",fontSize:16,fontWeight:800,borderRadius:16,border:"none",background:isPro?"#e0f2fe":"#0891b2",color:isPro?"#6d786f":"#ffffff",boxShadow:isPro?"none":"0 8px 28px rgba(8,145,178,0.28)",cursor:checkoutLoading||isPro?"not-allowed":"pointer",opacity:checkoutLoading?0.7:1,marginBottom:12,fontFamily:"'Inter',sans-serif",letterSpacing:"-0.01em"}}
         >
           {checkoutLoading ? "Opening checkout..." : isPro ? "Pro Active ✓" : "Start Pro — $1.99/mo →"}
         </button>

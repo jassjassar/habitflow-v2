@@ -21,7 +21,7 @@ export default function AddHabitSheet({
     >
       <div
         onClick={e=>e.stopPropagation()}
-        style={{background:"#ffffff",borderRadius:"28px 28px 0 0",padding:"0 20px 40px",width:"100%",maxHeight:"92vh",overflowY:"auto",boxShadow:"0 -12px 48px rgba(15,31,21,0.14)",border:"1px solid rgba(31,53,40,0.08)",borderBottom:"none",fontFamily:"'Inter',sans-serif"}}
+        style={{background:"#ffffff",borderRadius:"28px 28px 0 0",padding:"0 20px 40px",width:"100%",maxHeight:"92vh",overflowY:"auto",boxShadow:"0 -12px 48px rgba(15,31,21,0.14)",border:"1px solid rgba(8,28,80,0.08)",borderBottom:"none",fontFamily:"'Inter',sans-serif"}}
       >
         {/* HANDLE */}
         <div style={{width:36,height:4,background:"#dce8df",borderRadius:2,margin:"14px auto 20px"}}/>
@@ -34,7 +34,7 @@ export default function AddHabitSheet({
           </div>
           <button
             onClick={onClose}
-            style={{width:36,height:36,borderRadius:"50%",border:"1px solid rgba(31,53,40,0.1)",background:"#f4f8f2",color:"#536257",cursor:"pointer",fontSize:16,fontFamily:"'Inter',sans-serif",display:"flex",alignItems:"center",justifyContent:"center"}}
+            style={{width:36,height:36,borderRadius:"50%",border:"1px solid rgba(8,28,80,0.1)",background:"#f0f9ff",color:"#536257",cursor:"pointer",fontSize:16,fontFamily:"'Inter',sans-serif",display:"flex",alignItems:"center",justifyContent:"center"}}
           >✕</button>
         </div>
 
@@ -43,9 +43,9 @@ export default function AddHabitSheet({
           value={newName}
           onChange={e=>setNewName(e.target.value)}
           placeholder="What habit will you build?"
-          style={{width:"100%",padding:"15px 16px",fontSize:15,borderRadius:16,border:"1px solid rgba(31,53,40,0.12)",background:"#fbfdf9",color:"#152118",fontFamily:"'Inter',sans-serif",outline:"none",marginBottom:20,boxSizing:"border-box"}}
-          onFocus={e=>e.target.style.borderColor="#1f7a4d"}
-          onBlur={e=>e.target.style.borderColor="rgba(31,53,40,0.12)"}
+          style={{width:"100%",padding:"15px 16px",fontSize:15,borderRadius:16,border:"1px solid rgba(8,28,80,0.12)",background:"#fbfdf9",color:"#152118",fontFamily:"'Inter',sans-serif",outline:"none",marginBottom:20,boxSizing:"border-box"}}
+          onFocus={e=>e.target.style.borderColor="#0891b2"}
+          onBlur={e=>e.target.style.borderColor="rgba(8,28,80,0.12)"}
         />
 
         {/* EMOJI */}
@@ -55,7 +55,7 @@ export default function AddHabitSheet({
             <button
               key={e}
               onClick={()=>setNewEmoji(e)}
-              style={{width:44,height:44,borderRadius:13,border:`2px solid ${newEmoji===e?"#1f7a4d":"rgba(31,53,40,0.08)"}`,background:newEmoji===e?"#eef8e9":"#f4f8f2",cursor:"pointer",fontSize:20,transition:"all .15s",display:"flex",alignItems:"center",justifyContent:"center"}}
+              style={{width:44,height:44,borderRadius:13,border:`2px solid ${newEmoji===e?"#0891b2":"rgba(8,28,80,0.08)"}`,background:newEmoji===e?"#e0f2fe":"#f0f9ff",cursor:"pointer",fontSize:20,transition:"all .15s",display:"flex",alignItems:"center",justifyContent:"center"}}
             >{e}</button>
           ))}
         </div>
@@ -78,9 +78,9 @@ export default function AddHabitSheet({
           type="time"
           value={newTime}
           onChange={e=>setNewTime(e.target.value)}
-          style={{padding:"13px 16px",fontSize:15,borderRadius:16,border:"1px solid rgba(31,53,40,0.12)",background:"#fbfdf9",color:"#152118",fontFamily:"'Inter',sans-serif",outline:"none",marginBottom:8,display:"block"}}
-          onFocus={e=>e.target.style.borderColor="#1f7a4d"}
-          onBlur={e=>e.target.style.borderColor="rgba(31,53,40,0.12)"}
+          style={{padding:"13px 16px",fontSize:15,borderRadius:16,border:"1px solid rgba(8,28,80,0.12)",background:"#fbfdf9",color:"#152118",fontFamily:"'Inter',sans-serif",outline:"none",marginBottom:8,display:"block"}}
+          onFocus={e=>e.target.style.borderColor="#0891b2"}
+          onBlur={e=>e.target.style.borderColor="rgba(8,28,80,0.12)"}
         />
         <div style={{fontSize:12,color:"#9aad9f",lineHeight:1.5,marginBottom:24}}>
           We'll send a gentle nudge at this time each day.
@@ -97,11 +97,11 @@ export default function AddHabitSheet({
         <div style={{display:"flex",gap:10}}>
           <button
             onClick={onClose}
-            style={{flex:1,padding:"15px",fontSize:14,fontWeight:600,borderRadius:16,border:"1px solid rgba(31,53,40,0.1)",background:"#ffffff",color:"#536257",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}
+            style={{flex:1,padding:"15px",fontSize:14,fontWeight:600,borderRadius:16,border:"1px solid rgba(8,28,80,0.1)",background:"#ffffff",color:"#536257",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}
           >Cancel</button>
           <button
             onClick={onAdd}
-            style={{flex:2,padding:"15px",fontSize:15,fontWeight:800,borderRadius:16,border:"none",background:"#1f7a4d",color:"#ffffff",boxShadow:"0 8px 24px rgba(31,122,77,0.22)",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}
+            style={{flex:2,padding:"15px",fontSize:15,fontWeight:800,borderRadius:16,border:"none",background:"#0891b2",color:"#ffffff",boxShadow:"0 8px 24px rgba(8,145,178,0.22)",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}
           >Add Habit →</button>
         </div>
 
