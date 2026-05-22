@@ -39,12 +39,12 @@ export default function HeatmapCalendar({ habits }) {
   const DAYS = ["S","M","T","W","T","F","S"]
 
   const getColor = (pct, isToday) => {
-    if (isToday) return "#0891b2"
-    if (pct === 0) return "#e0f2fe"
-    if (pct <= 0.25) return "#bae6fd"
-    if (pct <= 0.5)  return "#7dd3fc"
-    if (pct <= 0.75) return "#38bdf8"
-    return "#0369a1"
+    if (isToday) return "#4f5d75"
+    if (pct === 0) return "#edf2f7"
+    if (pct <= 0.25) return "#c3d1e8"
+    if (pct <= 0.5)  return "#8fa3c8"
+    if (pct <= 0.75) return "#6b7fa3"
+    return "#2e3a59"
   }
 
   const monthLabels = []
@@ -84,13 +84,13 @@ export default function HeatmapCalendar({ habits }) {
         <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
           <button
             onClick={() => setSelectedHabit("all")}
-            style={{padding:"5px 12px",fontSize:12,fontWeight:700,borderRadius:999,border:"none",cursor:"pointer",fontFamily:"'Inter',sans-serif",transition:"all .15s",background:selectedHabit==="all"?"#0891b2":"#f4f8f2",color:selectedHabit==="all"?"#ffffff":"#6d786f"}}
+            style={{padding:"5px 12px",fontSize:12,fontWeight:700,borderRadius:999,border:"none",cursor:"pointer",fontFamily:"'Inter',sans-serif",transition:"all .15s",background:selectedHabit==="all"?"#4f5d75":"#f4f8f2",color:selectedHabit==="all"?"#ffffff":"#6d786f"}}
           >All</button>
           {habits.map(h => (
             <button
               key={h.id}
               onClick={() => setSelectedHabit(h.id)}
-              style={{padding:"5px 12px",fontSize:12,fontWeight:700,borderRadius:999,border:"none",cursor:"pointer",fontFamily:"'Inter',sans-serif",transition:"all .15s",background:selectedHabit===h.id?"#0891b2":"#f4f8f2",color:selectedHabit===h.id?"#ffffff":"#6d786f"}}
+              style={{padding:"5px 12px",fontSize:12,fontWeight:700,borderRadius:999,border:"none",cursor:"pointer",fontFamily:"'Inter',sans-serif",transition:"all .15s",background:selectedHabit===h.id?"#4f5d75":"#f4f8f2",color:selectedHabit===h.id?"#ffffff":"#6d786f"}}
             >{h.emoji} {h.name}</button>
           ))}
         </div>
@@ -122,7 +122,7 @@ export default function HeatmapCalendar({ habits }) {
                   key={di}
                   onMouseEnter={() => setTooltip(day)}
                   onMouseLeave={() => setTooltip(null)}
-                  style={{width:12,height:12,borderRadius:3,background:color,cursor:"pointer",transition:"transform .15s",border:isToday?"2px solid #0891b2":"none",transform:tooltip?.dateStr===day.dateStr?"scale(1.4)":"scale(1)"}}
+                  style={{width:12,height:12,borderRadius:3,background:color,cursor:"pointer",transition:"transform .15s",border:isToday?"2px solid #4f5d75":"none",transform:tooltip?.dateStr===day.dateStr?"scale(1.4)":"scale(1)"}}
                 />
               )
             })}
@@ -133,7 +133,7 @@ export default function HeatmapCalendar({ habits }) {
       {/* LEGEND */}
       <div style={{display:"flex",alignItems:"center",gap:5,marginTop:10,justifyContent:"flex-end"}}>
         <div style={{fontSize:9,color:"#9aad9f",fontWeight:600}}>Less</div>
-        {["#e0f2fe","#bae6fd","#7dd3fc","#38bdf8","#0369a1"].map((c,i) => (
+        {["#edf2f7","#c3d1e8","#8fa3c8","#6b7fa3","#2e3a59"].map((c,i) => (
           <div key={i} style={{width:10,height:10,borderRadius:2,background:c}}/>
         ))}
         <div style={{fontSize:9,color:"#9aad9f",fontWeight:600}}>More</div>
@@ -151,7 +151,7 @@ export default function HeatmapCalendar({ habits }) {
       {/* QUICK STATS */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginTop:14}}>
         {[
-          {lbl:"Perfect Days", val:totalDone,              color:"#0891b2", bg:"#eef8e9"},
+          {lbl:"Perfect Days", val:totalDone,              color:"#4f5d75", bg:"#eef8e9"},
           {lbl:"Current Streak",val:`${currentStreak}🔥`,  color:"#ea580c", bg:"#fff7ed"},
           {lbl:"Longest Streak",val:`${longestStreak}⚡`,  color:"#7c3aed", bg:"#f5f3ff"},
         ].map(s=>(

@@ -33,7 +33,7 @@ export default function AnalyticsScreen({
           <div style={{color:"#6d786f",fontSize:14,lineHeight:1.6,marginBottom:24}}>See your XP progress, lifetime stats, and detailed habit performance with Pro.</div>
           <button
             onClick={()=>onOpenPaywall("stats")}
-            style={{padding:"13px 28px",fontSize:14,fontWeight:800,borderRadius:999,border:"none",background:"#0891b2",color:"#ffffff",boxShadow:"0 8px 20px rgba(8,145,178,0.2)",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}
+            style={{padding:"13px 28px",fontSize:14,fontWeight:800,borderRadius:999,border:"none",background:"#4f5d75",color:"#ffffff",boxShadow:"0 8px 20px rgba(79,93,117,0.2)",cursor:"pointer",fontFamily:"'Inter',sans-serif"}}
           >
             Upgrade to Pro
           </button>
@@ -45,11 +45,11 @@ export default function AnalyticsScreen({
             <div style={{fontSize:12,fontWeight:750,color:"#6d786f",textTransform:"uppercase",letterSpacing:.4,marginBottom:16}}>Level Progress</div>
             <div style={{position:"relative",width:140,height:140,margin:"0 auto 16px"}}>
               <svg width="140" height="140" viewBox="0 0 140 140" style={{transform:"rotate(-90deg)"}}>
-                <circle cx="70" cy="70" r="58" fill="none" stroke="#e0f2fe" strokeWidth="10"/>
-                <circle cx="70" cy="70" r="58" fill="none" stroke="#0891b2" strokeWidth="10"
+                <circle cx="70" cy="70" r="58" fill="none" stroke="#edf2f7" strokeWidth="10"/>
+                <circle cx="70" cy="70" r="58" fill="none" stroke="#4f5d75" strokeWidth="10"
                   strokeLinecap="round"
                   strokeDasharray={`${(xpPct/100)*2*Math.PI*58} ${2*Math.PI*58}`}
-                  style={{transition:"stroke-dasharray 1s ease",filter:"drop-shadow(0 0 6px rgba(8,145,178,0.3))"}}/>
+                  style={{transition:"stroke-dasharray 1s ease",filter:"drop-shadow(0 0 6px rgba(79,93,117,0.3))"}}/>
               </svg>
               <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
                 <div style={{fontSize:28,fontWeight:900,color:"#152118",lineHeight:1}}>{Math.round(xpPct)}%</div>
@@ -67,7 +67,7 @@ export default function AnalyticsScreen({
           {/* STAT GRID */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
             {[
-              {lbl:"Completions", val:lifetimeCompletions, color:"#0891b2", bg:"#eef8e9"},
+              {lbl:"Completions", val:lifetimeCompletions, color:"#4f5d75", bg:"#eef8e9"},
               {lbl:"Best Streak",  val:`${bestStreak} days`,  color:"#ea580c", bg:"#fff7ed"},
               {lbl:"Total XP",     val:displayXP,             color:"#7c3aed", bg:"#f5f3ff"},
               {lbl:"Habits",       val:habits.length,         color:"#0369a1", bg:"#f0f9ff"},
@@ -88,10 +88,10 @@ export default function AnalyticsScreen({
                 <div key={h.id} style={{marginBottom:14}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:13}}>
                     <span style={{color:"#152118",fontWeight:600}}>{h.emoji} {h.name}</span>
-                    <span style={{color:"#0891b2",fontWeight:700}}>{cnt}/7</span>
+                    <span style={{color:"#4f5d75",fontWeight:700}}>{cnt}/7</span>
                   </div>
-                  <div style={{height:7,borderRadius:999,background:"#e0f2fe",overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${(cnt/7)*100}%`,background:"#0891b2",borderRadius:999,transition:"width 1s ease"}}/>
+                  <div style={{height:7,borderRadius:999,background:"#edf2f7",overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${(cnt/7)*100}%`,background:"#4f5d75",borderRadius:999,transition:"width 1s ease"}}/>
                   </div>
                 </div>
               )
