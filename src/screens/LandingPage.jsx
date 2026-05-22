@@ -65,7 +65,7 @@ export default function LandingPage({ onSignIn, onGoogleSignIn }) {
               <span style={{fontSize:13,fontWeight:700,color:"#2e3a59"}}>3 / 4</span>
             </div>
             <div style={{height:8,borderRadius:999,background:"#e7efe5",overflow:"hidden"}}>
-              <div style={{height:"100%",width:"75%",borderRadius:999,background:"linear-gradient(90deg,#2e3a59,#22c55e)"}}/>
+              <div style={{height:"100%",width:"75%",borderRadius:999,background:"linear-gradient(90deg,#2e3a59,#4f5d75)"}}/>
             </div>
           </div>
 
@@ -84,7 +84,7 @@ export default function LandingPage({ onSignIn, onGoogleSignIn }) {
           ))}
 
           {/* STREAK ROW */}
-          <div style={{marginTop:16,padding:"12px 14px",borderRadius:14,background:"linear-gradient(135deg,#f0fdf4,#f0f9ff)",border:"1px solid rgba(31,53,40,0.06)",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{marginTop:16,padding:"12px 14px",borderRadius:14,background:"linear-gradient(135deg,#edf2f7,#f0f2f5)",border:"1px solid rgba(31,53,40,0.06)",display:"flex",alignItems:"center",gap:12}}>
             <div style={{fontSize:22}}>🔥</div>
             <div>
               <div style={{fontSize:13,fontWeight:800,color:"#1a202c"}}>14-day streak</div>
